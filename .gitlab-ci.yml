@@ -8,195 +8,230 @@ stages:
 variables:
   LOG_LEVEL: INFO
   DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ''
+  DOCKER_TLS_CERTDIR: ""
   DOCKER_HOST: tcp://docker:2375
-  APP_NAME: personalia-jkt
-  CONTAINER_IMAGE: $CI_REGISTRY_IMAGE
+  APP_NAME: "personalia-jkt"
+  CONTAINER_IMAGE: "$CI_REGISTRY_IMAGE"
 
 default:
-  image: node:18-alpine
+  image: node:20-alpine
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
-    - node_modules/
-    - .npm/
-
-
+    - backend/node_modules/
+    - frontend/node_modules/
 
 .deploy-template: &deploy-template
-  image: alpine:latest
+  image: alpine:3.20
   before_script:
     - apk add --no-cache openssh-client docker-cli
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+.docker-build-template: &docker-build-template
+  stage: build
+  image: docker:24.0.7
+  services:
+    - name: docker:24.0.7-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: tcp://docker:2375
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker info
 
 # ==================== VALIDATE ====================
 
-lint:
+lint-backend:
   stage: validate
-
   before_script:
-    # DEBUG (hapus kalau sudah aman):
-    - pwd
-    - ls -la
-    - find . -maxdepth 3 -name package.json -print
-    - npm install --cache .npm --prefer-offline
-
+    - cd backend
+    - npm ci
   script:
-    - npm install --cache .npm --prefer-offline
     - npm run lint:check
     - npm run format:check
-    - npx tsc --noEmit
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+lint-frontend:
+  stage: validate
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npm run lint
+    - npm run format:check
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 # ==================== TEST ====================
 
-test:
+test-backend:
   stage: test
+  variables:
+    NODE_ENV: test
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_USER: postgres
+    DB_PASSWORD: postgres
+    DB_NAME: personalia_test
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    REDIS_PASSWORD: ""
+    AUTO_SYNC_MODELS: "true"
+  services:
+    - name: postgres:15
+      alias: postgres
+      variables:
+        POSTGRES_DB: personalia_test
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+    - name: redis:7-alpine
+      alias: redis
   before_script:
-    - npm install --cache .npm --prefer-offline
+    - cd backend
+    - npm ci
+    - apk add --no-cache netcat-openbsd
+    - echo "Waiting for PostgreSQL to be ready..."
+    - timeout 60 sh -c 'until nc -z postgres 5432; do echo "Waiting for postgres..."; sleep 2; done'
+    - echo "PostgreSQL is ready"
   script:
     - npm run test:ci
+  artifacts:
+    paths:
+      - backend/coverage/
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  needs:
+    - lint-backend
+
+test-frontend:
+  stage: test
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npm run build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  needs:
+    - lint-frontend
+
+# ==================== BUILD ====================
+
+build-backend-staging:
+  <<: *docker-build-template
+  script:
+    - docker build -t "$CONTAINER_IMAGE/backend:staging" -f backend/Dockerfile.prod backend
+    - docker push "$CONTAINER_IMAGE/backend:staging"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
-    - lint
-  allow_failure: true
-
-build-backend-staging:
-    stage: build
-    image: docker:20.10.16
-    services:
-      - name: docker:20.10.16-dind
-    before_script:
-      - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-
-    script:
-      - docker build -f Dockerfile.backend -t "$CONTAINER_IMAGE/backend:staging" .
-      - docker push "$CONTAINER_IMAGE/backend:staging"
-
-      - docker info
-    script:
-      - docker build --target production -f Dockerfile.prod -t "$CONTAINER_IMAGE:backend-staging" .
-      - docker push "$CONTAINER_IMAGE:backend-staging"
-
-    rules:
-      - if: $CI_COMMIT_BRANCH == "dev"
+    - test-backend
 
 build-frontend-staging:
-  stage: build
-  image: docker:20.10.16
-  services:
-    - name: docker:20.10.16-dind
-
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  <<: *docker-build-template
   script:
-    - docker build -f Dockerfile.frontend -t "$CONTAINER_IMAGE/frontend:staging" .
+    - docker build -t "$CONTAINER_IMAGE/frontend:staging" -f frontend/Dockerfile.prod frontend
     - docker push "$CONTAINER_IMAGE/frontend:staging"
-
-  alias: docker
-  variables:
-    DOCKER_TLS_CERTDIR: ''
-    DOCKER_HOST: tcp://docker:2375
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker info
-  script:
-    - docker build --target production -f Dockerfile.prod -t "$CONTAINER_IMAGE:frontend-staging" .
-    - docker push "$CONTAINER_IMAGE:frontend-staging"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
-  needs: []
+  needs:
+    - test-frontend
 
-build-production:
-  stage: build
-  image: docker:20.10.16
-  services:
-    - name: docker:20.10.16-dind
-      alias: docker
-  variables:
-    DOCKER_TLS_CERTDIR: ''
-    DOCKER_HOST: tcp://docker:2375
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker info
+build-backend-production:
+  <<: *docker-build-template
   script:
-    - docker build --target production -f Dockerfile.prod -t "$CONTAINER_IMAGE:production" .
-    - docker push "$CONTAINER_IMAGE:production"
-    - docker tag "$CONTAINER_IMAGE:production" "$CONTAINER_IMAGE:latest"
-    - docker push "$CONTAINER_IMAGE:latest"
-
+    - docker build -t "$CONTAINER_IMAGE/backend:production" -f backend/Dockerfile.prod backend
+    - docker push "$CONTAINER_IMAGE/backend:production"
+    - docker tag "$CONTAINER_IMAGE/backend:production" "$CONTAINER_IMAGE/backend:latest"
+    - docker push "$CONTAINER_IMAGE/backend:latest"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+  needs:
+    - test-backend
 
+build-frontend-production:
+  <<: *docker-build-template
+  script:
+    - docker build -t "$CONTAINER_IMAGE/frontend:production" -f frontend/Dockerfile.prod frontend
+    - docker push "$CONTAINER_IMAGE/frontend:production"
+    - docker tag "$CONTAINER_IMAGE/frontend:production" "$CONTAINER_IMAGE/frontend:latest"
+    - docker push "$CONTAINER_IMAGE/frontend:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  needs:
+    - test-frontend
 
+# ==================== DEPLOY ====================
 
 deploy-staging:
   stage: deploy
   <<: *deploy-template
   script:
+    - echo "Deploying to staging server..."
+    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
 
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "mkdir -p /opt/$APP_NAME"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin $CI_REGISTRY"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose pull"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose up -d"
+    # Copy deployment artifacts
+    - scp deployment/docker-compose.staging.yml "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/deployment/docker-compose.yml"
+    - scp backend/.env.staging "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/.env.staging"
+    - scp backend/deployment/init-db.sql "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/deployment/init-db.sql"
 
-    - '[ -n "$STAGING_SERVER_USER" ] || { echo "STAGING_SERVER_USER is not set"; exit 1; }'
-    - '[ -n "$STAGING_SERVER_IP" ] || { echo "STAGING_SERVER_IP is not set"; exit 1; }'
-    - echo "Deploying to $STAGING_SERVER_USER@$STAGING_SERVER_IP"
+    # Pull + run services
+    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml pull"
+    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "sudo mkdir -p /opt/$APP_NAME/deployment"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "sudo mkdir -p /opt/$APP_NAME/uploads/docs"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "sudo mkdir -p /opt/$APP_NAME/uploads/karyawan"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME"
-
-    - scp -r deployment/* "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/deployment/"
-    - scp .env.staging "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/.env"
-
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && export CI_REGISTRY_IMAGE='$CI_REGISTRY_IMAGE' && docker compose --env-file .env -f deployment/docker-compose.staging.yml pull"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && export CI_REGISTRY_IMAGE='$CI_REGISTRY_IMAGE' && docker compose --env-file .env -f deployment/docker-compose.staging.yml down || true"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && export CI_REGISTRY_IMAGE='$CI_REGISTRY_IMAGE' && docker compose --env-file .env -f deployment/docker-compose.staging.yml up -d"
-
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "docker system prune -af --volumes"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.staging.yml ps"
+    # Diagnostics
+    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
+    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "docker logs personalia-backend --since 5m --tail 80 || true"
+    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
   environment:
     name: staging
+    url: https://$STAGING_DOMAIN
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
     - build-backend-staging
     - build-frontend-staging
 
-
 deploy-production:
   stage: deploy
   <<: *deploy-template
   script:
-    - '[ -n "$PRODUCTION_SERVER_USER" ] || { echo "PRODUCTION_SERVER_USER is not set"; exit 1; }'
-    - '[ -n "$PRODUCTION_SERVER_IP" ] || { echo "PRODUCTION_SERVER_IP is not set"; exit 1; }'
-    - echo "Deploying to $PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP"
+    - echo "Deploying to production server..."
+    - '[ -n "$BACKEND_ENV_PRODUCTION" ] || (echo "BACKEND_ENV_PRODUCTION CI variable is required" && exit 1)'
+    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
 
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "sudo mkdir -p /opt/$APP_NAME/deployment/config/ssl"
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "sudo chown -R $PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER /opt/$APP_NAME"
+    # Copy deployment artifacts
+    - scp deployment/docker-compose.staging.yml "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/deployment/docker-compose.yml"
+    - printf "%s" "$BACKEND_ENV_PRODUCTION" | ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cat > /opt/$APP_NAME/backend/.env.production"
+    - scp backend/deployment/init-db.sql "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/backend/deployment/init-db.sql"
 
-    - scp -r deployment/* "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/deployment/"
-    - scp .env.production "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/.env"
+    # Pull + run services
+    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml pull"
+    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && echo \"$CI_REGISTRY_PASSWORD\" | docker login -u \"$CI_REGISTRY_USER\" --password-stdin \"$CI_REGISTRY\""
+    # Diagnostics
+    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
+    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "docker logs personalia-backend --since 5m --tail 80 || true"
+    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.prod.yml pull"
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.prod.yml down || true"
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.prod.yml up -d"
-
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "docker system prune -af --volumes"
   environment:
     name: production
     url: https://$PRODUCTION_DOMAIN
@@ -204,15 +239,21 @@ deploy-production:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
   needs:
-    - build-production
+    - build-backend-production
+    - build-frontend-production
 
-# ==================== POST DEPLOY ====================
+# ==================== POST-DEPLOY ====================
 
 health-check-staging:
   stage: post-deploy
-  image: curlimages/curl:latest
+  image: curlimages/curl:8.11.1
   script:
-    - curl -s --fail "https://$STAGING_DOMAIN/health" || exit 1
+    - echo "Waiting for services to be ready..."
+    - sleep 30
+    - echo "Checking backend health..."
+    - curl -f --connect-timeout 10 --max-time 30 "https://$STAGING_DOMAIN/health"
+    - echo "Checking frontend availability..."
+    - curl -f --connect-timeout 10 --max-time 30 "https://$STAGING_DOMAIN/"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
@@ -220,9 +261,14 @@ health-check-staging:
 
 health-check-production:
   stage: post-deploy
-  image: curlimages/curl:latest
+  image: curlimages/curl:8.11.1
   script:
-    - curl -s --fail "https://$PRODUCTION_DOMAIN/health" || exit 1
+    - echo "Waiting for services to be ready..."
+    - sleep 30
+    - echo "Checking backend health..."
+    - curl -f --connect-timeout 10 --max-time 30 "https://$PRODUCTION_DOMAIN/health"
+    - echo "Checking frontend availability..."
+    - curl -f --connect-timeout 10 --max-time 30 "https://$PRODUCTION_DOMAIN/"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   needs:
