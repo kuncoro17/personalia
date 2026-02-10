@@ -83,14 +83,14 @@ export default function AllKaryawan() {
         email_penabur: item?.email_penabur || "",
       }));
 
-        return {
-          data: filteredItem,
-          pagination: {
-            page: data?.data?.page ?? 1,
-            totalPages: data?.data?.total_pages ?? 1,
-          },
-        };
-      },
+      return {
+        data: filteredItem,
+        pagination: {
+          page: data?.data?.page ?? 1,
+          totalPages: data?.data?.total_pages ?? 1,
+        },
+      };
+    },
   });
 
   useEffect(() => {
@@ -203,7 +203,9 @@ export default function AllKaryawan() {
               <Spinner size="md" color="primary" />
             </div>
           ) : (data?.data?.length ?? 0) === 0 ||
-            ((searchData?.data?.length ?? 0) === 0 && search !== "" && searchData) ? (
+            ((searchData?.data?.length ?? 0) === 0 &&
+              search !== "" &&
+              searchData) ? (
             <div className="w-full flex items-center justify-center min-h-20">
               <p className="font-Poppins text-primary opacity-70">
                 Tidak ada data karyawan
@@ -212,7 +214,11 @@ export default function AllKaryawan() {
           ) : (
             <Employees
               isTable={isTable}
-              data={searchData && search !== "" ? searchData?.data ?? [] : data?.data ?? []}
+              data={
+                searchData && search !== ""
+                  ? (searchData?.data ?? [])
+                  : (data?.data ?? [])
+              }
             />
           )}
 
