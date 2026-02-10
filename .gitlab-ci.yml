@@ -99,16 +99,22 @@ test-backend:
   before_script:
     - cd backend
     - npm ci --no-audit --no-fund --prefer-offline
-    - apk add --no-cache netcat-openbsd
+    - apk add --no-cache postgresql15 postgresql15-client
     - |
-      if getent hosts postgres >/dev/null 2>&1; then
-        export DB_HOST="postgres"
-      else
+      export DB_HOST="postgres"
+      if ! getent hosts "$DB_HOST" >/dev/null 2>&1; then
+        echo "Postgres service alias not resolvable, starting local PostgreSQL fallback..."
         export DB_HOST="127.0.0.1"
+        export PGDATA="/tmp/pgdata"
+        mkdir -p "$PGDATA"
+        chown -R postgres:postgres "$PGDATA"
+        su postgres -c "initdb -D $PGDATA --auth-host=trust --auth-local=trust"
+        su postgres -c "pg_ctl -D $PGDATA -o \"-c listen_addresses='127.0.0.1' -p 5432\" -w start"
+        su postgres -c "createdb -h 127.0.0.1 -p 5432 -U postgres $DB_NAME || true"
       fi
       echo "Using PostgreSQL host: $DB_HOST"
       echo "Waiting for PostgreSQL to be ready..."
-      timeout 60 sh -c 'until nc -z "$DB_HOST" 5432; do echo "Waiting for postgres..."; sleep 2; done'
+      timeout 60 sh -c 'until PGPASSWORD="$DB_PASSWORD" pg_isready -h "$DB_HOST" -p 5432 -U "$DB_USER" -d "$DB_NAME"; do echo "Waiting for postgres..."; sleep 2; done'
     - echo "PostgreSQL is ready"
   script:
     - npm run test:ci
