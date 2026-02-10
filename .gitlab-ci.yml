@@ -12,15 +12,15 @@ variables:
   DOCKER_HOST: tcp://docker:2375
   APP_NAME: "personalia-jkt"
   CONTAINER_IMAGE: "$CI_REGISTRY_IMAGE"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
 
 default:
   image: node:20-alpine
 
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key: npm-v2-${CI_COMMIT_REF_SLUG}
   paths:
-    - backend/node_modules/
-    - frontend/node_modules/
+    - .npm/
 
 .deploy-template: &deploy-template
   image: alpine:3.20
@@ -50,7 +50,7 @@ lint-backend:
   stage: validate
   before_script:
     - cd backend
-    - npm ci
+    - npm ci --no-audit --no-fund --prefer-offline
   script:
     - npm run lint:check
     - npm run format:check
@@ -63,7 +63,7 @@ lint-frontend:
   stage: validate
   before_script:
     - cd frontend
-    - npm ci
+    - npm ci --no-audit --no-fund --prefer-offline
   script:
     - npm run lint
     - npm run format:check
@@ -98,10 +98,17 @@ test-backend:
       alias: redis
   before_script:
     - cd backend
-    - npm ci
+    - npm ci --no-audit --no-fund --prefer-offline
     - apk add --no-cache netcat-openbsd
-    - echo "Waiting for PostgreSQL to be ready..."
-    - timeout 60 sh -c 'until nc -z postgres 5432; do echo "Waiting for postgres..."; sleep 2; done'
+    - |
+      if getent hosts postgres >/dev/null 2>&1; then
+        export DB_HOST="postgres"
+      else
+        export DB_HOST="127.0.0.1"
+      fi
+      echo "Using PostgreSQL host: $DB_HOST"
+      echo "Waiting for PostgreSQL to be ready..."
+      timeout 60 sh -c 'until nc -z "$DB_HOST" 5432; do echo "Waiting for postgres..."; sleep 2; done'
     - echo "PostgreSQL is ready"
   script:
     - npm run test:ci
@@ -120,7 +127,7 @@ test-frontend:
   stage: test
   before_script:
     - cd frontend
-    - npm ci
+    - npm ci --no-audit --no-fund --prefer-offline
   script:
     - npm run build
   rules:
