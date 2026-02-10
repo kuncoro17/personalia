@@ -198,23 +198,27 @@ deploy-staging:
   stage: deploy
   <<: *deploy-template
   script:
+    - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
+    - '[ -n "$STAGING_SERVER_IP" ] || (echo "Missing CI variable: STAGING_SERVER_IP" && exit 1)'
+    - export STAGING_SERVER_PORT="${STAGING_SERVER_PORT:-22}"
+    - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
     - echo "Deploying to staging server..."
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
 
     # Copy deployment artifacts
-    - scp deployment/docker-compose.staging.yml "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/deployment/docker-compose.yml"
-    - scp backend/.env.staging "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/.env.staging"
-    - scp backend/deployment/init-db.sql "$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/deployment/init-db.sql"
+    - scp -P "$STAGING_SERVER_PORT" deployment/docker-compose.staging.yml "$STAGING_TARGET:/opt/$APP_NAME/deployment/docker-compose.yml"
+    - scp -P "$STAGING_SERVER_PORT" backend/.env.staging "$STAGING_TARGET:/opt/$APP_NAME/backend/.env.staging"
+    - scp -P "$STAGING_SERVER_PORT" backend/deployment/init-db.sql "$STAGING_TARGET:/opt/$APP_NAME/backend/deployment/init-db.sql"
 
     # Pull + run services
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml pull"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml pull"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
     # Diagnostics
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "docker logs personalia-backend --since 5m --tail 80 || true"
-    - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "docker logs personalia-frontend --since 5m --tail 80 || true"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
   environment:
     name: staging
@@ -231,22 +235,26 @@ deploy-production:
   script:
     - echo "Deploying to production server..."
     - '[ -n "$BACKEND_ENV_PRODUCTION" ] || (echo "BACKEND_ENV_PRODUCTION CI variable is required" && exit 1)'
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
+    - '[ -n "$PRODUCTION_SERVER_USER" ] || (echo "Missing CI variable: PRODUCTION_SERVER_USER" && exit 1)'
+    - '[ -n "$PRODUCTION_SERVER_IP" ] || (echo "Missing CI variable: PRODUCTION_SERVER_IP" && exit 1)'
+    - export PRODUCTION_SERVER_PORT="${PRODUCTION_SERVER_PORT:-22}"
+    - export PRODUCTION_TARGET="${PRODUCTION_SERVER_USER}@${PRODUCTION_SERVER_IP}"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
 
     # Copy deployment artifacts
-    - scp deployment/docker-compose.staging.yml "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/deployment/docker-compose.yml"
-    - printf "%s" "$BACKEND_ENV_PRODUCTION" | ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cat > /opt/$APP_NAME/backend/.env.production"
-    - scp backend/deployment/init-db.sql "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/backend/deployment/init-db.sql"
+    - scp -P "$PRODUCTION_SERVER_PORT" deployment/docker-compose.staging.yml "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/docker-compose.yml"
+    - printf "%s" "$BACKEND_ENV_PRODUCTION" | ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cat > /opt/$APP_NAME/backend/.env.production"
+    - scp -P "$PRODUCTION_SERVER_PORT" backend/deployment/init-db.sql "$PRODUCTION_TARGET:/opt/$APP_NAME/backend/deployment/init-db.sql"
 
     # Pull + run services
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml pull"
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml pull"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export CONTAINER_IMAGE='$CONTAINER_IMAGE' IMAGE_TAG='production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
     # Diagnostics
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "docker logs personalia-backend --since 5m --tail 80 || true"
-    - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "docker logs personalia-frontend --since 5m --tail 80 || true"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
   environment:
     name: production
