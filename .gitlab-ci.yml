@@ -121,23 +121,23 @@ build-backend-staging:
   needs: []
 
   build-frontend-staging:
-  stage: build
-  image: docker:20.10.16
-  services:
+    stage: build
+    image: docker:20.10.16
+    services:
     - name: docker:20.10.16-dind
       alias: docker
-  variables:
+    variables:
     DOCKER_TLS_CERTDIR: ''
     DOCKER_HOST: tcp://docker:2375
-  before_script:
+    before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - docker info
-  script:
+    script:
     - docker build --target production -f Dockerfile.prod -t $CONTAINER_IMAGE:staging .
     - docker push $CONTAINER_IMAGE:staging
-  rules:
+    rules:
     - if: $CI_COMMIT_BRANCH == "dev"
-  needs: []
+    needs: []
 
 build-production:
   stage: build
