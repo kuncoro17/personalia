@@ -36,10 +36,7 @@ default:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
   before_script:
-    - '[ -n "$CI_REGISTRY" ] || (echo "Missing CI_REGISTRY" && exit 1)'
-    - '[ -n "$CI_REGISTRY_IMAGE" ] || (echo "Missing CI_REGISTRY_IMAGE (Container Registry may be disabled)" && exit 1)'
-    - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
-    - echo "Using registry image: $CI_REGISTRY_IMAGE"
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker info
 
 # ==================== VALIDATE ====================
@@ -214,7 +211,7 @@ deploy-staging:
     - scp -P "$STAGING_SERVER_PORT" backend/deployment/init-db.sql "$STAGING_TARGET:/opt/$APP_NAME/backend/deployment/init-db.sql"
 
     # Pull + run services
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_JOB_TOKEN' | docker login -u gitlab-ci-token --password-stdin '$CI_REGISTRY'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml pull"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
@@ -250,7 +247,7 @@ deploy-production:
     - scp -P "$PRODUCTION_SERVER_PORT" backend/deployment/init-db.sql "$PRODUCTION_TARGET:/opt/$APP_NAME/backend/deployment/init-db.sql"
 
     # Pull + run services
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "echo '$CI_JOB_TOKEN' | docker login -u gitlab-ci-token --password-stdin '$CI_REGISTRY'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml pull"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
