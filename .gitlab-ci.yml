@@ -73,16 +73,16 @@ build-backend-staging:
     - name: docker:20.10.16-dind
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-<<<<<<< HEAD
+
   script:
     - docker build -f Dockerfile.backend -t "$CONTAINER_IMAGE/backend:staging" .
     - docker push "$CONTAINER_IMAGE/backend:staging"
-=======
+
     - docker info
   script:
     - docker build --target production -f Dockerfile.prod -t "$CONTAINER_IMAGE:backend-staging" .
     - docker push "$CONTAINER_IMAGE:backend-staging"
->>>>>>> 12484ed (dockerfile)
+
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
 
@@ -91,13 +91,13 @@ build-frontend-staging:
   image: docker:20.10.16
   services:
     - name: docker:20.10.16-dind
-<<<<<<< HEAD
+
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
   script:
     - docker build -f Dockerfile.frontend -t "$CONTAINER_IMAGE/frontend:staging" .
     - docker push "$CONTAINER_IMAGE/frontend:staging"
-=======
+
       alias: docker
   variables:
     DOCKER_TLS_CERTDIR: ''
@@ -129,7 +129,7 @@ build-production:
     - docker push "$CONTAINER_IMAGE:production"
     - docker tag "$CONTAINER_IMAGE:production" "$CONTAINER_IMAGE:latest"
     - docker push "$CONTAINER_IMAGE:latest"
->>>>>>> 12484ed (dockerfile)
+
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
 
@@ -228,4 +228,3 @@ health-check-production:
     - if: $CI_COMMIT_BRANCH == "main"
   needs:
     - deploy-production
-
