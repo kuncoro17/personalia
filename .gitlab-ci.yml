@@ -12,15 +12,10 @@ variables:
   DOCKER_HOST: tcp://docker:2375
   APP_NAME: "personalia-jkt"
   CONTAINER_IMAGE: "$CI_REGISTRY_IMAGE"
-  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  NPM_CONFIG_CACHE: "/tmp/.npm"
 
 default:
   image: node:20-alpine
-
-cache:
-  key: npm-v2-${CI_COMMIT_REF_SLUG}
-  paths:
-    - .npm/
 
 .deploy-template: &deploy-template
   image: alpine:3.20
@@ -50,7 +45,9 @@ lint-backend:
   stage: validate
   before_script:
     - cd backend
-    - npm ci --no-audit --no-fund --prefer-offline
+    - rm -rf /tmp/.npm && mkdir -p /tmp/.npm
+    - npm ci --cache /tmp/.npm --no-audit --no-fund --prefer-online --omit=optional
+    - npm cache clean --force
   script:
     - npm run lint:check
     - npm run format:check
@@ -63,7 +60,9 @@ lint-frontend:
   stage: validate
   before_script:
     - cd frontend
-    - npm ci --no-audit --no-fund --prefer-offline
+    - rm -rf /tmp/.npm && mkdir -p /tmp/.npm
+    - npm ci --cache /tmp/.npm --no-audit --no-fund --prefer-online --omit=optional
+    - npm cache clean --force
   script:
     - npm run lint
     - npm run format:check
@@ -98,7 +97,9 @@ test-backend:
       alias: redis
   before_script:
     - cd backend
-    - npm ci --no-audit --no-fund --prefer-offline
+    - rm -rf /tmp/.npm && mkdir -p /tmp/.npm
+    - npm ci --cache /tmp/.npm --no-audit --no-fund --prefer-online --omit=optional
+    - npm cache clean --force
     - apk add --no-cache postgresql15 postgresql15-client
     - |
       export DB_HOST="postgres"
@@ -133,7 +134,9 @@ test-frontend:
   stage: test
   before_script:
     - cd frontend
-    - npm ci --no-audit --no-fund --prefer-offline
+    - rm -rf /tmp/.npm && mkdir -p /tmp/.npm
+    - npm ci --cache /tmp/.npm --no-audit --no-fund --prefer-online --omit=optional
+    - npm cache clean --force
   script:
     - npm run build
   rules:
