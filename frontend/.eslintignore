@@ -1,0 +1,12 @@
+.now/*
+dist
+esm/*
+public/*
+tests/*
+scripts/*
+coverage
+.next
+build
+node_modules
+
+src/**/*.css

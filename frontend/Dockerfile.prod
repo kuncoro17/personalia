@@ -1,0 +1,61 @@
+# Multi-stage build for production
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install ALL dependencies (include devDependencies needed for build)
+RUN npm ci && npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Build-time env for Vite (values can be overridden from docker-compose args)
+ARG VITE_API_URL=http://localhost:3001
+ARG VITE_CLERK_PUBLISHABLE_KEY=
+ARG VITE_CLERK_SIGN_IN_URL=
+ARG VITE_CLERK_DOMAIN=
+ARG VITE_CLERK_IS_SATELLITE=true
+
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
+ENV VITE_CLERK_SIGN_IN_URL=$VITE_CLERK_SIGN_IN_URL
+ENV VITE_CLERK_DOMAIN=$VITE_CLERK_DOMAIN
+ENV VITE_CLERK_IS_SATELLITE=$VITE_CLERK_IS_SATELLITE
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+# Install serve to serve static files
+RUN npm install -g serve
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S reactjs -u 1001
+
+# Copy built files from builder stage
+COPY --from=builder --chown=reactjs:nodejs /app/dist ./dist
+
+# Switch to non-root user
+USER reactjs
+
+# Expose production port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
+# Start the application
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["serve", "-s", "dist", "-l", "3000"]

@@ -1,0 +1,5 @@
+# Ignore Swagger UI generated files
+src/swagger-ui/*
+swagger-ui
+node_modules
+dist

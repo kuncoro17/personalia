@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: ../Dockerfile
+      target: dev
+    container_name: personalia-app-local
+    ports:
+      - '3001:3001'
+    volumes:
+      - ../:/app
+      - /app/node_modules
+      - ../uploads:/app/uploads
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=dev_personalia
+      - DB_USER=postgres
+      - DB_PASSWORD=asd
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLERK_JWT_KEY=${CLERK_JWT_KEY}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - personalia-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: personalia-postgres-local
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=dev_personalia
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=asd
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - personalia-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d dev_personalia']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: personalia-redis-local
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data_local:/data
+    networks:
+      - personalia-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: personalia-loki-local
+    ports:
+      - '3100:3100'
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data_local:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - personalia-network
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: personalia-promtail-local
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - personalia-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data_local:
+    driver: local
+  redis_data_local:
+    driver: local
+  loki_data_local:
+    driver: local
+
+networks:
+  personalia-network:
+    driver: bridge
