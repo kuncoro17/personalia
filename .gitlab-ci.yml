@@ -46,7 +46,7 @@ default:
         exit 1
       fi
     - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
-    - echo "Using registry image: $CI_REGISTRY_IMAGE"
+    - 'echo "Using registry image: $CI_REGISTRY_IMAGE"'
     - docker info
 
 # ==================== VALIDATE ====================
