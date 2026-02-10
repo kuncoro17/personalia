@@ -223,6 +223,7 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/docker-compose.yml'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment/init-db.sql'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "rm -rf '$STAGING_TMP_DIR'"
 
@@ -266,6 +267,7 @@ deploy-production:
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/docker-compose.yml'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment/init-db.sql'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "rm -rf '$PRODUCTION_TMP_DIR'"
 
