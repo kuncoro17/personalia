@@ -36,7 +36,17 @@ default:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - |
+      if [ -z "$CI_REGISTRY" ]; then
+        echo "Missing CI_REGISTRY"
+        exit 1
+      fi
+      if [ -z "$CI_REGISTRY_IMAGE" ]; then
+        echo "Missing CI_REGISTRY_IMAGE (Container Registry may be disabled)"
+        exit 1
+      fi
+    - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
+    - echo "Using registry image: $CI_REGISTRY_IMAGE"
     - docker info
 
 # ==================== VALIDATE ====================
