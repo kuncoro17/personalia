@@ -48,6 +48,8 @@ lint:
   script:
     - npm install --cache .npm --prefer-offline
     - npm run lint:check
+    - npm run format:check
+    - npx tsc --noEmit
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
 
@@ -55,8 +57,9 @@ lint:
 
 test:
   stage: test
-  script:
+  before_script:
     - npm install --cache .npm --prefer-offline
+  script:
     - npm run test:ci
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
@@ -84,7 +87,7 @@ test:
     rules:
       - if: $CI_COMMIT_BRANCH == "dev"
 
-  build-frontend-staging:
+build-frontend-staging:
   stage: build
   image: docker:20.10.16
   services:
@@ -129,7 +132,7 @@ build-production:
     - docker push "$CONTAINER_IMAGE:latest"
 
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "main"
 
 
 
@@ -180,14 +183,19 @@ deploy-production:
     - '[ -n "$PRODUCTION_SERVER_USER" ] || { echo "PRODUCTION_SERVER_USER is not set"; exit 1; }'
     - '[ -n "$PRODUCTION_SERVER_IP" ] || { echo "PRODUCTION_SERVER_IP is not set"; exit 1; }'
     - echo "Deploying to $PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP"
+
     - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "sudo mkdir -p /opt/$APP_NAME/deployment/config/ssl"
     - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "sudo chown -R $PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER /opt/$APP_NAME"
+
     - scp -r deployment/* "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/deployment/"
     - scp .env.production "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP:/opt/$APP_NAME/.env"
+
     - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && echo \"$CI_REGISTRY_PASSWORD\" | docker login -u \"$CI_REGISTRY_USER\" --password-stdin \"$CI_REGISTRY\""
+
     - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.prod.yml pull"
     - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.prod.yml down || true"
     - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.prod.yml up -d"
+
     - ssh "$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP" "docker system prune -af --volumes"
   environment:
     name: production
@@ -198,19 +206,12 @@ deploy-production:
   needs:
     - build-production
 
-
+# ==================== POST DEPLOY ====================
 
 health-check-staging:
   stage: post-deploy
-  image: curlimages/curl
+  image: curlimages/curl:latest
   script:
-
-    - curl -f https://$STAGING_DOMAIN/health
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  needs:
-    - deploy-staging
-
     - curl -s --fail "https://$STAGING_DOMAIN/health" || exit 1
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
