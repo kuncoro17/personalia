@@ -200,7 +200,7 @@ deploy-staging:
   script:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
     - '[ -n "$STAGING_SERVER_IP" ] || (echo "Missing CI variable: STAGING_SERVER_IP" && exit 1)'
-    - export STAGING_SERVER_PORT="${STAGING_SERVER_PORT:-22}"
+    - export STAGING_SERVER_PORT="${STAGING_SERVER_PORT:-443}"
     - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
     - echo "Deploying to staging server..."
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
@@ -237,7 +237,7 @@ deploy-production:
     - '[ -n "$BACKEND_ENV_PRODUCTION" ] || (echo "BACKEND_ENV_PRODUCTION CI variable is required" && exit 1)'
     - '[ -n "$PRODUCTION_SERVER_USER" ] || (echo "Missing CI variable: PRODUCTION_SERVER_USER" && exit 1)'
     - '[ -n "$PRODUCTION_SERVER_IP" ] || (echo "Missing CI variable: PRODUCTION_SERVER_IP" && exit 1)'
-    - export PRODUCTION_SERVER_PORT="${PRODUCTION_SERVER_PORT:-22}"
+    - export PRODUCTION_SERVER_PORT="${PRODUCTION_SERVER_PORT:-443}"
     - export PRODUCTION_TARGET="${PRODUCTION_SERVER_USER}@${PRODUCTION_SERVER_IP}"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
 
