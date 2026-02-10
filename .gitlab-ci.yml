@@ -22,7 +22,7 @@ cache:
     - node_modules/
     - .npm/
 
-# ==================== DEPLOY TEMPLATE ====================
+
 
 .deploy-template: &deploy-template
   image: alpine:latest
