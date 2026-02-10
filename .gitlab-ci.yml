@@ -13,7 +13,7 @@ variables:
   DOCKER_HOST: tcp://docker:2375
 
   # Application settings
-  APP_NAME: 'be-sas-personalia-jkt'
+  APP_NAME: 'personalia-jkt'
 
   # Docker registry settings
   CONTAINER_IMAGE: '${CI_REGISTRY_IMAGE}'
