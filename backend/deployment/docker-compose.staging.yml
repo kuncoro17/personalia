@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${CI_REGISTRY_IMAGE:-gitlab.bpkpenaburjakarta.or.id:5050/kuncoro017/be-personalia}:staging
+    mage: ${CONTAINER_IMAGE}:staging
     container_name: personalia-app-staging
     ports:
       - '3001:3001'

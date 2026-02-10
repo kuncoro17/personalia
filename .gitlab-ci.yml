@@ -120,13 +120,13 @@ build-backend-staging:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs: []
 
-  build-frontend-staging:
-    stage: build
-    image: docker:20.10.16
-    services:
+build-frontend-staging:
+  stage: build
+  image: docker:20.10.16
+  services:
     - name: docker:20.10.16-dind
       alias: docker
-    variables:
+  variables:
     DOCKER_TLS_CERTDIR: ''
     DOCKER_HOST: tcp://docker:2375
     before_script:
