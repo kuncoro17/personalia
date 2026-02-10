@@ -107,6 +107,7 @@ test-backend:
         echo "Postgres service alias not resolvable, starting local PostgreSQL fallback..."
         export DB_HOST="127.0.0.1"
         export PGDATA="/tmp/pgdata"
+        
         mkdir -p "$PGDATA"
         chown -R postgres:postgres "$PGDATA"
         su postgres -c "initdb -D $PGDATA --auth-host=trust --auth-local=trust"
