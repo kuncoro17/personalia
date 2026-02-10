@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ${CONTAINER_IMAGE}/backend:${IMAGE_TAG:-staging}
+    image: ${BACKEND_IMAGE}
     container_name: personalia-backend
     ports:
       - "3001:3001"
@@ -67,7 +67,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ${CONTAINER_IMAGE}/frontend:${IMAGE_TAG:-staging}
+    image: ${FRONTEND_IMAGE}
     container_name: personalia-frontend
     ports:
       - "3000:3000"
