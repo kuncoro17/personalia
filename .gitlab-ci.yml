@@ -67,7 +67,7 @@ test:
     - lint
   allow_failure: true
 
-  build-backend-staging:
+build-backend-staging:
     stage: build
     image: docker:20.10.16
     services:
