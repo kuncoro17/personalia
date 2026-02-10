@@ -6,7 +6,19 @@ import { useToastSlice } from "../stores/useToast";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const apiClient = (getToken) => {
-  const { message: messageToast, setMessage, deleteMessage } = useToastSlice();
+  const showToastOnce = (toastMessage, toastConfig) => {
+    const { message, setMessage, deleteMessage } = useToastSlice.getState();
+
+    if (message.includes(toastMessage)) return;
+
+    setMessage(toastMessage);
+    addToast({
+      ...toastConfig,
+      onClose: () => {
+        deleteMessage(toastMessage);
+      },
+    });
+  };
 
   const api = axios.create({
     baseURL: `${API_URL}/`,
@@ -42,17 +54,11 @@ export const apiClient = (getToken) => {
       }
 
       if (error.request) {
-        if (!messageToast.includes("Tidak mendapat respons dari server")) {
-          setMessage("Tidak mendapat respons dari server");
-          addToast({
-            title: "No Response",
-            description: "Tidak mendapat respons dari server",
-            color: "danger",
-            onClose: () => {
-              deleteMessage("Tidak mendapat respons dari server");
-            },
-          });
-        }
+        showToastOnce("Tidak mendapat respons dari server", {
+          title: "No Response",
+          description: "Tidak mendapat respons dari server",
+          color: "danger",
+        });
 
         return Promise.reject({
           type: "NO_RESPONSE",
@@ -62,17 +68,11 @@ export const apiClient = (getToken) => {
 
       const msg = error?.message || "Unknown error";
 
-      if (!messageToast.includes(msg)) {
-        setMessage(msg);
-        addToast({
-          title: "Unknown Error",
-          description: msg,
-          color: "danger",
-          onClose: () => {
-            deleteMessage(msg);
-          },
-        });
-      }
+      showToastOnce(msg, {
+        title: "Unknown Error",
+        description: msg,
+        color: "danger",
+      });
 
       return Promise.reject({
         type: "UNKNOWN_ERROR",
@@ -95,7 +95,7 @@ export const apiService = async (method, api, params, body = {}) => {
     const response = await api[method](endpoint, body);
 
     return response?.data ?? null;
-  } catch (error) {
+  } catch {
     return [];
   }
 };

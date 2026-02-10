@@ -5,6 +5,7 @@ import logger from './utils/logger';
 dotenv.config();
 
 const PORT = Number(process.env.PORT || 3000);
+type ErrnoLike = Error & { code?: string };
 
 const bootstrap = async () => {
   const { maybeAutoSyncModels } = await import('./bootstrap/modelSync');
@@ -25,7 +26,7 @@ const bootstrap = async () => {
   );
 
   server.on('error', err => {
-    if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
+    if ((err as ErrnoLike).code === 'EADDRINUSE') {
       logger.error(
         `Port ${PORT} is already in use. Stop the process using this port or change PORT in backend/.env.`
       );

@@ -1,8 +1,5 @@
 import { MiddlewareHandler } from 'hono';
-import {
-  verifyToken,
-  VerifyTokenOptions,
-} from '@clerk/backend';
+import { verifyToken, VerifyTokenOptions } from '@clerk/backend';
 import dotenv from 'dotenv';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { ClerkAuthPayload } from '../types/clerk';
