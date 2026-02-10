@@ -1,0 +1,10 @@
+{
+  "name": "personalia-jkt",
+  "private": true,
+  "scripts": {
+    "lint:check": "npm --prefix backend run lint:check && npm --prefix frontend run lint:check",
+    "format:check": "npm --prefix backend run format:check && npm --prefix frontend run format:check",
+    "test:ci": "npm --prefix backend run test:ci",
+    "build": "npm --prefix frontend run build"
+  }
+}
