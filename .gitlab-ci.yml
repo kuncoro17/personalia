@@ -37,15 +37,14 @@ cache:
 
 lint:
   stage: validate
-<<<<<<< HEAD
-=======
+
   before_script:
     # DEBUG (hapus kalau sudah aman):
     - pwd
     - ls -la
     - find . -maxdepth 3 -name package.json -print
     - npm install --cache .npm --prefer-offline
->>>>>>> 12484ed (dockerfile)
+
   script:
     - npm install --cache .npm --prefer-offline
     - npm run lint:check
@@ -140,12 +139,12 @@ deploy-staging:
   stage: deploy
   <<: *deploy-template
   script:
-<<<<<<< HEAD
+
     - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "mkdir -p /opt/$APP_NAME"
     - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin $CI_REGISTRY"
     - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose pull"
     - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose up -d"
-=======
+
     - '[ -n "$STAGING_SERVER_USER" ] || { echo "STAGING_SERVER_USER is not set"; exit 1; }'
     - '[ -n "$STAGING_SERVER_IP" ] || { echo "STAGING_SERVER_IP is not set"; exit 1; }'
     - echo "Deploying to $STAGING_SERVER_USER@$STAGING_SERVER_IP"
@@ -166,7 +165,7 @@ deploy-staging:
 
     - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "docker system prune -af --volumes"
     - ssh "$STAGING_SERVER_USER@$STAGING_SERVER_IP" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.staging.yml ps"
->>>>>>> 12484ed (dockerfile)
+
   environment:
     name: staging
   rules:
@@ -175,9 +174,7 @@ deploy-staging:
     - build-backend-staging
     - build-frontend-staging
 
-<<<<<<< HEAD
-# ==================== POST DEPLOY ====================
-=======
+
 deploy-production:
   stage: deploy
   <<: *deploy-template
@@ -203,20 +200,19 @@ deploy-production:
   needs:
     - build-production
 
-# ==================== POST-DEPLOY STAGE ====================
->>>>>>> 12484ed (dockerfile)
+
 
 health-check-staging:
   stage: post-deploy
   image: curlimages/curl
   script:
-<<<<<<< HEAD
+
     - curl -f https://$STAGING_DOMAIN/health
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
     - deploy-staging
-=======
+
     - curl -s --fail "https://$STAGING_DOMAIN/health" || exit 1
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
@@ -232,4 +228,4 @@ health-check-production:
     - if: $CI_COMMIT_BRANCH == "main"
   needs:
     - deploy-production
->>>>>>> 12484ed (dockerfile)
+
