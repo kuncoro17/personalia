@@ -216,7 +216,7 @@ deploy-staging:
     - echo "Deploying to staging server..."
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
 
-
+ 
     # Copy deployment artifacts
     - scp -P "$STAGING_SERVER_PORT" deployment/docker-compose.staging.yml "$STAGING_TARGET:$STAGING_TMP_DIR/docker-compose.staging.yml"
     - scp -P "$STAGING_SERVER_PORT" backend/.env.staging "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
