@@ -218,7 +218,7 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
 
  
-    # Copy deployment artifacts
+    # Copy deployment artifactsss
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
     - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/deployment/
     - scp -r deployment/* $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/deployment
