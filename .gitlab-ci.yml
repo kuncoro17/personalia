@@ -16,7 +16,7 @@ variables:
 
 default:
   image: node:20-alpine
-
+##
 .deploy-template: &deploy-template
   image: alpine:3.20
   before_script:
