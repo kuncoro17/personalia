@@ -20,6 +20,7 @@ default:
 .deploy-template: &deploy-template
   image: alpine:3.20
   before_script:
+    - ⁠apk add --no-cache openssh-client rsync docker-cli
     - apk add --no-cache openssh-client docker-cli
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
