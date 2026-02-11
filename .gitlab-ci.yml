@@ -220,7 +220,16 @@ deploy-staging:
 
     # Copy deployment artifactsss
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
-    - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
+    # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
+
+    # Copy backend
+    - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" backend/ \
+      $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/
+
+    # Copy frontend
+    - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" frontend/ \
+      $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/frontend/
+
     - scp -r deployment/* $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/deployment
     - scp -P "$STAGING_SERVER_PORT" deployment/docker-compose.staging.yml "$STAGING_TARGET:$STAGING_TMP_DIR/docker-compose.staging.yml"
     - scp -P "$STAGING_SERVER_PORT" backend/.env.staging "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
