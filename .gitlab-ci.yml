@@ -225,8 +225,9 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/docker-compose.yml'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging'"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment/init-db.sql'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "rm -rf '$STAGING_TMP_DIR'"
+    
 
     # Pull + run services
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
