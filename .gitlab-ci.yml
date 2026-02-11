@@ -234,7 +234,7 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
     # Diagnostics
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml ps"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
@@ -278,7 +278,7 @@ deploy-production:
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
     # Diagnostics
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml ps"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
