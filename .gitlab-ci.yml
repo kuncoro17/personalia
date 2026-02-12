@@ -311,7 +311,7 @@ health-check-staging:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
     - '[ -n "$STAGING_SERVER_IP" ] || (echo "Missing CI variable: STAGING_SERVER_IP" && exit 1)'
     - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
-    - export STAGING_API_DOMAIN="${STAGING_API_DOMAIN:-api-staging-personali.bpkpenaburjakarta.or.id}"
+    - export STAGING_API_DOMAIN="${STAGING_API_DOMAIN:-api-staging-personalia.bpkpenaburjakarta.or.id}"
     - echo "Waiting for services to be ready..."
     - sleep 20
     - echo "Checking backend container health..."
