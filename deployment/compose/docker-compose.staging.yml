@@ -137,13 +137,15 @@ services:
     command: -config.file=/etc/promtail/config.yml -config.expand-env=true
     environment:
       LOKI_ENDPOINT: ${LOKI_ENDPOINT:-http://loki:3100/loki/api/v1/push}
+    ports:
+      - "127.0.0.1:${PROMTAIL_HOST_PORT:-9080}:9080"
     volumes:
       - ../observability/promtail-staging-config.yaml:/etc/promtail/config.yml:ro
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     depends_on:
       loki:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test:
         [
