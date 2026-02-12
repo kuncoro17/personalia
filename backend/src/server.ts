@@ -44,6 +44,12 @@ import { registerPrsKaryawanRoutes } from './routes/prsKaryawanRoute';
 import { historyRoutes } from './routes/historyRoutes';
 import { presensiRoutes } from './routes/routesphp';
 // import { sdmCheckInOutRoutes } from './routes/sdmcheckinoutRoutes';
+
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 const app = new OpenAPIHono({
   defaultHook: (result, c) => {
     if (!result.success) return c.json({ error: result.error }, 400);
@@ -53,14 +59,13 @@ const app = new OpenAPIHono({
 app.use(
   '*',
   cors({
-    origin: '*', // Bisa diganti dengan origin tertentu seperti 'https://example.com'
+    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
 app.use('*', logger());
-app.use('*', cors());
 app.onError(errorHandler);
 
 app.get('/health', c => {
