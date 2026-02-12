@@ -221,6 +221,8 @@ deploy-staging:
 
     # Copy deployment artifactsss
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME"
+
     # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
 
     # Copy backend
