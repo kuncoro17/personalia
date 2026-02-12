@@ -64,7 +64,7 @@ export const EMPLOYEEENDPOINT = {
     `personalia/karyawan/employee?page=${page}&limit=${limit}`,
   search: (search, page) =>
     `personalia/karyawan/search?nama_lengkap=${search}${page ? `&${page}` : ""}`,
-  joinToday: `personalia/join-today`,
+  joinToday: `personalia/karyawan/join-today`,
 };
 
 export const LETTERENDPOINT = {

@@ -3,8 +3,29 @@ import service from '../services/prsBagianService';
 import { ok, created, badRequest, notFound } from '../utils/response.helper';
 import { logInfo, logWarn, logError } from '../utils/log.helper';
 
-const getErrorMessage = (err: unknown): string =>
-  err instanceof Error ? err.message : 'Unknown error';
+const getErrorMessage = (err: unknown): string => {
+  if (err instanceof Error && err.message.trim()) return err.message;
+  if (typeof err === 'string' && err.trim()) return err;
+
+  if (err && typeof err === 'object') {
+    const maybe = err as {
+      message?: unknown;
+      original?: { message?: unknown };
+      parent?: { message?: unknown };
+    };
+
+    const candidates = [
+      maybe.message,
+      maybe.original?.message,
+      maybe.parent?.message,
+    ];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) return candidate;
+    }
+  }
+
+  return 'Unknown error';
+};
 
 export const getAll = async (c: Context): Promise<Response> => {
   try {
