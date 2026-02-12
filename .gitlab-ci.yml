@@ -328,7 +328,7 @@ health-check-staging:
     - echo "Checking frontend container health..."
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-frontend | grep -q '^healthy$'"
     - 'echo "Public endpoint check (non-blocking): https://$STAGING_DOMAIN/health"'
-    - 'wget -q --spider "https://$STAGING_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
+    # - 'wget -q --spider "https://$STAGING_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
