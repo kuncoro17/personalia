@@ -16,7 +16,9 @@ function AppRouter() {
   if (!isLoaded) return <LoadingFallback />;
 
   if (!isSignedIn) {
-    window.location.href = signInUrl;
+    if (signInUrl && window.location.href !== signInUrl) {
+      window.location.href = signInUrl;
+    }
     return;
   }
 
