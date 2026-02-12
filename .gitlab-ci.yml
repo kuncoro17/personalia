@@ -225,12 +225,12 @@ deploy-staging:
 
     # Copy backend
     # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" backend/$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/
-    - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" backend/ $STAGING_TARGET:/opt/$APP_NAME/backend/
+    - rsync -avzvv -e "ssh -p $STAGING_SERVER_PORT" backend/ $STAGING_TARGET:/opt/$APP_NAME/backend/
 
 
     # Copy frontend
     # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" frontend/$STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/frontend/
-    - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" backend/ $STAGING_TARGET:/opt/$APP_NAME/frontend/
+    - rsync -avzvv -e "ssh -p $STAGING_SERVER_PORT" backend/ $STAGING_TARGET:/opt/$APP_NAME/frontend/
 
 
     - scp -r deployment/* $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/deployment
