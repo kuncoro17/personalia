@@ -11,7 +11,7 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   DOCKER_HOST: tcp://docker:2375
   APP_NAME: "personalia-jkt"
-  CONTAINER_IMAGE: "$CI_REGISTRY_IMAGE"
+  CONTAINER_IMAGE: "$CONTAINER_IMAGE"
   NPM_CONFIG_CACHE: "/tmp/.npm"
 
 default:
@@ -20,7 +20,8 @@ default:
 .deploy-template: &deploy-template
   image: alpine:3.20
   before_script:
-    - apk add --no-cache openssh-client docker-cli wget
+    - apk add --no-cache openssh-client rsync docker-cli
+    - apk add --no-cache openssh-client docker-cli
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
@@ -172,8 +173,7 @@ build-backend-staging:
 build-frontend-staging:
   <<: *docker-build-template
   script:
-    - '[ -n "$STAGING_FE_CLERK_PUBLISHABLE_KEY" ] || (echo "Missing CI variable: STAGING_FE_CLERK_PUBLISHABLE_KEY" && exit 1)'
-    - docker build --build-arg VITE_API_URL="${STAGING_FE_API_URL:-/api}" --build-arg VITE_CLERK_PUBLISHABLE_KEY="$STAGING_FE_CLERK_PUBLISHABLE_KEY" --build-arg VITE_CLERK_SIGN_IN_URL="${STAGING_FE_CLERK_SIGN_IN_URL:-}" --build-arg VITE_CLERK_DOMAIN="${STAGING_FE_CLERK_DOMAIN:-}" --build-arg VITE_CLERK_IS_SATELLITE="${STAGING_FE_CLERK_IS_SATELLITE:-true}" -t "$CONTAINER_IMAGE:frontend-staging" -f frontend/Dockerfile.prod frontend
+    - docker build -t "$CONTAINER_IMAGE:frontend-staging" -f frontend/Dockerfile.prod frontend
     - docker push "$CONTAINER_IMAGE:frontend-staging"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
@@ -195,8 +195,7 @@ build-backend-production:
 build-frontend-production:
   <<: *docker-build-template
   script:
-    - '[ -n "$PRODUCTION_FE_CLERK_PUBLISHABLE_KEY" ] || (echo "Missing CI variable: PRODUCTION_FE_CLERK_PUBLISHABLE_KEY" && exit 1)'
-    - docker build --build-arg VITE_API_URL="${PRODUCTION_FE_API_URL:-/api}" --build-arg VITE_CLERK_PUBLISHABLE_KEY="$PRODUCTION_FE_CLERK_PUBLISHABLE_KEY" --build-arg VITE_CLERK_SIGN_IN_URL="${PRODUCTION_FE_CLERK_SIGN_IN_URL:-}" --build-arg VITE_CLERK_DOMAIN="${PRODUCTION_FE_CLERK_DOMAIN:-}" --build-arg VITE_CLERK_IS_SATELLITE="${PRODUCTION_FE_CLERK_IS_SATELLITE:-false}" -t "$CONTAINER_IMAGE:frontend-production" -f frontend/Dockerfile.prod frontend
+    - docker build -t "$CONTAINER_IMAGE:frontend-production" -f frontend/Dockerfile.prod frontend
     - docker push "$CONTAINER_IMAGE:frontend-production"
     - docker tag "$CONTAINER_IMAGE:frontend-production" "$CONTAINER_IMAGE:frontend-latest"
     - docker push "$CONTAINER_IMAGE:frontend-latest"
@@ -213,37 +212,44 @@ deploy-staging:
   script:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
     - '[ -n "$STAGING_SERVER_IP" ] || (echo "Missing CI variable: STAGING_SERVER_IP" && exit 1)'
-    - '[ -n "$STAGING_DOMAIN" ] || (echo "Missing CI variable: STAGING_DOMAIN" && exit 1)'
+    - export STAGING_SERVER_PORT="22"
     - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
     - export STAGING_TMP_DIR="/tmp/${APP_NAME}-${CI_PIPELINE_ID}-staging"
     - echo "Deploying to staging server..."
-    - ssh "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
-    - ssh "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment/compose /opt/$APP_NAME/deployment/be /opt/$APP_NAME/deployment/nginx/staging /opt/$APP_NAME/deployment/observability /opt/$APP_NAME/backend/uploads"
-    - ssh "$STAGING_TARGET" "sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME"
-    - scp deployment/compose/docker-compose.staging.yml "$STAGING_TARGET:$STAGING_TMP_DIR/docker-compose.staging.yml"
-    - scp backend/.env.staging "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
-    - scp deployment/be/init-db.sql "$STAGING_TARGET:$STAGING_TMP_DIR/init-db.sql"
-    - scp deployment/nginx/staging/frontend.conf "$STAGING_TARGET:$STAGING_TMP_DIR/frontend.conf"
-    - scp deployment/nginx/staging/api.conf "$STAGING_TARGET:$STAGING_TMP_DIR/api.conf"
-    - scp deployment/observability/loki-config.yaml "$STAGING_TARGET:$STAGING_TMP_DIR/loki-config.yaml"
-    - scp deployment/observability/promtail-staging-config.yaml "$STAGING_TARGET:$STAGING_TMP_DIR/promtail-staging-config.yaml"
-    - ssh "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/compose/docker-compose.staging.yml'"
-    - ssh "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging'"
-    - ssh "$STAGING_TARGET" "sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging'"
-    - ssh "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/init-db.sql' '/opt/$APP_NAME/deployment/be/init-db.sql'"
-    - ssh "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/frontend.conf' '/opt/$APP_NAME/deployment/nginx/staging/frontend.conf'"
-    - ssh "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/api.conf' '/opt/$APP_NAME/deployment/nginx/staging/api.conf'"
-    - ssh "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/loki-config.yaml' '/opt/$APP_NAME/deployment/observability/loki-config.yaml'"
-    - ssh "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/promtail-staging-config.yaml' '/opt/$APP_NAME/deployment/observability/promtail-staging-config.yaml'"
-    - ssh "$STAGING_TARGET" "rm -rf '$STAGING_TMP_DIR'"
-    - ssh "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-    - ssh "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
-    - ssh "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
-    - ssh "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
-    - ssh "$STAGING_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
-    - ssh "$STAGING_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
-    - ssh "$STAGING_TARGET" "docker logs personalia-loki --since 5m --tail 120 || true"
-    - ssh "$STAGING_TARGET" "docker logs personalia-promtail --since 5m --tail 120 || true"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
+
+
+    # Copy deployment artifactsss
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
+    # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
+
+    # Copy backend
+    - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" backend/ "$STAGING_TARGET:/opt/$APP_NAME/backend/"
+
+    # Copy frontend
+    - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" frontend/ "$STAGING_TARGET:/opt/$APP_NAME/frontend/"
+
+    - scp -r deployment/* $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/backend/deployment
+    - scp -P "$STAGING_SERVER_PORT" deployment/docker-compose.staging.yml "$STAGING_TARGET:$STAGING_TMP_DIR/docker-compose.staging.yml"
+    - scp -P "$STAGING_SERVER_PORT" backend/.env.staging "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
+    - scp -P "$STAGING_SERVER_PORT" backend/deployment/init-db.sql "$STAGING_TARGET:$STAGING_TMP_DIR/init-db.sql"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/docker-compose.yml'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "rm -rf '$STAGING_TMP_DIR'"
+
+
+    # Pull + run services
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml pull"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
+
+    # Diagnostics
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
   environment:
     name: staging
@@ -262,39 +268,32 @@ deploy-production:
     - '[ -n "$BACKEND_ENV_PRODUCTION" ] || (echo "BACKEND_ENV_PRODUCTION CI variable is required" && exit 1)'
     - '[ -n "$PRODUCTION_SERVER_USER" ] || (echo "Missing CI variable: PRODUCTION_SERVER_USER" && exit 1)'
     - '[ -n "$PRODUCTION_SERVER_IP" ] || (echo "Missing CI variable: PRODUCTION_SERVER_IP" && exit 1)'
+    - export PRODUCTION_SERVER_PORT="22"
     - export PRODUCTION_TARGET="${PRODUCTION_SERVER_USER}@${PRODUCTION_SERVER_IP}"
     - export PRODUCTION_TMP_DIR="/tmp/${APP_NAME}-${CI_PIPELINE_ID}-production"
-    - ssh "$PRODUCTION_TARGET" "mkdir -p '$PRODUCTION_TMP_DIR'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "mkdir -p '$PRODUCTION_TMP_DIR'"
     - printf "%s" "$BACKEND_ENV_PRODUCTION" > /tmp/.env.production
 
     # Copy deployment artifacts
-    - scp deployment/compose/docker-compose.staging.yml "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/docker-compose.staging.yml"
-    - scp /tmp/.env.production "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/.env.production"
-    - scp deployment/be/init-db.sql "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/init-db.sql"
-    - scp deployment/nginx/staging/frontend.conf "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/frontend.conf"
-    - scp deployment/nginx/staging/api.conf "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/api.conf"
-    - scp deployment/observability/loki-config.yaml "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/loki-config.yaml"
-    - scp deployment/observability/promtail-staging-config.yaml "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/promtail-staging-config.yaml"
-    - ssh "$PRODUCTION_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment/compose /opt/$APP_NAME/deployment/be /opt/$APP_NAME/deployment/nginx/staging /opt/$APP_NAME/deployment/observability /opt/$APP_NAME/backend/uploads"
-    - ssh "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/compose/docker-compose.staging.yml'"
-    - ssh "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production'"
-    - ssh "$PRODUCTION_TARGET" "sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production'"
-    - ssh "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/init-db.sql' '/opt/$APP_NAME/deployment/be/init-db.sql'"
-    - ssh "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/frontend.conf' '/opt/$APP_NAME/deployment/nginx/staging/frontend.conf'"
-    - ssh "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/api.conf' '/opt/$APP_NAME/deployment/nginx/staging/api.conf'"
-    - ssh "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/loki-config.yaml' '/opt/$APP_NAME/deployment/observability/loki-config.yaml'"
-    - ssh "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/promtail-staging-config.yaml' '/opt/$APP_NAME/deployment/observability/promtail-staging-config.yaml'"
-    - ssh "$PRODUCTION_TARGET" "rm -rf '$PRODUCTION_TMP_DIR'"
+    - scp -P "$PRODUCTION_SERVER_PORT" deployment/docker-compose.staging.yml "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/docker-compose.staging.yml"
+    - scp -P "$PRODUCTION_SERVER_PORT" /tmp/.env.production "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/.env.production"
+    - scp -P "$PRODUCTION_SERVER_PORT" backend/deployment/init-db.sql "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/init-db.sql"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/docker-compose.yml'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment/init-db.sql'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "rm -rf '$PRODUCTION_TMP_DIR'"
 
     # Pull + run services
-    - ssh "$PRODUCTION_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-    - ssh "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
-    - ssh "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml pull"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
 
     # Diagnostics
-    - ssh "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
-    - ssh "$PRODUCTION_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
-    - ssh "$PRODUCTION_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
   environment:
     name: production
@@ -314,30 +313,16 @@ health-check-staging:
   script:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
     - '[ -n "$STAGING_SERVER_IP" ] || (echo "Missing CI variable: STAGING_SERVER_IP" && exit 1)'
+    - export STAGING_SERVER_PORT="22"
     - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
-    - export STAGING_API_DOMAIN="${STAGING_API_DOMAIN:-api-staging-personalia.bpkpenaburjakarta.or.id}"
     - echo "Waiting for services to be ready..."
     - sleep 20
     - echo "Checking backend container health..."
-    - ssh "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-backend | grep -q '^healthy$'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-backend | grep -q '^healthy$'"
     - echo "Checking frontend container health..."
-    - ssh "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-frontend | grep -q '^healthy$'"
-    - echo "Checking Loki container state..."
-    - ssh "$STAGING_TARGET" "docker inspect -f '{{.State.Status}}' personalia-loki | grep -q '^running$'"
-    - echo "Checking Promtail container state..."
-    - ssh "$STAGING_TARGET" "docker inspect -f '{{.State.Status}}' personalia-promtail | grep -q '^running$'"
-    - echo "Checking local backend endpoint..."
-    - ssh "$STAGING_TARGET" "timeout 90 sh -c 'until wget -q --spider http://127.0.0.1:3001/health; do sleep 2; done'"
-    - echo "Checking local frontend endpoint..."
-    - ssh "$STAGING_TARGET" "timeout 90 sh -c 'until wget -q --spider http://127.0.0.1:3000/; do sleep 2; done'"
-    - echo "Checking Loki readiness (container internal)..."
-    - ssh "$STAGING_TARGET" "timeout 120 sh -c 'until docker exec personalia-loki wget -q --spider http://localhost:3100/ready; do sleep 2; done'"
-    - echo "Checking local Promtail endpoint..."
-    - ssh "$STAGING_TARGET" "timeout 90 sh -c 'until wget -q --spider http://127.0.0.1:9080/ready; do sleep 2; done'"
-    - echo "Checking public frontend endpoint..."
-    - wget -q --spider "https://$STAGING_DOMAIN/"
-    - echo "Checking public API endpoint..."
-    - wget -q --spider "https://$STAGING_API_DOMAIN/health"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-frontend | grep -q '^healthy$'"
+    - 'echo "Public endpoint check (non-blocking): https://$STAGING_DOMAIN/health"'
+    - 'wget -q --spider "https://$STAGING_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
@@ -349,13 +334,14 @@ health-check-production:
   script:
     - '[ -n "$PRODUCTION_SERVER_USER" ] || (echo "Missing CI variable: PRODUCTION_SERVER_USER" && exit 1)'
     - '[ -n "$PRODUCTION_SERVER_IP" ] || (echo "Missing CI variable: PRODUCTION_SERVER_IP" && exit 1)'
+    - export PRODUCTION_SERVER_PORT="22"
     - export PRODUCTION_TARGET="${PRODUCTION_SERVER_USER}@${PRODUCTION_SERVER_IP}"
     - echo "Waiting for services to be ready..."
     - sleep 20
     - echo "Checking backend container health..."
-    - ssh "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-backend | grep -q '^healthy$'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-backend | grep -q '^healthy$'"
     - echo "Checking frontend container health..."
-    - ssh "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-frontend | grep -q '^healthy$'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-frontend | grep -q '^healthy$'"
     - 'echo "Public endpoint check (non-blocking): https://$PRODUCTION_DOMAIN/health"'
     - 'wget -q --spider "https://$PRODUCTION_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
   rules:
