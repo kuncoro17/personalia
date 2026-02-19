@@ -173,7 +173,25 @@ build-backend-staging:
 build-frontend-staging:
   <<: *docker-build-template
   script:
-    - docker build -t "$CONTAINER_IMAGE:frontend-staging" -f frontend/Dockerfile.prod frontend
+    - '[ -n "$STAGING_API_DOMAIN" ] || (echo "Missing CI variable: STAGING_API_DOMAIN" && exit 1)'
+    - '[ -n "$STAGING_FE_CLERK_PUBLISHABLE_KEY" ] || (echo "Missing CI variable: STAGING_FE_CLERK_PUBLISHABLE_KEY" && exit 1)'
+    - '[ -n "$STAGING_FE_CLERK_SIGN_IN_URL" ] || (echo "Missing CI variable: STAGING_FE_CLERK_SIGN_IN_URL" && exit 1)'
+    - '[ -n "$STAGING_FE_CLERK_DOMAIN" ] || (echo "Missing CI variable: STAGING_FE_CLERK_DOMAIN" && exit 1)'
+    - |
+      if echo "$STAGING_API_DOMAIN" | grep -Eq '^https?://'; then
+        STAGING_VITE_API_URL="$STAGING_API_DOMAIN"
+      else
+        STAGING_VITE_API_URL="https://$STAGING_API_DOMAIN"
+      fi
+      docker build \
+        --build-arg VITE_API_URL="$STAGING_VITE_API_URL" \
+        --build-arg VITE_CLERK_PUBLISHABLE_KEY="$STAGING_FE_CLERK_PUBLISHABLE_KEY" \
+        --build-arg VITE_CLERK_SIGN_IN_URL="$STAGING_FE_CLERK_SIGN_IN_URL" \
+        --build-arg VITE_CLERK_DOMAIN="$STAGING_FE_CLERK_DOMAIN" \
+        --build-arg VITE_CLERK_IS_SATELLITE="${VITE_CLERK_IS_SATELLITE:-true}" \
+        -t "$CONTAINER_IMAGE:frontend-staging" \
+        -f frontend/Dockerfile.prod \
+        frontend
     - docker push "$CONTAINER_IMAGE:frontend-staging"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
