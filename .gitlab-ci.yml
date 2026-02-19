@@ -219,9 +219,9 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
 
 
-    # Copy deployment artifactsss
+    # Copy deployment artifacts
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
     # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
 
     # Copy backend
@@ -230,25 +230,21 @@ deploy-staging:
     # Copy frontend
     - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $STAGING_SERVER_PORT" frontend/ "$STAGING_TARGET:/opt/$APP_NAME/frontend/"
 
-    - scp -P "$STAGING_SERVER_PORT" -r deployment/* "$STAGING_TARGET:/opt/$APP_NAME/backend/deployment"
-    - scp -P "$STAGING_SERVER_PORT" deployment/docker-compose.staging.yml "$STAGING_TARGET:$STAGING_TMP_DIR/docker-compose.staging.yml"
+    - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $STAGING_SERVER_PORT" deployment/ "$STAGING_TARGET:/opt/$APP_NAME/deployment/"
     - scp -P "$STAGING_SERVER_PORT" backend/.env.staging "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
-    - scp -P "$STAGING_SERVER_PORT" backend/deployment/init-db.sql "$STAGING_TARGET:$STAGING_TMP_DIR/init-db.sql"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/docker-compose.yml'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging'"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 644 '$STAGING_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "rm -rf '$STAGING_TMP_DIR'"
 
 
     # Pull + run services
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml pull"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
 
     # Diagnostics
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
@@ -276,23 +272,20 @@ deploy-production:
     - printf "%s" "$BACKEND_ENV_PRODUCTION" > /tmp/.env.production
 
     # Copy deployment artifacts
-    - scp -P "$PRODUCTION_SERVER_PORT" deployment/docker-compose.staging.yml "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/docker-compose.staging.yml"
+    - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $PRODUCTION_SERVER_PORT" deployment/ "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/"
     - scp -P "$PRODUCTION_SERVER_PORT" /tmp/.env.production "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/.env.production"
-    - scp -P "$PRODUCTION_SERVER_PORT" backend/deployment/init-db.sql "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/init-db.sql"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/docker-compose.staging.yml' '/opt/$APP_NAME/deployment/docker-compose.yml'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production'"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 644 '$PRODUCTION_TMP_DIR/init-db.sql' '/opt/$APP_NAME/backend/deployment/init-db.sql'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "rm -rf '$PRODUCTION_TMP_DIR'"
 
     # Pull + run services
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml pull"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml up -d --remove-orphans"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
 
     # Diagnostics
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/docker-compose.yml ps"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
