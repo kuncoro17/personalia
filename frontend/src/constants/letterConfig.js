@@ -493,6 +493,7 @@ export const getActiveLetters = () => {
     }, {});
 };
 
+
 /**
  * Get available letters based on employee status
  * @param {string} employeeStatus - Status karyawan (TTP, KWT, dll)
