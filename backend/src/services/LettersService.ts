@@ -56,6 +56,24 @@ export class SuratService {
 
     return data;
   }
+  async getDisposisi(id: string) {
+    if (!id) throw new BadRequestException('Parameter id wajib diisi');
+
+    if (!isValidUUID(id)) {
+      throw new BadRequestException('Format id tidak valid');
+    }
+
+    const cleanId = xss(id);
+    const data = await repository.Disposisi(cleanId);
+
+    if (!data) {
+      throw new NotFoundException(
+        `Data karyawan disposisi dengan id ${cleanId} tidak ditemukan`
+      );
+    }
+
+    return data;
+  }
   async getSuratKaryawanTKL(id: string) {
     // 🔹 Validasi ID wajib diisi
     if (!id) throw new BadRequestException('Parameter id wajib diisi');

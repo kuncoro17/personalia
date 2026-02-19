@@ -71,7 +71,27 @@ export default function FormulirCkeYayasan({ data }) {
   const statusKawin = (data?.status_nikah ?? "").toString().trim() || "—";
   const jumlahAnak = String(data?.jumlah_anak ?? "0");
   const tingkat = (data?.tingkat ?? "").toString().trim() || "—";
-  const nama_div = (data?.nama_divisi ?? "").toString().trim() || "—";
+  
+const getNamaUnit = (uk) => {
+  const detail = uk?.unit_kerja_detail;
+
+  return (
+    detail?.seksi?.nama_sek ||
+    detail?.bagian?.nama_bag ||
+    detail?.divisi?.nama_div ||
+    detail?.deputi?.nama_deputi ||
+    detail?.direktur?.nama_direktur ||
+    null
+  );
+};
+
+const divisiList = Array.isArray(data?.unitKerja)
+  ? data.unitKerja
+      .map((uk) => getNamaUnit(uk))
+      .filter(Boolean)
+  : data?.unitKerja
+    ? [getNamaUnit(data.unitKerja)].filter(Boolean)
+    : [];
 
   const tipePerubahan = data?.["history.value_lama"]?.toString().trim() || "—";
 
@@ -192,7 +212,7 @@ export default function FormulirCkeYayasan({ data }) {
         <RowItem no="8." label="Ijazah" value={tingkat} />
 
         {/* 9 Penempatan */}
-        <RowItem no="9." label="Supaya ditempatkan di" value={nama_div} />
+        <RowItem no="9." label="Supaya ditempatkan di" value={divisiList} />
 
         {/* 10 Terhitung mulai / Gol */}
         <RowItem

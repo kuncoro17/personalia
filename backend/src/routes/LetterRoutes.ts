@@ -4,6 +4,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import {
   getSuratKaryawanTTP,
   getSuratKaryawanKWT,
+  getDisposisi,
   getSuratKaryawanTKL,
   getSuratKaryawanWTT,
   SuratBeritaAcaraBIPARTIT,
@@ -97,6 +98,41 @@ export const LetterRoutes = (app: OpenAPIHono) => {
       },
     }),
     getSuratKaryawanKWT
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/disposisi/{id}',
+      summary: 'Ambil data Surat Disposisi',
+      description:
+        'Mengambil data disposisi karyawan berdasarkan ID dengan struktur data KWT.',
+      tags: ['Surat Karyawan'],
+      request: {
+        params: z.object({
+          id: z.string().uuid().openapi({
+            example: '4e1b1ab7-9c13-4f8a-b65b-0c6f2c28d9d3',
+            description: 'ID karyawan (UUID)',
+          }),
+        }),
+      },
+      responses: {
+        200: {
+          description: 'Berhasil mendapatkan data surat disposisi',
+          content: {
+            'application/json': {
+              schema: z.object({
+                success: z.boolean(),
+                message: z.string(),
+                data: z.any(),
+              }),
+            },
+          },
+        },
+        404: { description: 'Data karyawan tidak ditemukan' },
+        400: { description: 'Parameter tidak valid' },
+      },
+    }),
+    getDisposisi
   );
   app.openapi(
     createRoute({

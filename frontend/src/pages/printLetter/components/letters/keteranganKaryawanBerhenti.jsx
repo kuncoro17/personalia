@@ -23,7 +23,87 @@ Font.registerHyphenationCallback((word) => {
   return [word];
 });
 
-export default function KeteranganKaryawanBerhenti() {
+export default function KeteranganKaryawanBerhenti({ data }) {
+  const payload = data?.data ?? data ?? {};
+
+  const BULAN = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  function formatAlamat(a) {
+    if (!a) return "—";
+    if (typeof a === "string") return a.trim() || "—";
+
+    const alamat = String(a?.alamat ?? "").trim();
+    const rt = String(a?.rt ?? "").trim();
+    const rw = String(a?.rw ?? "").trim();
+    const kel = String(a?.kelurahan?.nama ?? "").trim();
+    const kec = String(a?.kecamatan?.nama ?? "").trim();
+    const kota = String(a?.kota?.nama ?? "").trim();
+    const prov = String(a?.provinsi?.nama ?? "").trim();
+    const kodePos = String(a?.kode_pos ?? "").trim();
+
+    const rtRw = rt || rw ? `RT ${rt || "-"} / RW ${rw || "-"}` : "";
+    const bagian = [alamat, rtRw, kel, kec, kota, prov, kodePos]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    return bagian.join(", ") || "—";
+  }
+
+  function formatTanggalIndo(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+
+    const tanggal = date.getDate();
+    const bulan = BULAN[date.getMonth()];
+    const tahun = date.getFullYear();
+
+    return `${tanggal} ${bulan} ${tahun}`;
+  }
+  const getNamaUnit = (uk) => {
+    const detail = uk?.unit_kerja_detail;
+
+    return (
+      detail?.seksi?.nama_sek ||
+      detail?.bagian?.nama_bag ||
+      detail?.divisi?.nama_div ||
+      detail?.deputi?.nama_dep ||
+      detail?.deputi?.nama_deputi ||
+      detail?.direktur?.nama_dir ||
+      detail?.direktur?.nama_direktur ||
+      null
+    );
+  };
+
+  const unitKerja = payload?.unitKerja ?? payload?.unit_kerja_karyawan;
+  const divisiList = Array.isArray(unitKerja)
+    ? unitKerja.map((uk) => getNamaUnit(uk)).filter(Boolean)
+    : unitKerja
+      ? [getNamaUnit(unitKerja)].filter(Boolean)
+      : [];
+  const divisiText = divisiList.join(", ") || "—";
+  const namaLengkap =
+    String(payload?.nama_lengkap ?? payload?.nama ?? "").trim() || "—";
+  const tgl_join_penabur_jkt = formatTanggalIndo(payload?.tgl_join_penabur_jkt);
+  const tanggal_inactive = formatTanggalIndo(payload?.tanggal_inactive);
+  const today = formatTanggalIndo(new Date());
+  const kode_golongan = payload?.kode_golongan ?? "—";
+  const jabatan =
+    unitKerja?.jabatan?.jabatan ?? unitKerja?.[0]?.jabatan?.jabatan ?? "—";
   return (
     <Page style={styles.containerDocument} size={"A4"}>
       <Image src={"/assets/images/kop.png"} style={styles.kopSurat} fixed />
@@ -76,7 +156,7 @@ export default function KeteranganKaryawanBerhenti() {
               flexDirection: "row",
               justifyContent: "space-between",
             }}
-          >
+          >x` `
             <Text style={styles.textNormal}>Lampiran</Text>
             <Text style={styles.textNormal}>:</Text>
           </View>
@@ -100,11 +180,12 @@ export default function KeteranganKaryawanBerhenti() {
       <Text style={[styles.textNormal, { marginTop: 40 }]}>Dengan hormat,</Text>
 
       <Text style={[styles.textNormal, { marginTop: 20 }]}>
-        Sehubungan dengan surat pengunduran diri Sdr. Resvina dari BPK PENABUR
-        Jakarta terhitung 10 Maret 2025, dengan ini kami mohon dibuatkan Surat
-        Keterangan Kerja atas nama tersebut di atas yang bekerja sejak 22
-        Februari 2021 s/d 9 Maret 2025, golongan terakhir 3B1 dengan tugas dan
-        jabatan terakhir sebagai Staff Unit di Bagian Riset & Pengembangan,
+        Sehubungan dengan surat pengunduran diri Sdr.{namaLengkap} dari BPK
+        PENABUR Jakarta terhitung {today}, dengan ini kami mohon dibuatkan Surat
+        Keterangan Kerja atas nama tersebut di atas yang bekerja sejak{" "}
+        {tgl_join_penabur_jkt} 
+        s/d  {tanggal_inactive}, golongan terakhir {kode_golongan} dengan tugas dan
+        jabatan terakhir sebagai {jabatan} di {divisiText},
         Gedung UKRIDA Blok E Lantai 6, Jl. Tanjung Duren Raya No. 4, Jakarta
         Barat.
       </Text>

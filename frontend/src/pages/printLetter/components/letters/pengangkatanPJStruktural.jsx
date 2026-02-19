@@ -23,7 +23,7 @@ Font.registerHyphenationCallback((word) => {
   return [word];
 });
 
-export default function PerpanjanganPJStrukturalSekretariat() {
+export default function PerpanjanganPJStrukturalSekretariat(data) {
   return (
     <Page style={styles.containerDocument} size={"A4"}>
       <Image src={"/assets/images/kop.png"} style={styles.kopSurat} fixed />

@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 
 import Layout from "../../components/layout";
@@ -11,6 +11,7 @@ export default function EmployeeDetail() {
   const { getToken } = useAuth();
   const api = apiClient(getToken);
   const { state } = useLocation();
+  const navigate = useNavigate();
 
   const { data } = useMaster(
     api,
@@ -89,6 +90,7 @@ export default function EmployeeDetail() {
             <div className="flex flex-col flex-1 items-center gap-1">
               <img
                 src="/assets/images/profile.jpg"
+                alt="Foto karyawan"
                 className="rounded-md aspect-square w-full"
               />
 
@@ -128,7 +130,19 @@ export default function EmployeeDetail() {
           </div>
         </div>
 
-        <Detail employeeData={data} />
+        <div className="flex flex-1 flex-col gap-3">
+          <div>
+            <button
+              type="button"
+              className="h-9 px-4 rounded-md bg-primary text-white font-Poppins text-sm font-medium"
+              onClick={() => navigate("/employees")}
+            >
+              Kembali ke Employee
+            </button>
+          </div>
+
+          <Detail employeeData={data} />
+        </div>
       </section>
     </Layout>
   );

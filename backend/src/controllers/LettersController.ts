@@ -9,6 +9,157 @@ import { ok, badRequest, notFound } from '../utils/response.helper';
 import { logInfo, logWarn } from '../utils/log.helper';
 const service = new SuratService();
 
+const buildKwtPayload = (data: unknown) => {
+  const plainData: PlainRecord = toPlainRecord(data);
+
+  const toStringOrNull = (value: unknown): string | null =>
+    value != null ? String(value) : null;
+  const extractUnitKerja = () => ({
+    ukk_id: toStringOrNull(plainData['unit_kerja_karyawan.ukk_id']),
+    karyawan_id: toStringOrNull(plainData['unit_kerja_karyawan.karyawan_id']),
+    unit_kerja: toStringOrNull(plainData['unit_kerja_karyawan.unit_kerja']),
+    jab_id: toStringOrNull(plainData['unit_kerja_karyawan.jab_id']),
+
+    jabatan: {
+      jab_id: toStringOrNull(plainData['unit_kerja_karyawan.jabatan.jab_id']),
+      jabatan: toStringOrNull(plainData['unit_kerja_karyawan.jabatan.jabatan']),
+    },
+
+    unit_kerja_detail: {
+      kode_divisi: toStringOrNull(
+        plainData['unit_kerja_karyawan.unit_kerja_detail.kode_divisi']
+      ),
+
+      direktur: {
+        dir_id: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.direktur.dir_id']
+        ),
+        nama_dir: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.direktur.nama_dir']
+        ),
+      },
+
+      deputi: {
+        dep_id: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.deputi.dep_id']
+        ),
+        nama_dep: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.deputi.nama_dep']
+        ),
+      },
+
+      divisi: {
+        div_id: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.divisi.div_id']
+        ),
+        nama_div: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.divisi.nama_div']
+        ),
+      },
+
+      bagian: {
+        bag_id: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.bagian.bag_id']
+        ),
+        nama_bag: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.bagian.nama_bag']
+        ),
+      },
+
+      seksi: {
+        sek_id: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.seksi.sek_id']
+        ),
+        nama_sek: toStringOrNull(
+          plainData['unit_kerja_karyawan.unit_kerja_detail.seksi.nama_sek']
+        ),
+      },
+    },
+  });
+  const extractJamMengajar = (): Array<{
+    jam_mengajar: string | null;
+    mengajar_mapel: string | null;
+    mapel: {
+      mapel_id: string | null;
+      nama_mapel: string | null;
+    };
+  }> => {
+    const key = 'unit_kerja_karyawan.jam_mengajar.jam_mengajar';
+
+    if (!(key in plainData)) return [];
+
+    return [
+      {
+        jam_mengajar: toStringOrNull(
+          plainData['unit_kerja_karyawan.jam_mengajar.jam_mengajar']
+        ),
+        mengajar_mapel: toStringOrNull(
+          plainData['unit_kerja_karyawan.jam_mengajar.mengajar_mapel']
+        ),
+        mapel: {
+          mapel_id: toStringOrNull(
+            plainData['unit_kerja_karyawan.jam_mengajar.mapel.mapel_id']
+          ),
+          nama_mapel: toStringOrNull(
+            plainData['unit_kerja_karyawan.jam_mengajar.mapel.nama_mapel']
+          ),
+        },
+      },
+    ];
+  };
+
+  const extractAlamat = (prefix: string, idAlias?: string) => ({
+    id: idAlias ? toStringOrNull(plainData[`${prefix}.${idAlias}`]) : null,
+
+    alamat: toStringOrNull(plainData[`${prefix}.alamat`]),
+    rt: toStringOrNull(plainData[`${prefix}.rt`]),
+    rw: toStringOrNull(plainData[`${prefix}.rw`]),
+    kode_pos: toStringOrNull(plainData[`${prefix}.kode_pos`]),
+    status_tempat_tinggal: toStringOrNull(
+      plainData[`${prefix}.status_tempat_tinggal`]
+    ),
+
+    kelurahan: {
+      id: toStringOrNull(plainData[`${prefix}.kelurahan.id`]),
+      nama: toStringOrNull(plainData[`${prefix}.kelurahan.nama`]),
+    },
+    kecamatan: {
+      id: toStringOrNull(plainData[`${prefix}.kelurahan.kecamatan.id`]),
+      nama: toStringOrNull(plainData[`${prefix}.kelurahan.kecamatan.nama`]),
+    },
+    kota: {
+      id: toStringOrNull(plainData[`${prefix}.kelurahan.kecamatan.kota.id`]),
+      nama: toStringOrNull(
+        plainData[`${prefix}.kelurahan.kecamatan.kota.nama`]
+      ),
+    },
+    provinsi: {
+      id: toStringOrNull(
+        plainData[`${prefix}.kelurahan.kecamatan.kota.provinsi.id`]
+      ),
+      nama: toStringOrNull(
+        plainData[`${prefix}.kelurahan.kecamatan.kota.provinsi.nama`]
+      ),
+    },
+  });
+
+  return {
+    id_karyawan: toStringOrNull(plainData.id_karyawan),
+    nik: toStringOrNull(plainData.nik),
+    nama_lengkap: toStringOrNull(plainData.nama_lengkap),
+    no_ktp: toStringOrNull(plainData.no_ktp),
+    tgl_join_penabur_jkt: toStringOrNull(plainData.tgl_join_penabur_jkt),
+    tgl_inactive: toStringOrNull(plainData.tgl_inactive),
+    unitKerja: extractUnitKerja(),
+    jam_mengajar: extractJamMengajar(),
+    kode_status_gp: toStringOrNull(
+      plainData['status_karyawan.stat_karyawan_gp']
+    ),
+    alamatKtpDetail: extractAlamat('alamat_ktp_detail'),
+    alamatTempatTinggalDetail: extractAlamat('alamat_tempat_tinggal_detail'),
+  };
+};
+
 export const getSuratKaryawanTTP = async (c: Context): Promise<Response> => {
   const service = new SuratService();
 
@@ -161,157 +312,30 @@ export const getSuratKaryawanKWT = async (c: Context): Promise<Response> => {
     return notFound(c, 'Data tidak ditemukan');
   }
 
-  const plainData: PlainRecord = toPlainRecord(data);
-
-  const toStringOrNull = (value: unknown): string | null =>
-    value != null ? String(value) : null;
-  const extractUnitKerja = () => ({
-    ukk_id: toStringOrNull(plainData['unit_kerja_karyawan.ukk_id']),
-    karyawan_id: toStringOrNull(plainData['unit_kerja_karyawan.karyawan_id']),
-    unit_kerja: toStringOrNull(plainData['unit_kerja_karyawan.unit_kerja']),
-    jab_id: toStringOrNull(plainData['unit_kerja_karyawan.jab_id']),
-
-    jabatan: {
-      jab_id: toStringOrNull(plainData['unit_kerja_karyawan.jabatan.jab_id']),
-      jabatan: toStringOrNull(plainData['unit_kerja_karyawan.jabatan.jabatan']),
-    },
-
-    unit_kerja_detail: {
-      kode_divisi: toStringOrNull(
-        plainData['unit_kerja_karyawan.unit_kerja_detail.kode_divisi']
-      ),
-
-      direktur: {
-        dir_id: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.direktur.dir_id']
-        ),
-        nama_dir: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.direktur.nama_dir']
-        ),
-      },
-
-      deputi: {
-        dep_id: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.deputi.dep_id']
-        ),
-        nama_dep: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.deputi.nama_dep']
-        ),
-      },
-
-      divisi: {
-        div_id: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.divisi.div_id']
-        ),
-        nama_div: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.divisi.nama_div']
-        ),
-      },
-
-      bagian: {
-        bag_id: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.bagian.bag_id']
-        ),
-        nama_bag: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.bagian.nama_bag']
-        ),
-      },
-
-      seksi: {
-        sek_id: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.seksi.sek_id']
-        ),
-        nama_sek: toStringOrNull(
-          plainData['unit_kerja_karyawan.unit_kerja_detail.seksi.nama_sek']
-        ),
-      },
-    },
-  });
-  const extractJamMengajar = (): Array<{
-    jam_mengajar: string | null;
-    mengajar_mapel: string | null;
-    mapel: {
-      mapel_id: string | null;
-      nama_mapel: string | null;
-    };
-  }> => {
-    const key = 'unit_kerja_karyawan.jam_mengajar.jam_mengajar';
-
-    // kalau tidak ada jam mengajar sama sekali
-    if (!(key in plainData)) return [];
-
-    return [
-      {
-        jam_mengajar: toStringOrNull(
-          plainData['unit_kerja_karyawan.jam_mengajar.jam_mengajar']
-        ),
-        mengajar_mapel: toStringOrNull(
-          plainData['unit_kerja_karyawan.jam_mengajar.mengajar_mapel']
-        ),
-        mapel: {
-          mapel_id: toStringOrNull(
-            plainData['unit_kerja_karyawan.jam_mengajar.mapel.mapel_id']
-          ),
-          nama_mapel: toStringOrNull(
-            plainData['unit_kerja_karyawan.jam_mengajar.mapel.nama_mapel']
-          ),
-        },
-      },
-    ];
-  };
-
-  const extractAlamat = (prefix: string, idAlias?: string) => ({
-    id: idAlias ? toStringOrNull(plainData[`${prefix}.${idAlias}`]) : null,
-
-    alamat: toStringOrNull(plainData[`${prefix}.alamat`]),
-    rt: toStringOrNull(plainData[`${prefix}.rt`]),
-    rw: toStringOrNull(plainData[`${prefix}.rw`]),
-    kode_pos: toStringOrNull(plainData[`${prefix}.kode_pos`]),
-    status_tempat_tinggal: toStringOrNull(
-      plainData[`${prefix}.status_tempat_tinggal`]
-    ),
-
-    kelurahan: {
-      id: toStringOrNull(plainData[`${prefix}.kelurahan.id`]),
-      nama: toStringOrNull(plainData[`${prefix}.kelurahan.nama`]),
-    },
-    kecamatan: {
-      id: toStringOrNull(plainData[`${prefix}.kelurahan.kecamatan.id`]),
-      nama: toStringOrNull(plainData[`${prefix}.kelurahan.kecamatan.nama`]),
-    },
-    kota: {
-      id: toStringOrNull(plainData[`${prefix}.kelurahan.kecamatan.kota.id`]),
-      nama: toStringOrNull(
-        plainData[`${prefix}.kelurahan.kecamatan.kota.nama`]
-      ),
-    },
-    provinsi: {
-      id: toStringOrNull(
-        plainData[`${prefix}.kelurahan.kecamatan.kota.provinsi.id`]
-      ),
-      nama: toStringOrNull(
-        plainData[`${prefix}.kelurahan.kecamatan.kota.provinsi.nama`]
-      ),
-    },
-  });
-
-  const result = {
-    id_karyawan: toStringOrNull(plainData.id_karyawan),
-    nik: toStringOrNull(plainData.nik),
-    nama_lengkap: toStringOrNull(plainData.nama_lengkap),
-    no_ktp: toStringOrNull(plainData.no_ktp),
-    tgl_join_penabur_jkt: toStringOrNull(plainData.tgl_join_penabur_jkt),
-    tgl_inactive: toStringOrNull(plainData.tgl_inactive),
-    unitKerja: extractUnitKerja(),
-    jam_mengajar: extractJamMengajar(),
-    kode_status_gp: toStringOrNull(
-      plainData['status_karyawan.stat_karyawan_gp']
-    ),
-    alamatKtpDetail: extractAlamat('alamat_ktp_detail'),
-    alamatTempatTinggalDetail: extractAlamat('alamat_tempat_tinggal_detail'),
-  };
+  const result = buildKwtPayload(data);
 
   return ok(c, result, `Berhasil ambil data untuk id_karyawan ${idKaryawan}`);
+};
+
+export const getDisposisi = async (c: Context): Promise<Response> => {
+  const idKaryawan = c.req.param('id');
+
+  if (!idKaryawan) {
+    return badRequest(c, 'Parameter "id_karyawan" diperlukan');
+  }
+
+  const data = await service.getDisposisi(idKaryawan);
+  if (!data) {
+    return notFound(c, 'Data tidak ditemukan');
+  }
+
+  const result = buildKwtPayload(data);
+
+  return ok(
+    c,
+    result,
+    `Berhasil ambil data disposisi untuk id_karyawan ${idKaryawan}`
+  );
 };
 
 export const getSuratKaryawanTKL = async (c: Context): Promise<Response> => {

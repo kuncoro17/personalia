@@ -343,6 +343,10 @@ export class LetterRepository {
     });
   }
 
+  async Disposisi(id_karyawan: string): Promise<PrsKaryawan | null> {
+    return await this.SuratKaryawanKWT(id_karyawan);
+  }
+
   async SuratKaryawanTKL(id_karyawan: string): Promise<PrsKaryawan | null> {
     return await PrsKaryawan.findOne({
       where: { id_karyawan },
@@ -876,6 +880,8 @@ export class LetterRepository {
         'nama_lengkap',
         'nik',
         'kode_golongan',
+        'tgl_join_penabur_jkt',
+        'tanggal_inactive',
         'tempat_lahir',
         'birth_date',
       ],
@@ -886,6 +892,98 @@ export class LetterRepository {
           model: PrsStatusKaryawan,
           as: 'status_karyawan',
           attributes: ['stat_karyawan_gp'],
+        },
+         {
+          model: PrsMasterAlamat,
+          as: 'alamat_tempat_tinggal_detail',
+          attributes: [
+            'id',
+            'alamat',
+            'rt',
+            'rw',
+            'kode_pos',
+            'status_tempat_tinggal',
+          ],
+          required: false,
+          include: [
+            {
+              model: PrsMasterKel,
+              as: 'kelurahan',
+              attributes: ['id', 'nama'],
+              required: false,
+              include: [
+                {
+                  model: PrsMasterKec,
+                  as: 'kecamatan',
+                  attributes: ['id', 'nama'],
+                  required: false,
+                  include: [
+                    {
+                      model: PrsMasterKot,
+                      as: 'kota',
+                      attributes: ['id', 'nama'],
+                      required: false,
+                      include: [
+                        {
+                          model: PrsMasterProv,
+                          as: 'provinsi',
+                          attributes: ['id', 'nama'],
+                          required: false,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+
+        // ✅ Alamat KTP
+        {
+          model: PrsMasterAlamat,
+          as: 'alamat_ktp_detail',
+          attributes: [
+            'id',
+            'alamat',
+            'rt',
+            'rw',
+            'kode_pos',
+            'status_tempat_tinggal',
+          ],
+          required: false,
+          include: [
+            {
+              model: PrsMasterKel,
+              as: 'kelurahan',
+              attributes: ['id', 'nama'],
+              required: false,
+              include: [
+                {
+                  model: PrsMasterKec,
+                  as: 'kecamatan',
+                  attributes: ['id', 'nama'],
+                  required: false,
+                  include: [
+                    {
+                      model: PrsMasterKot,
+                      as: 'kota',
+                      attributes: ['id', 'nama'],
+                      required: false,
+                      include: [
+                        {
+                          model: PrsMasterProv,
+                          as: 'provinsi',
+                          attributes: ['id', 'nama'],
+                          required: false,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
       ],
       raw: false,

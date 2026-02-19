@@ -37,13 +37,30 @@ export default function KeteranganBekerjaPKWT({ data }) {
     payload?.tanggal_incative != null
       ? String(payload.tanggal_incative).trim()
       : "—";
-  const tl_join_penabur_jkt =
+  const tgl_inactive =
     payload?.tanggal_incative != null
       ? String(payload.tanggal_incative).trim()
       : "—";
-  const unitKerja =
-    payload?.unit_kerja_karyawan?.[0]?.unit_kerja_detail?.divisi?.nama_div ??
-    "—";
+  const getNamaUnit = (uk) => {
+  const detail = uk?.unit_kerja_detail;
+
+  return (
+    detail?.seksi?.nama_sek ||
+    detail?.bagian?.nama_bag ||
+    detail?.divisi?.nama_div ||
+    detail?.deputi?.nama_deputi ||
+    detail?.direktur?.nama_direktur ||
+    null
+  );
+};
+
+const divisiList = Array.isArray(data?.unitKerja)
+  ? data.unitKerja
+      .map((uk) => getNamaUnit(uk))
+      .filter(Boolean)
+  : data?.unitKerja
+    ? [getNamaUnit(data.unitKerja)].filter(Boolean)
+    : [];
 
   const jabatan = payload?.unit_kerja_karyawan?.[0]?.jabatan?.jabatan ?? "—";
 

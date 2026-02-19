@@ -5,6 +5,7 @@ export interface PrsSeksiAttributes {
   sek_id: string;
   kode: string | null;
   nama_sek: string;
+  alamat: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -22,6 +23,7 @@ class PrsSeksi
   public sek_id!: string;
   public kode!: string | null;
   public nama_sek!: string;
+  public alamat!: string;
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
 }
@@ -38,6 +40,10 @@ PrsSeksi.init(
       allowNull: true,
     },
     nama_sek: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+     alamat: {
       type: DataTypes.STRING(255),
       allowNull: false,
     },

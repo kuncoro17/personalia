@@ -24,6 +24,86 @@ Font.registerHyphenationCallback((word) => {
 });
 
 export default function PengangkatanPJKasek() {
+   const payload = data?.data ?? data ?? {};
+
+  const BULAN = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  function formatAlamat(a) {
+    if (!a) return "—";
+    if (typeof a === "string") return a.trim() || "—";
+
+    const alamat = String(a?.alamat ?? "").trim();
+    const rt = String(a?.rt ?? "").trim();
+    const rw = String(a?.rw ?? "").trim();
+    const kel = String(a?.kelurahan?.nama ?? "").trim();
+    const kec = String(a?.kecamatan?.nama ?? "").trim();
+    const kota = String(a?.kota?.nama ?? "").trim();
+    const prov = String(a?.provinsi?.nama ?? "").trim();
+    const kodePos = String(a?.kode_pos ?? "").trim();
+
+    const rtRw = rt || rw ? `RT ${rt || "-"} / RW ${rw || "-"}` : "";
+    const bagian = [alamat, rtRw, kel, kec, kota, prov, kodePos]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    return bagian.join(", ") || "—";
+  }
+
+  function formatTanggalIndo(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+
+    const tanggal = date.getDate();
+    const bulan = BULAN[date.getMonth()];
+    const tahun = date.getFullYear();
+
+    return `${tanggal} ${bulan} ${tahun}`;
+  }
+  const getNamaUnit = (uk) => {
+    const detail = uk?.unit_kerja_detail;
+
+    return (
+      detail?.seksi?.nama_sek ||
+      detail?.bagian?.nama_bag ||
+      detail?.divisi?.nama_div ||
+      detail?.deputi?.nama_dep ||
+      detail?.deputi?.nama_deputi ||
+      detail?.direktur?.nama_dir ||
+      detail?.direktur?.nama_direktur ||
+      null
+    );
+  };
+
+  const unitKerja = payload?.unitKerja ?? payload?.unit_kerja_karyawan;
+  const divisiList = Array.isArray(unitKerja)
+    ? unitKerja.map((uk) => getNamaUnit(uk)).filter(Boolean)
+    : unitKerja
+      ? [getNamaUnit(unitKerja)].filter(Boolean)
+      : [];
+  const divisiText = divisiList.join(", ") || "—";
+  const namaLengkap =
+    String(payload?.nama_lengkap ?? payload?.nama ?? "").trim() || "—";
+  const tgl_join_penabur_jkt = formatTanggalIndo(payload?.tgl_join_penabur_jkt);
+  const tanggal_inactive = formatTanggalIndo(payload?.tanggal_inactive);
+  const today = formatTanggalIndo(new Date());
+  const kode_golongan = payload?.kode_golongan ?? "—";
+  const jabatan =
+    unitKerja?.jabatan?.jabatan ?? unitKerja?.[0]?.jabatan?.jabatan ?? "—";
   return (
     <Page style={styles.containerDocument} size={"A4"}>
       <Image src={"/assets/images/kop.png"} style={styles.kopSurat} fixed />
@@ -74,7 +154,7 @@ export default function PengangkatanPJKasek() {
             <Text style={[styles.textNormal, { paddingLeft: 5 }]}>
               Surat Keputusan Pengurus Tentang Formasi Kepala Sekolah
               No.3/JKT/SKE/04/2024 yang disahkan dalam Rapat Pleno Pengurus BPK
-              PENABUR Jakarta tanggal 22 Maret 2024.
+              PENABUR Jakarta tanggal _____________.
             </Text>
           </View>
         </View>
@@ -92,10 +172,10 @@ export default function PengangkatanPJKasek() {
           </View>
           <View style={{ flex: 1, width: "75%" }}>
             <Text style={[styles.textBold, { paddingLeft: 5, color: "blue" }]}>
-              Sdr. Dilla Christina
+              Sdr. {namaLengkap}
             </Text>
             <Text style={[styles.textNormal, { paddingLeft: 5 }]}>
-              sebagai Pj. Kepala Sekolah di Jenjang TK,
+              sebagai {jabatan} di {divisiList},
             </Text>
           </View>
         </View>
@@ -115,8 +195,7 @@ export default function PengangkatanPJKasek() {
         <View style={{ flexDirection: "row" }}>
           <Text style={[styles.textNormal, { width: 20 }]}>a.</Text>
           <Text style={styles.textNormal}>
-            Pengangkatan ini berlaku mulai tanggal 1 Juli 2024 s.d. 30 Juni
-            2025;
+            Pengangkatan ini berlaku mulai tanggal ____________ s.d. ___________;
           </Text>
         </View>
       </View>

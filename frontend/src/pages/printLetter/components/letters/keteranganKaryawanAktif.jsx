@@ -23,8 +23,72 @@ Font.registerHyphenationCallback((word) => {
   return [word];
 });
 
-export default function KeteranganKaryawanAktif() {
+export default function KeteranganKaryawanAktif({ data }) {
+  const payload = data?.data ?? data ?? {};
+
+  const BULAN = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  function formatAlamat(a) {
+    if (!a) return "—";
+    if (typeof a === "string") return a.trim() || "—";
+
+    const alamat = String(a?.alamat ?? "").trim();
+    const rt = String(a?.rt ?? "").trim();
+    const rw = String(a?.rw ?? "").trim();
+    const kel = String(a?.kelurahan?.nama ?? "").trim();
+    const kec = String(a?.kecamatan?.nama ?? "").trim();
+    const kota = String(a?.kota?.nama ?? "").trim();
+    const prov = String(a?.provinsi?.nama ?? "").trim();
+    const kodePos = String(a?.kode_pos ?? "").trim();
+
+    const rtRw = rt || rw ? `RT ${rt || "-"} / RW ${rw || "-"}` : "";
+    const bagian = [alamat, rtRw, kel, kec, kota, prov, kodePos]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    return bagian.join(", ") || "—";
+  }
+
+  function formatTanggalIndo(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+
+    const tanggal = date.getDate();
+    const bulan = BULAN[date.getMonth()];
+    const tahun = date.getFullYear();
+
+    return `${tanggal} ${bulan} ${tahun}`;
+  }
+
+  const namaLengkap =
+    String(payload?.nama_lengkap ?? payload?.nama ?? "").trim() || "—";
+  const tgl_join_penabur_jkt = formatTanggalIndo(payload?.tgl_join_penabur_jkt);
+  const nik = String(payload?.nik ?? "").trim() || "—";
+  const today = formatTanggalIndo(new Date());
+
+  const unitKerja = payload?.unitKerja ?? payload?.unit_kerja_karyawan;
+  const jabatan =
+    unitKerja?.jabatan?.jabatan ?? unitKerja?.[0]?.jabatan?.jabatan ?? "—";
+  const alamatKtpDetail = formatAlamat(
+    payload?.alamatKtpDetail ?? payload?.alamat_ktp_detail,
+  );
   return (
+
     <Page style={styles.containerDocument} size={"A4"}>
       <Image src={"/assets/images/kop.png"} style={styles.kopSurat} fixed />
 
@@ -53,7 +117,7 @@ export default function KeteranganKaryawanAktif() {
           </View>
 
           <View style={{ flex: 1, paddingLeft: 10 }}>
-            <Text style={styles.textNormal}>Desimawati Datubara</Text>
+            <Text style={styles.textNormal}>{namaLengkap}</Text>
           </View>
         </View>
 
@@ -70,7 +134,7 @@ export default function KeteranganKaryawanAktif() {
           </View>
 
           <View style={{ flex: 1, paddingLeft: 10 }}>
-            <Text style={styles.textNormal}>0119170</Text>
+            <Text style={styles.textNormal}>{nik}</Text>
           </View>
         </View>
 
@@ -87,7 +151,7 @@ export default function KeteranganKaryawanAktif() {
           </View>
 
           <View style={{ flex: 1, paddingLeft: 10 }}>
-            <Text style={styles.textNormal}>Kepala Seksi</Text>
+            <Text style={styles.textNormal}>{jabatan}</Text>
           </View>
         </View>
 
@@ -105,8 +169,7 @@ export default function KeteranganKaryawanAktif() {
 
           <View style={{ flex: 1, paddingLeft: 10 }}>
             <Text style={styles.textNormal}>
-              Bah Raja II RT.000 RW.000 Kel. Bah Bolon Tongah Kec. Panei,
-              Simalungun, Sumatera Utara
+             {alamatKtpDetail}
             </Text>
           </View>
         </View>
@@ -114,7 +177,7 @@ export default function KeteranganKaryawanAktif() {
 
       <Text style={[styles.textNormal, { marginTop: 15 }]}>
         adalah benar karyawan tetap BPK PENABUR Jakarta yang bekerja dari
-        tanggal 26 Agustus 2019 dan sampai sekarang masih aktif bekerja.
+       {tgl_join_penabur_jkt}  dan sampai sekarang masih aktif bekerja.
       </Text>
 
       <Text style={[styles.textNormal, { marginTop: 20 }]}>
@@ -124,7 +187,7 @@ export default function KeteranganKaryawanAktif() {
 
       <View style={{ marginTop: 40, alignSelf: "flex-end", width: "50%" }}>
         <View style={{ alignItems: "center" }}>
-          <Text style={styles.textNormal}>Jakarta, 1 Januari 2025</Text>
+          <Text style={styles.textNormal}>Jakarta, {today}</Text>
           <Text style={styles.textNormal}>BPK PENABUR Jakarta</Text>
         </View>
 

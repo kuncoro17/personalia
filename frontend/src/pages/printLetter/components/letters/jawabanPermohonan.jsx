@@ -93,10 +93,26 @@ export default function JawabanPermohonan({ data }) {
       : tempat_lahir || birth_date || "—";
 
   const kode_golongan = payload?.kode_golongan?.toString().trim() || "";
-  const penempatan =
-    payload?.unit_kerja_karyawan?.[0]?.unit_kerja_detail?.divisi?.nama_div
-      ?.toString()
-      .trim() || "—";
+  const getNamaUnit = (uk) => {
+  const detail = uk?.unit_kerja_detail;
+
+  return (
+    detail?.seksi?.nama_sek ||
+    detail?.bagian?.nama_bag ||
+    detail?.divisi?.nama_div ||
+    detail?.deputi?.nama_deputi ||
+    detail?.direktur?.nama_direktur ||
+    null
+  );
+};
+
+const divisiList = Array.isArray(data?.unitKerja)
+  ? data.unitKerja
+      .map((uk) => getNamaUnit(uk))
+      .filter(Boolean)
+  : data?.unitKerja
+    ? [getNamaUnit(data.unitKerja)].filter(Boolean)
+    : [];
   const jabatan =
     payload?.unit_kerja_karyawan?.[0]?.jabatan?.jabatan?.toString().trim() ||
     "";
@@ -227,7 +243,7 @@ export default function JawabanPermohonan({ data }) {
           <Text style={[styles.textNormal, { width: "30%" }]}>
             Penempatan Baru
           </Text>
-          <Text style={styles.textNormal}>: {penempatan}</Text>
+          <Text style={styles.textNormal}>: {divisiList}</Text>
         </View>
       </View>
 

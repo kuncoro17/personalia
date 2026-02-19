@@ -12,7 +12,66 @@ Font.registerHyphenationCallback((word) => {
   return [word];
 });
 
-export default function Magang() {
+export default function Magang({ data }) {
+  const payload = data?.data ?? data ?? {};
+  const BULAN = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  function formatTanggalIndo(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return `${date.getDate()} ${BULAN[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  function formatAlamat(a) {
+    if (!a) return "—";
+    if (typeof a === "string") return a.trim() || "—";
+
+    const alamat = String(a?.alamat ?? "").trim();
+    const rt = String(a?.rt ?? "").trim();
+    const rw = String(a?.rw ?? "").trim();
+    const kel = String(a?.kelurahan?.nama ?? "").trim();
+    const kec = String(a?.kecamatan?.nama ?? "").trim();
+    const kota = String(a?.kota?.nama ?? "").trim();
+    const prov = String(a?.provinsi?.nama ?? "").trim();
+    const kodePos = String(a?.kode_pos ?? "").trim();
+
+    const rtRw = rt || rw ? `RT ${rt || "-"} / RW ${rw || "-"}` : "";
+    const bagian = [alamat, rtRw, kel, kec, kota, prov, kodePos]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    return bagian.join(", ") || "—";
+  }
+
+  const namaLengkap =
+    String(payload?.nama_lengkap ?? payload?.nama ?? "").trim() || "—";
+  const tanggal_inactive = formatTanggalIndo(
+    payload?.tanggal_inactive ?? payload?.tanggal_incative,
+  );
+  const tgl_join_penabur_jkt = formatTanggalIndo(payload?.tgl_join_penabur_jkt);
+  const unitKerja = payload?.unitKerja ?? payload?.unit_kerja_karyawan;
+  const jabatan =
+    unitKerja?.jabatan?.jabatan ?? unitKerja?.[0]?.jabatan?.jabatan ?? "—";
+  const atasanLangsung = String(payload?.atasan_langsung ?? "—").trim() || "—";
+  const today = formatTanggalIndo(new Date());
+  const alamatKtp = formatAlamat(
+    payload?.alamatKtpDetail ?? payload?.alamat_ktp_detail,
+  );
+
   return (
     <Page style={styles.containerDocument} size={["8.27in", "11.69in"]}>
       <Image src={"/assets/images/kop.png"} style={styles.kopSurat} fixed />
@@ -42,9 +101,8 @@ export default function Magang() {
       <View style={{ flexDirection: "row", marginTop: 12 }}>
         <Text style={[{ width: "0.3in" }, styles.textNormal]}>2.</Text>
         <Text style={[styles.textNormal, { flex: 1 }]}>
-          Saudara <Text style={{ color: "blue" }}>nama karyawan</Text>,
-          beralamat di{" "}
-          <Text style={{ color: "blue" }}>alamat ktp karyawan</Text>, untuk
+          Saudara <Text style={{ color: "blue" }}>{namaLengkap}</Text>,
+          beralamat di <Text style={{ color: "blue" }}>{alamatKtp}</Text>, untuk
           selanjutnya disebut “Karyawan”
         </Text>
       </View>
@@ -104,7 +162,7 @@ export default function Magang() {
               },
             ]}
           >
-            jabatan
+            {jabatan}
           </Text>
         </View>
 
@@ -210,7 +268,7 @@ export default function Magang() {
           >
             Tanggal{" "}
             <Text style={{ color: "blue" }}>
-              tgl awal kontrak – tgl akhir kontrak
+             {tgl_join_penabur_jkt} – {tanggal_inactive}
             </Text>
           </Text>
         </View>
@@ -519,7 +577,7 @@ export default function Magang() {
               },
             ]}
           >
-            atasan langsung
+            {atasanLangsung}
           </Text>
         </View>
 
@@ -613,7 +671,7 @@ export default function Magang() {
           Irwanto Hartono
         </Text>
         <Text style={[styles.textNormal, { textDecoration: "underline" }]}>
-          nama karyawan
+          {namaLengkap}
         </Text>
       </View>
 
@@ -623,10 +681,10 @@ export default function Magang() {
         }}
       >
         <Text style={[styles.textNormal, { width: "3.94in" }]}>
-          Tanggal ..................................
+          Tanggal {today}
         </Text>
         <Text style={[styles.textNormal]}>
-          Tanggal ..................................
+          Tanggal {today}
         </Text>
       </View>
     </Page>
