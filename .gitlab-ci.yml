@@ -220,8 +220,10 @@ deploy-staging:
 
 
     # Copy deployment artifacts
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend &&
+      sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME"
+    # - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
+    # - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
     # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
 
     # Copy backend
@@ -237,7 +239,8 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "rm -rf '$STAGING_TMP_DIR'"
 
-
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend &&
+      sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME"
     # Pull + run services
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
