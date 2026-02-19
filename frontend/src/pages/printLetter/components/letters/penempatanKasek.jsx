@@ -166,8 +166,8 @@ export default function PenempatanKaSek({ data }) {
               Sdr. {namaLengkap}
             </Text>
             <Text style={[styles.textNormal, { paddingLeft: 5 }]}>
-              sebagai Pj. {jabatan} di {divisiText},
-              terhitung mulai tanggal 1 Juli 2024.
+              sebagai Pj. {jabatan} di {divisiText}, terhitung mulai tanggal 1
+              Juli 2024.
             </Text>
           </View>
         </View>

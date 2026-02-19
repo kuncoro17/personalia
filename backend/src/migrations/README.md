@@ -37,4 +37,3 @@ export default migration;
 ```
 
 Disarankan memakai `transaction` saat memanggil `queryInterface`.
-

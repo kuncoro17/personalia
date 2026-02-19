@@ -268,7 +268,7 @@ export default function Magang({ data }) {
           >
             Tanggal{" "}
             <Text style={{ color: "blue" }}>
-             {tgl_join_penabur_jkt} – {tanggal_inactive}
+              {tgl_join_penabur_jkt} – {tanggal_inactive}
             </Text>
           </Text>
         </View>
@@ -683,9 +683,7 @@ export default function Magang({ data }) {
         <Text style={[styles.textNormal, { width: "3.94in" }]}>
           Tanggal {today}
         </Text>
-        <Text style={[styles.textNormal]}>
-          Tanggal {today}
-        </Text>
+        <Text style={[styles.textNormal]}>Tanggal {today}</Text>
       </View>
     </Page>
   );

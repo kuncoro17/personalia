@@ -893,7 +893,7 @@ export class LetterRepository {
           as: 'status_karyawan',
           attributes: ['stat_karyawan_gp'],
         },
-         {
+        {
           model: PrsMasterAlamat,
           as: 'alamat_tempat_tinggal_detail',
           attributes: [

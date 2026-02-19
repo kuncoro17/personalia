@@ -43,7 +43,7 @@ PrsSeksi.init(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-     alamat: {
+    alamat: {
       type: DataTypes.STRING(255),
       allowNull: false,
     },

@@ -32,7 +32,7 @@ Font.registerHyphenationCallback((word) => {
 });
 
 export default function PengangkatanWakasek(data) {
-    const payload = data?.data ?? data ?? {};
+  const payload = data?.data ?? data ?? {};
 
   const BULAN = [
     "Januari",
@@ -190,7 +190,7 @@ export default function PengangkatanWakasek(data) {
               </Text>
               Sebagai
               <Text style={[styles.textBold, { color: "blue" }]}>
-               {jabatan} Bidang Kesiswaan di {divisiList}.
+                {jabatan} Bidang Kesiswaan di {divisiList}.
               </Text>
             </Text>
           </View>

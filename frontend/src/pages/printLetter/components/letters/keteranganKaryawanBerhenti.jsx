@@ -156,8 +156,8 @@ export default function KeteranganKaryawanBerhenti({ data }) {
               flexDirection: "row",
               justifyContent: "space-between",
             }}
-          >x` `
-            <Text style={styles.textNormal}>Lampiran</Text>
+          >
+            x` `<Text style={styles.textNormal}>Lampiran</Text>
             <Text style={styles.textNormal}>:</Text>
           </View>
           <View style={{ flex: 1 }}>
@@ -183,11 +183,10 @@ export default function KeteranganKaryawanBerhenti({ data }) {
         Sehubungan dengan surat pengunduran diri Sdr.{namaLengkap} dari BPK
         PENABUR Jakarta terhitung {today}, dengan ini kami mohon dibuatkan Surat
         Keterangan Kerja atas nama tersebut di atas yang bekerja sejak{" "}
-        {tgl_join_penabur_jkt} 
-        s/d  {tanggal_inactive}, golongan terakhir {kode_golongan} dengan tugas dan
-        jabatan terakhir sebagai {jabatan} di {divisiText},
-        Gedung UKRIDA Blok E Lantai 6, Jl. Tanjung Duren Raya No. 4, Jakarta
-        Barat.
+        {tgl_join_penabur_jkt}
+        s/d {tanggal_inactive}, golongan terakhir {kode_golongan} dengan tugas
+        dan jabatan terakhir sebagai {jabatan} di {divisiText}, Gedung UKRIDA
+        Blok E Lantai 6, Jl. Tanjung Duren Raya No. 4, Jakarta Barat.
       </Text>
 
       <Text style={[styles.textNormal, { marginTop: 20 }]}>

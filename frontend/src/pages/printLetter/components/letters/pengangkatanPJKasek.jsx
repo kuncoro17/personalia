@@ -24,7 +24,7 @@ Font.registerHyphenationCallback((word) => {
 });
 
 export default function PengangkatanPJKasek() {
-   const payload = data?.data ?? data ?? {};
+  const payload = data?.data ?? data ?? {};
 
   const BULAN = [
     "Januari",
@@ -195,7 +195,8 @@ export default function PengangkatanPJKasek() {
         <View style={{ flexDirection: "row" }}>
           <Text style={[styles.textNormal, { width: 20 }]}>a.</Text>
           <Text style={styles.textNormal}>
-            Pengangkatan ini berlaku mulai tanggal ____________ s.d. ___________;
+            Pengangkatan ini berlaku mulai tanggal ____________ s.d.
+            ___________;
           </Text>
         </View>
       </View>

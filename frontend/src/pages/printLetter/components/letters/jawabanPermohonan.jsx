@@ -94,25 +94,23 @@ export default function JawabanPermohonan({ data }) {
 
   const kode_golongan = payload?.kode_golongan?.toString().trim() || "";
   const getNamaUnit = (uk) => {
-  const detail = uk?.unit_kerja_detail;
+    const detail = uk?.unit_kerja_detail;
 
-  return (
-    detail?.seksi?.nama_sek ||
-    detail?.bagian?.nama_bag ||
-    detail?.divisi?.nama_div ||
-    detail?.deputi?.nama_deputi ||
-    detail?.direktur?.nama_direktur ||
-    null
-  );
-};
+    return (
+      detail?.seksi?.nama_sek ||
+      detail?.bagian?.nama_bag ||
+      detail?.divisi?.nama_div ||
+      detail?.deputi?.nama_deputi ||
+      detail?.direktur?.nama_direktur ||
+      null
+    );
+  };
 
-const divisiList = Array.isArray(data?.unitKerja)
-  ? data.unitKerja
-      .map((uk) => getNamaUnit(uk))
-      .filter(Boolean)
-  : data?.unitKerja
-    ? [getNamaUnit(data.unitKerja)].filter(Boolean)
-    : [];
+  const divisiList = Array.isArray(data?.unitKerja)
+    ? data.unitKerja.map((uk) => getNamaUnit(uk)).filter(Boolean)
+    : data?.unitKerja
+      ? [getNamaUnit(data.unitKerja)].filter(Boolean)
+      : [];
   const jabatan =
     payload?.unit_kerja_karyawan?.[0]?.jabatan?.jabatan?.toString().trim() ||
     "";

@@ -70,29 +70,24 @@ export default function Disposisi({ data }) {
     data?.nama_div?.jabatan?.nama_div?.toString().trim() || "—";
   // ✅ unit kerja (kalau API kamu punya list)
   // contoh: data.unit_kerja = ["SMPK 1", "SMAK 2", ...]
- const getNamaUnit = (uk) => {
-  const detail = uk?.unit_kerja_detail;
+  const getNamaUnit = (uk) => {
+    const detail = uk?.unit_kerja_detail;
 
-  return (
-    detail?.seksi?.nama_sek ||
-    detail?.bagian?.nama_bag ||
-    detail?.divisi?.nama_div ||
-    detail?.deputi?.nama_deputi ||
-    detail?.direktur?.nama_direktur ||
-    null
-  );
-};
+    return (
+      detail?.seksi?.nama_sek ||
+      detail?.bagian?.nama_bag ||
+      detail?.divisi?.nama_div ||
+      detail?.deputi?.nama_deputi ||
+      detail?.direktur?.nama_direktur ||
+      null
+    );
+  };
 
-const divisiList = Array.isArray(data?.unitKerja)
-  ? data.unitKerja
-      .map((uk) => getNamaUnit(uk))
-      .filter(Boolean)
-  : data?.unitKerja
-    ? [getNamaUnit(data.unitKerja)].filter(Boolean)
-    : [];
-
-
-      
+  const divisiList = Array.isArray(data?.unitKerja)
+    ? data.unitKerja.map((uk) => getNamaUnit(uk)).filter(Boolean)
+    : data?.unitKerja
+      ? [getNamaUnit(data.unitKerja)].filter(Boolean)
+      : [];
 
   const namaDivisi = divisiList.join(", ") || "—";
   const kode_status_gp =

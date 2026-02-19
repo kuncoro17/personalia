@@ -98,8 +98,7 @@ export default function PenetapanMutasi(data) {
   const divisiText = divisiList.join(", ") || "—";
   const namaLengkap =
     String(payload?.nama_lengkap ?? payload?.nama ?? "").trim() || "—";
-    const nik =
-    String(payload?.nik ?? payload?.nik ?? "").trim() || "—";
+  const nik = String(payload?.nik ?? payload?.nik ?? "").trim() || "—";
   const tgl_join_penabur_jkt = formatTanggalIndo(payload?.tgl_join_penabur_jkt);
   const tanggal_inactive = formatTanggalIndo(payload?.tanggal_inactive);
   const today = formatTanggalIndo(new Date());
@@ -157,14 +156,18 @@ export default function PenetapanMutasi(data) {
             </Text>
             <Text style={[styles.textNormal, { paddingLeft: 5 }]}>
               dimutasikan dari :
-              <Text style={[styles.textBold, { color: "blue" }]}> {jabatan}</Text> di{" "}
               <Text style={[styles.textBold, { color: "blue" }]}>
-                 {divisiList}
+                {" "}
+                {jabatan}
+              </Text>{" "}
+              di{" "}
+              <Text style={[styles.textBold, { color: "blue" }]}>
+                {divisiList}
               </Text>{" "}
               ke
               <Text style={[styles.textBold, { color: "blue" }]}>
                 {" "}
-             {divisiList}{" "}
+                {divisiList}{" "}
               </Text>
               sebagai
               <Text style={[styles.textBold, { color: "blue" }]}> Guru,</Text>

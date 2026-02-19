@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import type { QueryInterface, Sequelize, Transaction } from 'sequelize';
 
 export type MigrationContext = {
@@ -11,4 +12,3 @@ export type Migration = {
   up: (ctx: MigrationContext) => Promise<void>;
   down?: (ctx: MigrationContext) => Promise<void>;
 };
-

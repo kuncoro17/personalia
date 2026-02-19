@@ -98,8 +98,7 @@ export default function PengangkatanKasek(data) {
   const divisiText = divisiList.join(", ") || "—";
   const namaLengkap =
     String(payload?.nama_lengkap ?? payload?.nama ?? "").trim() || "—";
-    const nik =
-    String(payload?.nik ?? payload?.nik ?? "").trim() || "—";
+  const nik = String(payload?.nik ?? payload?.nik ?? "").trim() || "—";
   const tgl_join_penabur_jkt = formatTanggalIndo(payload?.tgl_join_penabur_jkt);
   const tanggal_inactive = formatTanggalIndo(payload?.tanggal_inactive);
   const today = formatTanggalIndo(new Date());

@@ -71,27 +71,25 @@ export default function FormulirCkeYayasan({ data }) {
   const statusKawin = (data?.status_nikah ?? "").toString().trim() || "—";
   const jumlahAnak = String(data?.jumlah_anak ?? "0");
   const tingkat = (data?.tingkat ?? "").toString().trim() || "—";
-  
-const getNamaUnit = (uk) => {
-  const detail = uk?.unit_kerja_detail;
 
-  return (
-    detail?.seksi?.nama_sek ||
-    detail?.bagian?.nama_bag ||
-    detail?.divisi?.nama_div ||
-    detail?.deputi?.nama_deputi ||
-    detail?.direktur?.nama_direktur ||
-    null
-  );
-};
+  const getNamaUnit = (uk) => {
+    const detail = uk?.unit_kerja_detail;
 
-const divisiList = Array.isArray(data?.unitKerja)
-  ? data.unitKerja
-      .map((uk) => getNamaUnit(uk))
-      .filter(Boolean)
-  : data?.unitKerja
-    ? [getNamaUnit(data.unitKerja)].filter(Boolean)
-    : [];
+    return (
+      detail?.seksi?.nama_sek ||
+      detail?.bagian?.nama_bag ||
+      detail?.divisi?.nama_div ||
+      detail?.deputi?.nama_deputi ||
+      detail?.direktur?.nama_direktur ||
+      null
+    );
+  };
+
+  const divisiList = Array.isArray(data?.unitKerja)
+    ? data.unitKerja.map((uk) => getNamaUnit(uk)).filter(Boolean)
+    : data?.unitKerja
+      ? [getNamaUnit(data.unitKerja)].filter(Boolean)
+      : [];
 
   const tipePerubahan = data?.["history.value_lama"]?.toString().trim() || "—";
 

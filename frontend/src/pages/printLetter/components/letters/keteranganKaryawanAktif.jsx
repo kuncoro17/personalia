@@ -88,7 +88,6 @@ export default function KeteranganKaryawanAktif({ data }) {
     payload?.alamatKtpDetail ?? payload?.alamat_ktp_detail,
   );
   return (
-
     <Page style={styles.containerDocument} size={"A4"}>
       <Image src={"/assets/images/kop.png"} style={styles.kopSurat} fixed />
 
@@ -168,16 +167,14 @@ export default function KeteranganKaryawanAktif({ data }) {
           </View>
 
           <View style={{ flex: 1, paddingLeft: 10 }}>
-            <Text style={styles.textNormal}>
-             {alamatKtpDetail}
-            </Text>
+            <Text style={styles.textNormal}>{alamatKtpDetail}</Text>
           </View>
         </View>
       </View>
 
       <Text style={[styles.textNormal, { marginTop: 15 }]}>
         adalah benar karyawan tetap BPK PENABUR Jakarta yang bekerja dari
-       {tgl_join_penabur_jkt}  dan sampai sekarang masih aktif bekerja.
+        {tgl_join_penabur_jkt} dan sampai sekarang masih aktif bekerja.
       </Text>
 
       <Text style={[styles.textNormal, { marginTop: 20 }]}>

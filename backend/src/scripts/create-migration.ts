@@ -70,4 +70,3 @@ run()
     logger.error({ err: error }, 'Gagal membuat migration file');
     process.exit(1);
   });
-
