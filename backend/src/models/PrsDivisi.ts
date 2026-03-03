@@ -5,6 +5,7 @@ export interface PrsDivisiAttributes {
   div_id: string;
   kode: string;
   nama_div: string;
+  alamat: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -22,6 +23,7 @@ class PrsDivisi
   declare div_id: string;
   declare kode: string;
   declare nama_div: string;
+  declare alamat: string;
   declare created_at?: Date;
   declare updated_at?: Date;
 }
@@ -38,6 +40,10 @@ PrsDivisi.init(
       allowNull: false,
     },
     nama_div: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    alamat: {
       type: DataTypes.STRING(255),
       allowNull: false,
     },

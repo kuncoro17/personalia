@@ -5,6 +5,7 @@ export interface PrsMasterDirekturAttributes {
   dir_id: string;
   kode: string;
   nama_dir: string;
+  alamat: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -24,6 +25,7 @@ export class PrsMasterDirektur
   public dir_id!: string;
   public kode!: string;
   public nama_dir!: string;
+  public alamat!: string;
 
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
@@ -43,6 +45,10 @@ PrsMasterDirektur.init(
     },
     nama_dir: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    alamat: {
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
 

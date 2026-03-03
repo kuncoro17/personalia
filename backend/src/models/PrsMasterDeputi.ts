@@ -5,6 +5,7 @@ export interface PrsMasterDeputiAttributes {
   dep_id: string;
   kode: string;
   nama_dep: string;
+  alamat: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -21,6 +22,7 @@ export class PrsMasterDeputi
   public dep_id!: string;
   public kode!: string;
   public nama_dep!: string;
+  public alamat!: string;
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
 }
@@ -39,6 +41,10 @@ PrsMasterDeputi.init(
     },
     nama_dep: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    alamat: {
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
   },

@@ -5,6 +5,7 @@ export interface PrsBagianAttributes {
   bag_id: string;
   kode: string;
   nama_bag: string;
+  alamat: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -21,6 +22,7 @@ class PrsBagian
   declare bag_id: string;
   declare kode: string;
   declare nama_bag: string;
+  declare alamat: string;
   declare created_at?: Date;
   declare updated_at?: Date;
 }
@@ -37,6 +39,10 @@ PrsBagian.init(
       allowNull: false,
     },
     nama_bag: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    alamat: {
       type: DataTypes.STRING(255),
       allowNull: false,
     },
