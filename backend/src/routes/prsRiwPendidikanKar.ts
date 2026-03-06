@@ -34,18 +34,16 @@ export const prsRiwPendidikanKarRoutes = (app: OpenAPIHono) => {
   // 🔹 SCHEMA
   // ============================
   const PendidikanKarSchema = z.object({
-    id: z.string().uuid().optional(),
-    karyawan_id: z.string().optional(),
-    univ: z.string().optional(),
-    rpk_id: z.string(),
-    ipk: z.string(),
-    tingkat: z.string().optional(),
-    nama_sekolah: z.string().optional(),
+    rpk_id: z.string().uuid(),
+    karyawan_id: z.string().uuid(),
+    riw_pendidikan_id: z.string().uuid(),
+    tingkat: z.string().min(1),
     jurusan: z.string().optional(),
-    tahun_kelulusan: z.number().optional(),
+    tahun_kelulusan: z.number().int().optional(),
+    ipk: z.number().optional(),
   });
 
-  const CreateSchema = PendidikanKarSchema.omit({ id: true });
+  const CreateSchema = PendidikanKarSchema;
   const UpdateSchema = CreateSchema.partial();
 
   const ResponseListSchema = z.object({

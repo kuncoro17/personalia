@@ -927,21 +927,70 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
       id_karyawan?: string | null;
       nik?: string | null;
       nama_lengkap?: string | null;
-      unit_kerja_karyawan?: {
+      tgl_join_penabur?: string | null;
+      tgl_join_penabur_jkt?: string | null;
+      tanggal_inactive?: string | null;
+      unit_kerja_karyawan?:
+        | {
+            ukk_id?: string | null;
+            unit_kerja_detail?: {
+              seksi?: {
+                id?: string | null;
+                name?: string | null;
+                nama_sek?: string | null;
+              };
+              bagian?: {
+                id?: string | null;
+                name?: string | null;
+                nama_bag?: string | null;
+              };
+              divisi?: {
+                id?: string | null;
+                name?: string | null;
+                nama_div?: string | null;
+              };
+              deputi?: {
+                id?: string | null;
+                name?: string | null;
+                nama_dep?: string | null;
+              };
+              direktur?: {
+                id?: string | null;
+                name?: string | null;
+                nama_dir?: string | null;
+              };
+            };
+            jam_mengajar?:
+              | {
+                  jam_mengajar?: string | null;
+                  mapel?: { nama_mapel?: string | null };
+                }[]
+              | {
+                  jam_mengajar?: string | null;
+                  mapel?: { nama_mapel?: string | null };
+                };
+            jabatan?: { kode_jab?: string | null; jabatan?: string | null };
+          }[]
+        | {
         ukk_id?: string | null;
         unit_kerja_detail?: {
-          seksi?: { id?: string | null; nama_sek?: string | null };
-          bagian?: { id?: string | null; nama_bag?: string | null };
-          divisi?: { id?: string | null; nama_div?: string | null };
-          deputi?: { id?: string | null; nama_dep?: string | null };
-          direktur?: { id?: string | null; nama_dir?: string | null };
+          seksi?: { id?: string | null; name?: string | null; nama_sek?: string | null };
+          bagian?: { id?: string | null; name?: string | null; nama_bag?: string | null };
+          divisi?: { id?: string | null; name?: string | null; nama_div?: string | null };
+          deputi?: { id?: string | null; name?: string | null; nama_dep?: string | null };
+          direktur?: { id?: string | null; name?: string | null; nama_dir?: string | null };
         };
-        jam_mengajar?: {
-          jam_mengajar?: string | null;
-          mapel?: { nama_mapel?: string | null };
-        }[];
+        jam_mengajar?:
+          | {
+              jam_mengajar?: string | null;
+              mapel?: { nama_mapel?: string | null };
+            }[]
+          | {
+              jam_mengajar?: string | null;
+              mapel?: { nama_mapel?: string | null };
+            };
         jabatan?: { kode_jab?: string | null; jabatan?: string | null };
-      }[];
+      };
     };
 
     type FilteredItem = {
@@ -954,34 +1003,54 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
 
     const filteredData: FilteredItem[] = [];
 
-    plainData.unit_kerja_karyawan?.forEach(item => {
+    const unitKerjaList = Array.isArray(plainData.unit_kerja_karyawan)
+      ? plainData.unit_kerja_karyawan
+      : plainData.unit_kerja_karyawan
+        ? [plainData.unit_kerja_karyawan]
+        : [];
+
+    const pickNama = (
+      obj?: { name?: string | null; nama_sek?: string | null; nama_bag?: string | null; nama_div?: string | null; nama_dep?: string | null; nama_dir?: string | null }
+    ) => {
+      return (
+        obj?.name ??
+        obj?.nama_sek ??
+        obj?.nama_bag ??
+        obj?.nama_div ??
+        obj?.nama_dep ??
+        obj?.nama_dir ??
+        ''
+      );
+    };
+
+    unitKerjaList.forEach(item => {
       const detail = item.unit_kerja_detail;
 
       const lokasi =
         detail?.seksi?.id && detail.seksi.id !== 'nnn'
           ? {
               id: detail.seksi.id,
-              name: detail.seksi.nama_sek ?? '',
+              name: pickNama(detail.seksi),
             }
           : detail?.bagian?.id && detail.bagian.id !== 'nnn'
             ? {
                 id: detail.bagian.id,
-                name: detail.bagian.nama_bag ?? '',
+                name: pickNama(detail.bagian),
               }
             : detail?.divisi?.id && detail.divisi.id !== 'nnn'
               ? {
                   id: detail.divisi.id,
-                  name: detail.divisi.nama_div ?? '',
+                  name: pickNama(detail.divisi),
                 }
               : detail?.deputi?.id && detail.deputi.id !== 'nnn'
                 ? {
                     id: detail.deputi.id,
-                    name: detail.deputi.nama_dep ?? '',
+                    name: pickNama(detail.deputi),
                   }
                 : detail?.direktur
                   ? {
                       id: detail.direktur.id ?? '',
-                      name: detail.direktur.nama_dir ?? '',
+                      name: pickNama(detail.direktur),
                     }
                   : { id: '', name: '' };
 
@@ -992,8 +1061,14 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
           }
         : undefined;
 
-      if (item.jam_mengajar && item.jam_mengajar.length > 0) {
-        item.jam_mengajar.forEach(j => {
+      const jamMengajarList = Array.isArray(item.jam_mengajar)
+        ? item.jam_mengajar
+        : item.jam_mengajar
+          ? [item.jam_mengajar]
+          : [];
+
+      if (jamMengajarList.length > 0) {
+        jamMengajarList.forEach(j => {
           filteredData.push({
             id: item.ukk_id ?? '',
             jam_mengajar: j.jam_mengajar ?? '',
@@ -1019,6 +1094,9 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
         id_karyawan: plainData.id_karyawan ?? id,
         nik: plainData.nik ?? null,
         nama_lengkap: plainData.nama_lengkap ?? null,
+        tgl_join_penabur: plainData.tgl_join_penabur ?? null,
+        tgl_join_penabur_jkt: plainData.tgl_join_penabur_jkt ?? null,
+        tanggal_inactive: plainData.tanggal_inactive ?? null,
         unit_kerja: filteredData,
       },
       `Berhasil ambil data karyawan: ${id}`
@@ -1028,7 +1106,15 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
       `Gagal ambil unit kerja karyawan id=${c.req.param('id')}`,
       err
     );
-    return badRequest(c, 'Terjadi kesalahan');
+
+    if (err instanceof Error && 'status' in err) {
+      const e = err as Error & { status?: number };
+      if (e.status === 400) return badRequest(c, e.message);
+      if (e.status === 404) return notFound(c, e.message);
+      return badRequest(c, e.message);
+    }
+
+    return badRequest(c, 'Terjadi kesalahan saat mengambil data unit kerja');
   }
 };
 

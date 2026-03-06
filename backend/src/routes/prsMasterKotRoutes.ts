@@ -91,7 +91,7 @@ export const prsMasterKotaRoutes = (app: OpenAPIHono) => {
   router.openapi(
     createRoute({
       method: 'get',
-      path: '/by-prov/{prov_id}',
+      path: '/prov/{prov_id}',
       summary: 'Get kota by provinsi ID',
       tags: ['Kota'],
       security: [{ bearerAuth: [] }],

@@ -3,7 +3,8 @@ export const DETAILENDPOINT = {
     profile: (employeeId) => `personalia/karyawan/employee/by-id/${employeeId}`,
     location: (employeeId) =>
       `personalia/karyawan/unitkerja_karyawan/${employeeId}`,
-    contract: (employeeId) => `kontrak/${employeeId}`,
+    contract: (employeeId) =>
+      `personalia/karyawan/unitkerja_karyawan/${employeeId}`,
     address: (employeeId) =>
       `personalia/karyawan/alamat-lengkap/by-id/${employeeId}`,
     education: (employeeId) =>
@@ -18,7 +19,11 @@ export const DETAILENDPOINT = {
   update: {
     profile: (employeeId) =>
       `personalia/karyawan/employee/profile/${employeeId}`,
-    location: (employeeId, ukkId) =>
+    contract: (contractId) => `personalia/kontrak/${contractId}`,
+    profileUnitKerja: (employeeId) =>
+      `unit-kerja-karyawan/jabatan/${employeeId}`,
+    location: (ukkId) => `unit-kerja-karyawan/${ukkId}`,
+    locationMapel: (employeeId, ukkId) =>
       `personalia/jam_mengajar/update_mapel/${employeeId}/${ukkId}`,
     address: (employeeId) =>
       `personalia/karyawan/update_alamat_karyawan/${employeeId}`,
@@ -32,9 +37,11 @@ export const DETAILENDPOINT = {
     salary: (employeeId) => `personalia/karyawan/InfoPenggajian/${employeeId}`,
   },
   create: {
+    contract: () => `personalia/kontrak`,
     location: () => `unit-kerja-karyawan/created`,
+    education: () => `riw-pendidikan-kar`,
     family: () => `personalia/keluarga`,
-    address: (employeeId) => `master-alamat/${employeeId}/alamat`,
+    address: (employeeId) => `master-alamat/create/${employeeId}/alamat`,
   },
 };
 
@@ -52,7 +59,7 @@ export const MASTERENDPOINT = {
   agama: `master-agama`,
   jabatan: `personalia/jabatan/getall`,
 
-  universitas: "/riwayat-pendidikan",
+  universitas: "riwayat-pendidikan",
 
   divisi: `personalia/divisi`,
   bagian: (params) => `personalia/bagian/divisi/${params}`,

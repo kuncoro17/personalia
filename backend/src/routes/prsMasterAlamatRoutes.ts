@@ -123,29 +123,55 @@ export const PrsMasterAlamatroutes = (app: OpenAPIHono) => {
   app.openapi(
     createRoute({
       method: 'post',
-      path: `${basePath}/create`,
-      summary: 'Create new alamat',
+      path: `${basePath}/create/{id_karyawan}/alamat`,
+      summary: 'Create alamat by karyawan ID',
       tags: ['Master Alamat'],
       security: [{ bearerAuth: [] }],
       request: {
+        params: z.object({
+          id_karyawan: z.string().uuid(),
+        }),
         body: {
-          content: { 'application/json': { schema: createAlamatSchema } },
-        },
-      },
-      responses: {
-        201: {
-          description: 'Alamat berhasil dibuat',
           content: {
             'application/json': {
-              schema: responseSchema,
+              schema: z
+                .object({
+                  alamatTempatTinggalDetail: z
+                    .object({
+                      alamat: z.string().optional(),
+                      rt: z.string().optional(),
+                      rw: z.string().optional(),
+                      kode_pos: z.string().optional(),
+                      status_tempat_tinggal: z.string().optional(),
+                      kelurahan: z.string().uuid(),
+                    })
+                    .optional(),
+                  alamatKtpDetail: z
+                    .object({
+                      alamat: z.string().optional(),
+                      rt: z.string().optional(),
+                      rw: z.string().optional(),
+                      kode_pos: z.string().optional(),
+                      status_tempat_tinggal: z.string().optional(),
+                      kelurahan: z.string().uuid(),
+                    })
+                    .optional(),
+                })
+                .refine(
+                  v => !!v.alamatTempatTinggalDetail || !!v.alamatKtpDetail,
+                  { message: 'Alamat wajib dikirim' }
+                ),
             },
           },
         },
+      },
+      responses: {
+        200: { description: 'Alamat karyawan berhasil ditambahkan' },
         400: { description: 'Validasi gagal' },
         401: { description: 'Unauthorized' },
       },
     }),
-    controller.create
+    controller.createAlamatKaryawan
   );
 
   // =====================================================

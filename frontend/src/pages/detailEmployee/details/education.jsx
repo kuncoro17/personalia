@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { useDisclosure } from "@heroui/react";
+import { addToast } from "@heroui/toast";
 import { useMemo, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 
@@ -11,7 +12,6 @@ import { PROPERTIES } from "../constant";
 import { useMaster } from "../../../hooks/useMaster";
 import { DETAILENDPOINT, MASTERENDPOINT } from "../../../constants/api";
 import { formatDataDetail } from "../../../utils/format";
-import NoData from "../../../components/common/NoData";
 import { uniqById } from "../../../utils/uniqueValue";
 
 export default function Education() {
@@ -35,16 +35,25 @@ export default function Education() {
 
   const { data: masterUniv, isFetching: masterUnivFetching } = useMaster(
     api,
-    ["master-univ"],
+    ["master-riwayat-pendidikan"],
     MASTERENDPOINT.universitas,
     {
       enabled: isOpen,
       select: (data) => {
-        const unique = uniqById(data.data, "univ");
-        return unique.map((i) => ({
-          id: i.id,
-          name: i.univ,
-        }));
+        const rows = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+        const mapped = rows
+          .map((i) => ({
+            id: i?.id ?? i?.riw_pendidikan_id ?? i?.kode ?? null,
+            name:
+              i?.univ ??
+              i?.nama_sekolah ??
+              i?.nama ??
+              i?.jenjang ??
+              null,
+          }))
+          .filter((i) => i.id && i.name);
+
+        return uniqById(mapped, "id");
       },
     },
   );
@@ -87,12 +96,21 @@ export default function Education() {
         }
       });
 
-      await apiService(
+      const response = await apiService(
         "put",
         api,
         DETAILENDPOINT.update.education(state.id, rpkId),
         requestBody,
       );
+
+      if (!response?.success) {
+        addToast({
+          title: "Gagal menyimpan",
+          description: "Perubahan data pendidikan tidak berhasil disimpan.",
+          color: "danger",
+        });
+        return;
+      }
 
       queryClient.invalidateQueries([`pendidikan-${state.id}`]);
 
@@ -106,6 +124,7 @@ export default function Education() {
     try {
       const requestBody = {
         karyawan_id: state.id,
+        rpk_id: crypto.randomUUID(),
       };
 
       Object.keys(value).forEach((key) => {
@@ -115,11 +134,17 @@ export default function Education() {
 
         if (findProp?.master) {
           const selectedMaster = master[findProp.master]?.find(
-            (i) => i.name === value[key],
+            (i) =>
+              i.name === value[key] ||
+              String(i.id) === String(value[key]),
           );
 
           if (selectedMaster) {
-            requestBody[key] = selectedMaster.id;
+            if (key === "univ") {
+              requestBody.riw_pendidikan_id = String(selectedMaster.id);
+            } else {
+              requestBody[key] = String(selectedMaster.id);
+            }
           }
         } else if (findProp?.form === "number" || findProp?.form === "float") {
           const numValue = parseFloat(value[key]);
@@ -131,12 +156,30 @@ export default function Education() {
         }
       });
 
-      await apiService(
+      if (!requestBody.riw_pendidikan_id || !requestBody.tingkat) {
+        addToast({
+          title: "Data belum lengkap",
+          description: "Tingkat dan Nama Institusi Pendidikan wajib diisi.",
+          color: "danger",
+        });
+        return;
+      }
+
+      const response = await apiService(
         "post",
         api,
-        DETAILENDPOINT.create.education(state.id),
+        DETAILENDPOINT.create.education(),
         requestBody,
       );
+
+      if (!response?.success) {
+        addToast({
+          title: "Gagal menambah",
+          description: "Data pendidikan gagal ditambahkan.",
+          color: "danger",
+        });
+        return;
+      }
 
       queryClient.invalidateQueries([`pendidikan-${state.id}`]);
 
@@ -172,7 +215,6 @@ export default function Education() {
   const hasEducation = !!pendidikan?.length;
 
   if (pendidikanFetching) return <Loading />;
-  if (!pendidikan?.length) return <NoData />;
 
   return (
     <div className="w-full flex flex-col gap-5">

@@ -50,6 +50,9 @@ export function sanitizeObject<M extends SanitizeMode>(
   input: Partial<RiwPendidikanKarCreationAttributes>,
   mode: M
 ): SanitizeResult<M> {
+  const cleanedTingkat =
+    typeof input.tingkat === 'string' ? xss(input.tingkat).trim() : undefined;
+
   const sanitized: Partial<RiwPendidikanKarCreationAttributes> = {
     karyawan_id: input.karyawan_id ? xss(input.karyawan_id) : undefined,
     rpk_id: input.rpk_id ? xss(input.rpk_id) : undefined,
@@ -67,13 +70,32 @@ export function sanitizeObject<M extends SanitizeMode>(
 
     tahun_kelulusan: input.tahun_kelulusan ?? undefined,
     ipk: input.ipk ?? undefined,
-    tingkat: input.tingkat ? xss(input.tingkat) : undefined,
+    tingkat: cleanedTingkat || undefined,
   };
 
   // CREATE → field wajib
   if (mode === 'create') {
-    if (!sanitized.karyawan_id || !sanitized.rpk_id) {
-      throw new BadRequestException('karyawan_id dan rpk_id wajib diisi');
+    if (
+      !sanitized.karyawan_id ||
+      !sanitized.rpk_id ||
+      !sanitized.riw_pendidikan_id ||
+      !sanitized.tingkat
+    ) {
+      throw new BadRequestException(
+        'karyawan_id, rpk_id, riw_pendidikan_id, dan tingkat wajib diisi'
+      );
+    }
+
+    if (!isValidUUID(sanitized.karyawan_id)) {
+      throw new BadRequestException('karyawan_id tidak valid');
+    }
+
+    if (!isValidUUID(sanitized.rpk_id)) {
+      throw new BadRequestException('rpk_id tidak valid');
+    }
+
+    if (!isValidUUID(sanitized.riw_pendidikan_id)) {
+      throw new BadRequestException('riw_pendidikan_id tidak valid');
     }
 
     // Type assertion AMAN karena sudah divalidasi

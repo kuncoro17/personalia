@@ -13,7 +13,7 @@ RUN npm ci && npm cache clean --force
 COPY . .
 
 # Build-time env for Vite (values can be overridden from docker-compose args)
-ARG VITE_API_URL=http://localhost:3001
+ARG VITE_API_URL=http://localhost:3002
 ARG VITE_CLERK_PUBLISHABLE_KEY=
 ARG VITE_CLERK_SIGN_IN_URL=
 ARG VITE_CLERK_DOMAIN=

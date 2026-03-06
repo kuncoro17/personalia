@@ -21,7 +21,7 @@ export const HEADER = [
   {
     title: "Kontrak Kerja",
     content: <Contract />,
-    disable: true,
+    // disable: true,
   },
   {
     title: "Alamat",
@@ -210,6 +210,16 @@ export const PROPERTIES = {
       properties: "mengajar_mapel",
       form: "select",
       master: "masterMapel",
+    },
+  ],
+
+  kontrak: [
+    { title: "Kontrak", properties: "kontrak" },
+    { title: "Tanggal Mulai", properties: "tanggal_mulai", form: "date" },
+    {
+      title: "Tanggal Berakhir",
+      properties: "tanggal_berakhir",
+      form: "date",
     },
   ],
 

@@ -31,6 +31,7 @@ export default function Modals({
   onUpdate,
   isLoading,
   onSelect,
+  allowSubmitWithoutChange = false,
 }) {
   const initialValue = useMemo(() => buildInitialValue(data), [data]);
 
@@ -71,6 +72,11 @@ export default function Modals({
         break;
 
       case "divisi":
+        inputValue["bagian"] = undefined;
+        inputValue["seksi"] = undefined;
+        break;
+
+      case "bagian":
         inputValue["seksi"] = undefined;
         break;
 
@@ -101,7 +107,9 @@ export default function Modals({
         return acc;
       }, {});
 
-      if (hasChange) onUpdate?.(changeValue, onClose);
+      if (hasChange || allowSubmitWithoutChange) {
+        onUpdate?.(changeValue, onClose);
+      }
     } finally {
       setLoading(false);
     }

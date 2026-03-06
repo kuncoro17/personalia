@@ -9,7 +9,7 @@ import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
 import { cloneDeep, setByPath } from "../../../utils/flatten";
-import { onAddNew, onDelete } from "../../../utils/detailService";
+import { onDelete } from "../../../utils/detailService";
 import { uniqById } from "../../../utils/uniqueValue";
 import { formatDataDetail } from "../../../utils/format";
 
@@ -32,7 +32,13 @@ export default function Location() {
     DETAILENDPOINT.get.location(state.id),
     {
       select: (res) => {
-        return res.data.map((d) => {
+        const rows = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res?.data?.unit_kerja)
+            ? res.data.unit_kerja
+            : [];
+
+        return rows.map((d) => {
           const formatted = formatDataDetail("lokasi", d);
           formatted.id = d.id;
           return formatted;
@@ -61,29 +67,55 @@ export default function Location() {
     useMaster(api, ["master-lokasi-kerja"], MASTERENDPOINT.lokasiKerja, {
       enabled: isOpen,
       select: (data) => {
-        const formattedData = data.data.reduce((acc, item) => {
+        const getId = (node) => node?.id ?? node?.kode ?? null;
+        const getName = (node) =>
+          node?.nama ??
+          node?.name ??
+          node?.nama_sek ??
+          node?.nama_bag ??
+          node?.nama_div ??
+          node?.nama_dep ??
+          node?.nama_dir ??
+          null;
+        const resolveOption = (node) => {
+          const id = getId(node);
+          const name = getName(node);
+
+          if (name && name !== "None") return { id, name };
+          if (id && id !== "nnn") return { id, name: String(id) };
+
+          return null;
+        };
+
+        const formattedData = (data?.data ?? []).reduce((acc, item) => {
           const pushData = {
-            id: item.id,
+            id: item?.id ?? item?.uk_id ?? null,
           };
 
-          if (item.seksi.nama !== "None") {
-            pushData.name = item.seksi.nama;
-            pushData.kode = item.seksi.id;
-          } else if (item.bagian.nama !== "None") {
-            pushData.name = item.bagian.nama;
-            pushData.kode = item.bagian.id;
-          } else if (item.divisi.nama !== "None") {
-            pushData.name = item.divisi.nama;
-            pushData.kode = item.divisi.id;
-          } else if (item.deputi.nama !== "None") {
-            pushData.name = item.deputi.nama;
-            pushData.kode = item.deputi.id;
-          } else if (item.direktur.nama !== "None") {
-            pushData.name = item.direktur.nama;
-            pushData.kode = item.direktur.id;
+          const seksiOption = resolveOption(item?.seksi);
+          const bagianOption = resolveOption(item?.bagian);
+          const divisiOption = resolveOption(item?.divisi);
+          const deputiOption = resolveOption(item?.deputi);
+          const direkturOption = resolveOption(item?.direktur);
+
+          if (seksiOption) {
+            pushData.name = seksiOption.name;
+            pushData.kode = seksiOption.id;
+          } else if (bagianOption) {
+            pushData.name = bagianOption.name;
+            pushData.kode = bagianOption.id;
+          } else if (divisiOption) {
+            pushData.name = divisiOption.name;
+            pushData.kode = divisiOption.id;
+          } else if (deputiOption) {
+            pushData.name = deputiOption.name;
+            pushData.kode = deputiOption.id;
+          } else if (direkturOption) {
+            pushData.name = direkturOption.name;
+            pushData.kode = direkturOption.id;
           }
 
-          acc.push(pushData);
+          if (pushData.name && pushData.id) acc.push(pushData);
           return acc;
         }, []);
 
@@ -135,28 +167,68 @@ export default function Location() {
 
   const onUpdate = async (value, onClose) => {
     try {
-      const dataValue = Object.keys(value).reduce((acc, key) => {
+      const unitKerjaPayload = {};
+      const jamMengajarPayload = {};
+
+      Object.keys(value).forEach((key) => {
         const dataProp = PROPERTIES.lokasi.find((i) => i.properties === key);
+        if (!dataProp) return;
 
         if (dataProp.master) {
           const findSelected = master[dataProp.master].find(
             (i) => i.name === value[key],
           );
 
-          if (findSelected) acc[key] = findSelected.id;
-          return acc;
+          if (!findSelected) return;
+
+          if (key === "lokasi_kerja") {
+            unitKerjaPayload.unit_kerja = findSelected.id;
+            jamMengajarPayload.lokasi_kerja = findSelected.id;
+            return;
+          }
+
+          if (key === "jabatan") {
+            unitKerjaPayload.jab_id = findSelected.id;
+            jamMengajarPayload.jabatan = findSelected.id;
+            return;
+          }
+
+          if (key === "mengajar_mapel") {
+            jamMengajarPayload.mengajar_mapel = findSelected.id;
+            return;
+          }
+
+          jamMengajarPayload[key] = findSelected.id;
+          return;
         }
 
-        acc[key] = value[key];
-        return acc;
-      }, {});
+        if (key === "jam_mengajar") {
+          jamMengajarPayload.jam_mengajar = Number(value[key]);
+          return;
+        }
 
-      const resp = await apiService(
-        "put",
-        api,
-        DETAILENDPOINT.update.location(state.id, location[selectedEdit].id),
-        dataValue,
-      );
+        jamMengajarPayload[key] = value[key];
+      });
+
+      const ukkId = location[selectedEdit].id;
+
+      if (Object.keys(unitKerjaPayload).length > 0) {
+        await apiService(
+          "put",
+          api,
+          DETAILENDPOINT.update.location(ukkId),
+          unitKerjaPayload,
+        );
+      }
+
+      if (Object.keys(jamMengajarPayload).length > 0) {
+        await apiService(
+          "put",
+          api,
+          DETAILENDPOINT.update.locationMapel(state.id, ukkId),
+          jamMengajarPayload,
+        );
+      }
 
       queryClient.setQueryData([`lokasi-${state.id}`], (oldRaw) => {
         if (!oldRaw) return oldRaw;
@@ -176,33 +248,38 @@ export default function Location() {
     }
   };
 
-  const onNew = (value) => {
+  const onNew = async (value, onClose) => {
     try {
-      const dataValue = Object.keys(value).reduce((acc, key) => {
-        const dataProp = PROPERTIES.lokasi.find((i) => i.properties === key);
+      const lokasiSelected = (master.masterLokasiKerja || []).find(
+        (i) => i.name === value?.lokasi_kerja,
+      );
+      const jabatanSelected = (master.masterJabatan || []).find(
+        (i) => i.name === value?.jabatan,
+      );
 
-        if (dataProp.master) {
-          const findSelected = master[dataProp.master].find(
-            (i) => i.name === value[key],
-          );
+      if (!lokasiSelected?.id || !jabatanSelected?.id) return;
 
-          if (findSelected) acc[dataProp.created] = findSelected.id;
-          return acc;
-        }
+      const dataValue = {
+        karyawan_id: state.id,
+        unit_kerja: lokasiSelected.id,
+        jab_id: jabatanSelected.id,
+        lokasi_penggajian: "",
+      };
 
-        acc[dataProp.created] = value[key];
-        return acc;
-      }, {});
-      dataValue["karyawan_id"] = state.id;
-
-      const resp = apiService(
+      const resp = await apiService(
         "post",
         api,
         DETAILENDPOINT.create.location(),
         dataValue,
       );
 
-      onAddNew(value, queryClient, "unit_kerja_karyawan", `lokasi-${state.id}`);
+      if (!resp?.success) throw resp;
+
+      await queryClient.invalidateQueries({
+        queryKey: [`lokasi-${state.id}`],
+      });
+
+      onClose?.();
     } catch (err) {
       console.error(err);
     }
@@ -342,9 +419,10 @@ export default function Location() {
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onUpdate={(value, onClose) =>
-          selectedEdit !== null ? onUpdate(value, onClose) : onNew(value)
+          selectedEdit !== null ? onUpdate(value, onClose) : onNew(value, onClose)
         }
         isLoading={isLoading}
+        allowSubmitWithoutChange={selectedEdit === null}
       />
     </div>
   );

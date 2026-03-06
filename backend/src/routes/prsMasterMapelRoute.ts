@@ -67,7 +67,7 @@ export const PrsMasterMapelRoutes = (app: OpenAPIHono) => {
   router.openapi(
     createRoute({
       method: 'get',
-      path: '/',
+      path: '/GetAllMapel',
       summary: 'Get all mapel',
       tags: ['Mapel'],
       security: [{ bearerAuth: [] }],

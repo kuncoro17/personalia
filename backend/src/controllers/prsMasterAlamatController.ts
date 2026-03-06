@@ -117,8 +117,11 @@ export const createAlamatKaryawan = async (c: Context) => {
   const body = await c.req.json();
 
   // 🔥 Repo sudah CREATE + UPDATE karyawan
-  await service.createAlamatByKaryawanId(idKaryawan, body);
-  if (!created) {
+  const createdAlamat = await service.createAlamatByKaryawanId(
+    idKaryawan,
+    body
+  );
+  if (!createdAlamat) {
     return badRequest(c, 'Gagal menambahkan alamat karyawan');
   }
   // 🔥 Ambil ulang data lengkap

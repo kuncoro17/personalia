@@ -151,9 +151,34 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
     message: z.string().openapi({ example: 'success' }),
   });
   const UnitKerjaSchema = z.object({
-    ng: z.string().openapi({ example: '10' }),
-    unit_kerja: z.string().openapi({ example: 'HR' }),
-    kode_unit: z.string().nullable().openapi({ example: 'HR01' }),
+    id_karyawan: z
+      .string()
+      .openapi({ example: '4092cd75-b7ca-4646-8882-5ea06e794a9b' }),
+    nik: z.string().nullable().openapi({ example: '0193041' }),
+    nama_lengkap: z.string().nullable().openapi({ example: 'A TATIK KUSWORO' }),
+    tgl_join_penabur: z.string().nullable().openapi({ example: '2020-01-01' }),
+    tgl_join_penabur_jkt: z
+      .string()
+      .nullable()
+      .openapi({ example: '2020-01-01' }),
+    tanggal_inactive: z.string().nullable().openapi({ example: null }),
+    unit_kerja: z.array(
+      z.object({
+        id: z.string().openapi({ example: '8f0d63b8-f09d-4fc1-a1d8-9f7c3f5bbf77' }),
+        jam_mengajar: z.string().openapi({ example: '24' }),
+        mengajar_mapel: z.string().openapi({ example: 'Matematika' }),
+        lokasi_kerja: z.object({
+          id: z.string().nullable().openapi({ example: 'VPS' }),
+          name: z.string().nullable().openapi({ example: 'Seksi VPS' }),
+        }),
+        jabatan: z
+          .object({
+            id: z.string().nullable().openapi({ example: 'JDS' }),
+            name: z.string().nullable().openapi({ example: 'Guru' }),
+          })
+          .optional(),
+      })
+    ),
   });
   const AlamatSchema = z.object({
     alamat: z.string().optional().openapi({ example: 'Jl. Melati No. 12' }),

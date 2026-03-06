@@ -69,7 +69,7 @@ export const prsJabatanRoutes = (app: OpenAPIHono) => {
   app.openapi(
     createRoute({
       method: 'get',
-      path: `${basePath}`,
+      path: `${basePath}/getall`,
       summary: 'Get all Jabatan',
       tags: ['Jabatan'],
       security: [{ bearerAuth: [] }],

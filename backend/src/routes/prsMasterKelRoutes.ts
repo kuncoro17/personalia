@@ -89,7 +89,7 @@ export const prsMasterKelRoutes = (app: OpenAPIHono) => {
   router.openapi(
     createRoute({
       method: 'get',
-      path: '/by-kecamatan/{kec_id}',
+      path: '/ByKecamatan/{kec_id}',
       summary: 'Get kelurahan by kecamatan ID',
       tags: ['Kelurahan'],
       security: [{ bearerAuth: [] }],

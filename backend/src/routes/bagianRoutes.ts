@@ -48,6 +48,40 @@ export const bagianRoutes = (app: OpenAPIHono) => {
     controller.getAll
   );
 
+  // GET BY KODE DIVISI
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/personalia/bagian/divisi/{kode_divisi}',
+      summary: 'Get Bagian by Kode Divisi',
+      description: 'Mengambil data bagian berdasarkan kode divisi',
+      tags: ['Bagian'],
+      request: {
+        params: z.object({ kode_divisi: z.string() }),
+      },
+      responses: {
+        200: {
+          description: 'Daftar bagian berdasarkan kode divisi',
+          content: {
+            'application/json': {
+              schema: z.object({
+                data: z.array(
+                  z.object({
+                    kode_bagian: z.string(),
+                    nama_bag: z.string(),
+                  })
+                ),
+              }),
+            },
+          },
+        },
+        400: { description: 'kode_divisi tidak valid' },
+        401: { description: 'Unauthorized' },
+      },
+    }),
+    controller.getUnitKerjaByDivisi
+  );
+
   // GET BY ID
   app.openapi(
     createRoute({

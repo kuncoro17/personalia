@@ -202,6 +202,55 @@ export default function Profile() {
     return units;
   }, [masterUnitKerja, valueSelect]);
 
+  const isNoneUnitValue = (value) =>
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value === "nnn" ||
+    value === "None";
+
+  const resolveUnitKerjaId = (selectedHierarchy) => {
+    const allUnits = masterUnitKerja?.data ?? [];
+    if (allUnits.length === 0) return null;
+
+    if (selectedHierarchy.seksi) {
+      return (
+        allUnits.find((item) => item?.seksi?.id === selectedHierarchy.seksi)
+          ?.id ?? null
+      );
+    }
+
+    if (selectedHierarchy.bagian) {
+      const bagianLevel =
+        allUnits.find(
+          (item) =>
+            item?.bagian?.id === selectedHierarchy.bagian &&
+            isNoneUnitValue(item?.seksi?.id) &&
+            isNoneUnitValue(item?.seksi?.nama),
+        ) ??
+        allUnits.find((item) => item?.bagian?.id === selectedHierarchy.bagian);
+
+      return bagianLevel?.id ?? null;
+    }
+
+    if (selectedHierarchy.divisi) {
+      const divisiLevel =
+        allUnits.find(
+          (item) =>
+            item?.divisi?.id === selectedHierarchy.divisi &&
+            isNoneUnitValue(item?.bagian?.id) &&
+            isNoneUnitValue(item?.bagian?.nama) &&
+            isNoneUnitValue(item?.seksi?.id) &&
+            isNoneUnitValue(item?.seksi?.nama),
+        ) ??
+        allUnits.find((item) => item?.divisi?.id === selectedHierarchy.divisi);
+
+      return divisiLevel?.id ?? null;
+    }
+
+    return null;
+  };
+
   useEffect(() => {
     if (!profile?.selectDefaults) return;
 
@@ -244,7 +293,8 @@ export default function Profile() {
     masterDivisiFetching ||
     masterMapelFetching ||
     masterAgamaFetching ||
-    masterJabatanFetching;
+    masterJabatanFetching ||
+    masterUnitKerjaFetching;
 
   const profileInput = useMemo(() => {
     const updatedProfile = profile ? { ...profile } : {};
@@ -266,9 +316,13 @@ export default function Profile() {
 
   const onUpdate = async (value, onClose) => {
     try {
-      const dataValue = Object.keys(value).reduce((acc, key) => {
+      const selectedHierarchy = { ...valueSelect };
+      const profilePayload = {};
+      const unitKerjaPayload = {};
+
+      Object.keys(value).forEach((key) => {
         const dataProp = PROPERTIES.profile.find((i) => i.properties === key);
-        if (!dataProp) return acc;
+        if (!dataProp) return;
 
         if (dataProp.master) {
           const findSelected = master[dataProp.master].find(
@@ -276,29 +330,64 @@ export default function Profile() {
           );
 
           if (findSelected) {
-            if (key === "seksi") {
-              acc["unit_kerja"] = findSelected.uk_id;
-              return acc;
+            if (key === "divisi") {
+              selectedHierarchy.divisi = findSelected.id;
+              selectedHierarchy.bagian = null;
+              selectedHierarchy.seksi = null;
+            } else if (key === "bagian") {
+              selectedHierarchy.bagian = findSelected.id;
+              selectedHierarchy.seksi = null;
+            } else if (key === "seksi") {
+              selectedHierarchy.seksi = findSelected.id;
+            } else if (key === "jabatan") {
+              unitKerjaPayload.jab_id = findSelected.id;
+              return;
             }
 
-            acc[key] = findSelected.id;
+            profilePayload[key] = findSelected.id;
           }
 
-          return acc;
+          return;
         }
 
-        acc[key] = value[key];
-        return acc;
-      }, {});
+        profilePayload[key] = value[key];
+      });
 
-      const resp = await apiService(
-        "put",
-        api,
-        DETAILENDPOINT.update.profile(state.id),
-        dataValue,
+      const changedHierarchy = ["divisi", "bagian", "seksi"].some((field) =>
+        Object.prototype.hasOwnProperty.call(value, field),
       );
 
-      if (!resp.success) throw resp;
+      if (changedHierarchy) {
+        const resolvedUnitKerjaId = resolveUnitKerjaId(selectedHierarchy);
+        if (resolvedUnitKerjaId) {
+          unitKerjaPayload.unit_kerja = resolvedUnitKerjaId;
+          delete profilePayload.divisi;
+          delete profilePayload.bagian;
+          delete profilePayload.seksi;
+        }
+      }
+
+      if (Object.keys(unitKerjaPayload).length > 0) {
+        const respUnitKerja = await apiService(
+          "put",
+          api,
+          DETAILENDPOINT.update.profileUnitKerja(state.id),
+          unitKerjaPayload,
+        );
+
+        if (!respUnitKerja.success) throw respUnitKerja;
+      }
+
+      if (Object.keys(profilePayload).length > 0) {
+        const resp = await apiService(
+          "put",
+          api,
+          DETAILENDPOINT.update.profile(state.id),
+          profilePayload,
+        );
+
+        if (!resp.success) throw resp;
+      }
 
       queryClient.setQueryData([`profile-${state.id}`], (oldRaw) => {
         if (!oldRaw) return oldRaw;
