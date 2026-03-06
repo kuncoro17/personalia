@@ -419,7 +419,9 @@ export default function Location() {
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onUpdate={(value, onClose) =>
-          selectedEdit !== null ? onUpdate(value, onClose) : onNew(value, onClose)
+          selectedEdit !== null
+            ? onUpdate(value, onClose)
+            : onNew(value, onClose)
         }
         isLoading={isLoading}
         allowSubmitWithoutChange={selectedEdit === null}

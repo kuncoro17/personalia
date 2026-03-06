@@ -88,23 +88,13 @@ const normalizeRow = (item) => {
     pickFirst(item, ["tanggal_mulai", "tgl_mulai", "mulai", "start_date"]),
   );
   const tanggalBerakhir = normalizeDate(
-    pickFirst(item, [
-      "tanggal_berakhir",
-      "tgl_berakhir",
-      "akhir",
-      "end_date",
-    ]),
+    pickFirst(item, ["tanggal_berakhir", "tgl_berakhir", "akhir", "end_date"]),
   );
   const tanggalMulaiRaw = toDateInput(
     pickFirst(item, ["tanggal_mulai", "tgl_mulai", "mulai", "start_date"]),
   );
   const tanggalBerakhirRaw = toDateInput(
-    pickFirst(item, [
-      "tanggal_berakhir",
-      "tgl_berakhir",
-      "akhir",
-      "end_date",
-    ]),
+    pickFirst(item, ["tanggal_berakhir", "tgl_berakhir", "akhir", "end_date"]),
   );
 
   return {
@@ -283,9 +273,7 @@ export default function Contract() {
   );
 
   const hasKontrak = editableRows.some((item) => {
-    return (
-      item.kontrak || item.tanggal_mulai || item.tanggal_berakhir
-    );
+    return item.kontrak || item.tanggal_mulai || item.tanggal_berakhir;
   });
 
   const displayedRows = useMemo(() => {
@@ -325,7 +313,8 @@ export default function Contract() {
     if (!merged.kontrak || !merged.tanggal_mulai || !merged.tanggal_berakhir) {
       addToast({
         title: "Data belum lengkap",
-        description: "Kontrak, Tanggal Mulai, dan Tanggal Berakhir wajib diisi.",
+        description:
+          "Kontrak, Tanggal Mulai, dan Tanggal Berakhir wajib diisi.",
         color: "danger",
       });
       return;
@@ -369,7 +358,8 @@ export default function Contract() {
     } catch (err) {
       addToast({
         title: "Gagal menyimpan",
-        description: err?.message || "Terjadi kesalahan saat menyimpan kontrak.",
+        description:
+          err?.message || "Terjadi kesalahan saat menyimpan kontrak.",
         color: "danger",
       });
     }

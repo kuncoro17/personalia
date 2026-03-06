@@ -40,16 +40,15 @@ export default function Education() {
     {
       enabled: isOpen,
       select: (data) => {
-        const rows = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+        const rows = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+            ? data.data
+            : [];
         const mapped = rows
           .map((i) => ({
             id: i?.id ?? i?.riw_pendidikan_id ?? i?.kode ?? null,
-            name:
-              i?.univ ??
-              i?.nama_sekolah ??
-              i?.nama ??
-              i?.jenjang ??
-              null,
+            name: i?.univ ?? i?.nama_sekolah ?? i?.nama ?? i?.jenjang ?? null,
           }))
           .filter((i) => i.id && i.name);
 
@@ -134,9 +133,7 @@ export default function Education() {
 
         if (findProp?.master) {
           const selectedMaster = master[findProp.master]?.find(
-            (i) =>
-              i.name === value[key] ||
-              String(i.id) === String(value[key]),
+            (i) => i.name === value[key] || String(i.id) === String(value[key]),
           );
 
           if (selectedMaster) {
