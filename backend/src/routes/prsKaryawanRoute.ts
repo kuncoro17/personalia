@@ -164,7 +164,9 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
     tanggal_inactive: z.string().nullable().openapi({ example: null }),
     unit_kerja: z.array(
       z.object({
-        id: z.string().openapi({ example: '8f0d63b8-f09d-4fc1-a1d8-9f7c3f5bbf77' }),
+        id: z
+          .string()
+          .openapi({ example: '8f0d63b8-f09d-4fc1-a1d8-9f7c3f5bbf77' }),
         jam_mengajar: z.string().openapi({ example: '24' }),
         mengajar_mapel: z.string().openapi({ example: 'Matematika' }),
         lokasi_kerja: z.object({

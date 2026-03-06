@@ -247,7 +247,14 @@ export class PrsKaryawanRepository {
   async unit_kerja_karyawan_byidkaryawan(id_karyawan: string) {
     const data = await PrsKaryawan.findOne({
       where: { id_karyawan },
-      attributes: ['id_karyawan', 'nik', 'nama_lengkap','tgl_join_penabur_jkt','tgl_join_penabur','tanggal_inactive'],
+      attributes: [
+        'id_karyawan',
+        'nik',
+        'nama_lengkap',
+        'tgl_join_penabur_jkt',
+        'tgl_join_penabur',
+        'tanggal_inactive',
+      ],
       include: [
         {
           model: PrsUnitKerjaKaryawan,

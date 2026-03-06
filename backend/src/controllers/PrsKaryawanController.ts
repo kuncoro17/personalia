@@ -972,25 +972,45 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
             jabatan?: { kode_jab?: string | null; jabatan?: string | null };
           }[]
         | {
-        ukk_id?: string | null;
-        unit_kerja_detail?: {
-          seksi?: { id?: string | null; name?: string | null; nama_sek?: string | null };
-          bagian?: { id?: string | null; name?: string | null; nama_bag?: string | null };
-          divisi?: { id?: string | null; name?: string | null; nama_div?: string | null };
-          deputi?: { id?: string | null; name?: string | null; nama_dep?: string | null };
-          direktur?: { id?: string | null; name?: string | null; nama_dir?: string | null };
-        };
-        jam_mengajar?:
-          | {
-              jam_mengajar?: string | null;
-              mapel?: { nama_mapel?: string | null };
-            }[]
-          | {
-              jam_mengajar?: string | null;
-              mapel?: { nama_mapel?: string | null };
+            ukk_id?: string | null;
+            unit_kerja_detail?: {
+              seksi?: {
+                id?: string | null;
+                name?: string | null;
+                nama_sek?: string | null;
+              };
+              bagian?: {
+                id?: string | null;
+                name?: string | null;
+                nama_bag?: string | null;
+              };
+              divisi?: {
+                id?: string | null;
+                name?: string | null;
+                nama_div?: string | null;
+              };
+              deputi?: {
+                id?: string | null;
+                name?: string | null;
+                nama_dep?: string | null;
+              };
+              direktur?: {
+                id?: string | null;
+                name?: string | null;
+                nama_dir?: string | null;
+              };
             };
-        jabatan?: { kode_jab?: string | null; jabatan?: string | null };
-      };
+            jam_mengajar?:
+              | {
+                  jam_mengajar?: string | null;
+                  mapel?: { nama_mapel?: string | null };
+                }[]
+              | {
+                  jam_mengajar?: string | null;
+                  mapel?: { nama_mapel?: string | null };
+                };
+            jabatan?: { kode_jab?: string | null; jabatan?: string | null };
+          };
     };
 
     type FilteredItem = {
@@ -1009,9 +1029,14 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
         ? [plainData.unit_kerja_karyawan]
         : [];
 
-    const pickNama = (
-      obj?: { name?: string | null; nama_sek?: string | null; nama_bag?: string | null; nama_div?: string | null; nama_dep?: string | null; nama_dir?: string | null }
-    ) => {
+    const pickNama = (obj?: {
+      name?: string | null;
+      nama_sek?: string | null;
+      nama_bag?: string | null;
+      nama_div?: string | null;
+      nama_dep?: string | null;
+      nama_dir?: string | null;
+    }) => {
       return (
         obj?.name ??
         obj?.nama_sek ??
