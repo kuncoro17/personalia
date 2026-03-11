@@ -1,4 +1,5 @@
-import type { Model, ModelStatic } from 'sequelize';
+import { DataTypes, QueryTypes } from 'sequelize';
+import type { Model, ModelStatic, Sequelize, Transaction } from 'sequelize';
 
 import AppLog from '../models/AppLog';
 import HistoryModels from '../models/HistoryModels';
@@ -49,6 +50,12 @@ type AttributeLike = {
   comment?: string;
 };
 
+type ColumnDefinition = Record<string, unknown> & {
+  type: unknown;
+  allowNull?: boolean;
+  defaultValue?: unknown;
+};
+
 const MODELS: SyncModel[] = [
   AppLog,
   HistoryModels,
@@ -97,10 +104,33 @@ const normalizeTableName = (table: unknown): string => {
   return '';
 };
 
+const quoteIdent = (value: string): string => `"${value.replace(/"/g, '""')}"`;
+
+const quoteQualifiedTable = (tableName: string): string =>
+  tableName
+    .split('.')
+    .filter(Boolean)
+    .map(part => quoteIdent(part.trim()))
+    .join('.');
+
+const tableHasRows = async (
+  sequelize: Sequelize,
+  tableName: string,
+  transaction: Transaction
+): Promise<boolean> => {
+  const quotedTable = quoteQualifiedTable(tableName);
+  const rows = await sequelize.query<{ exists: number }>(
+    `SELECT 1 as exists FROM ${quotedTable} LIMIT 1`,
+    { type: QueryTypes.SELECT, transaction }
+  );
+
+  return rows.length > 0;
+};
+
 const buildColumnDefinition = (
   attribute: AttributeLike
-): Record<string, unknown> => {
-  const column: Record<string, unknown> = {
+): ColumnDefinition => {
+  const column: ColumnDefinition = {
     type: attribute.type,
   };
 
@@ -123,9 +153,9 @@ const buildColumnDefinition = (
 
 const getModelColumns = (
   model: SyncModel
-): Record<string, Record<string, unknown>> => {
+): Record<string, ColumnDefinition> => {
   const attributes = model.getAttributes();
-  const columns: Record<string, Record<string, unknown>> = {};
+  const columns: Record<string, ColumnDefinition> = {};
 
   for (const [attributeName, raw] of Object.entries(attributes)) {
     const attribute = raw as unknown as AttributeLike;
@@ -138,7 +168,7 @@ const getModelColumns = (
 };
 
 const migration: Migration = {
-  async up({ queryInterface, transaction }) {
+  async up({ queryInterface, sequelize, transaction }) {
     const allTables = await queryInterface.showAllTables();
     const existingTables = new Set(
       allTables.map(normalizeTableName).filter(Boolean)
@@ -151,7 +181,7 @@ const migration: Migration = {
       const modelColumns = getModelColumns(model);
 
       if (!existingTables.has(tableName)) {
-        await queryInterface.createTable(tableName, modelColumns, {
+        await queryInterface.createTable(tableName, modelColumns as any, {
           transaction,
         });
         existingTables.add(tableName);
@@ -159,16 +189,48 @@ const migration: Migration = {
       }
 
       const currentTable = await queryInterface.describeTable(tableName);
+      let tableHasData: boolean | null = null;
 
       for (const [columnName, columnDefinition] of Object.entries(
         modelColumns
       )) {
         if (columnName in currentTable) continue;
 
+        const isNotNull = columnDefinition.allowNull === false;
+        const hasDefaultValue =
+          columnDefinition.defaultValue !== undefined &&
+          columnDefinition.defaultValue !== null;
+
+        const isTimestampColumn =
+          columnName === 'createdAt' ||
+          columnName === 'updatedAt' ||
+          columnName === 'created_at' ||
+          columnName === 'updated_at';
+
+        if (isTimestampColumn && isNotNull && !hasDefaultValue) {
+          await queryInterface.addColumn(
+            tableName,
+            columnName,
+            { ...columnDefinition, defaultValue: DataTypes.NOW } as any,
+            { transaction }
+          );
+          continue;
+        }
+
+        if (isNotNull && !hasDefaultValue) {
+          tableHasData ??= await tableHasRows(sequelize, tableName, transaction);
+          if (tableHasData) {
+            throw new Error(
+              `Tidak bisa menambahkan kolom NOT NULL tanpa default ke tabel yang sudah berisi data: ${tableName}.${columnName}. ` +
+                'Solusi: buat migration manual (backfill dulu, lalu set NOT NULL) atau set defaultValue/allowNull di model.'
+            );
+          }
+        }
+
         await queryInterface.addColumn(
           tableName,
           columnName,
-          columnDefinition,
+          columnDefinition as any,
           {
             transaction,
           }
