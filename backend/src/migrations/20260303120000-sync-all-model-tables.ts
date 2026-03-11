@@ -127,9 +127,7 @@ const tableHasRows = async (
   return rows.length > 0;
 };
 
-const buildColumnDefinition = (
-  attribute: AttributeLike
-): ColumnDefinition => {
+const buildColumnDefinition = (attribute: AttributeLike): ColumnDefinition => {
   const column: ColumnDefinition = {
     type: attribute.type,
   };
@@ -218,7 +216,11 @@ const migration: Migration = {
         }
 
         if (isNotNull && !hasDefaultValue) {
-          tableHasData ??= await tableHasRows(sequelize, tableName, transaction);
+          tableHasData ??= await tableHasRows(
+            sequelize,
+            tableName,
+            transaction
+          );
           if (tableHasData) {
             throw new Error(
               `Tidak bisa menambahkan kolom NOT NULL tanpa default ke tabel yang sudah berisi data: ${tableName}.${columnName}. ` +
