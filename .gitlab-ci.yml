@@ -322,36 +322,6 @@ deploy-production:
 
 # ==================== POST-DEPLOY ====================
 
-migrate-staging:
-  stage: post-deploy
-  <<: *deploy-template
-  script:
-    - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
-    - '[ -n "$STAGING_SERVER_IP" ] || (echo "Missing CI variable: STAGING_SERVER_IP" && exit 1)'
-    - export STAGING_SERVER_PORT="22"
-    - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
-    - echo "Running staging migrations..."
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker exec personalia-backend npm run migrate"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-  needs:
-    - deploy-staging
-
-migrate-production:
-  stage: post-deploy
-  <<: *deploy-template
-  script:
-    - '[ -n "$PRODUCTION_SERVER_USER" ] || (echo "Missing CI variable: PRODUCTION_SERVER_USER" && exit 1)'
-    - '[ -n "$PRODUCTION_SERVER_IP" ] || (echo "Missing CI variable: PRODUCTION_SERVER_IP" && exit 1)'
-    - export PRODUCTION_SERVER_PORT="22"
-    - export PRODUCTION_TARGET="${PRODUCTION_SERVER_USER}@${PRODUCTION_SERVER_IP}"
-    - echo "Running production migrations..."
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker exec personalia-backend npm run migrate"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  needs:
-    - deploy-production
-
 health-check-staging:
   stage: post-deploy
   <<: *deploy-template
@@ -362,6 +332,8 @@ health-check-staging:
     - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
     - echo "Waiting for services to be ready..."
     - sleep 20
+    - echo "Running migrations..."
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker exec personalia-backend npm run migrate"
     - echo "Checking backend container health..."
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-backend | grep -q '^healthy$'"
     - echo "Checking frontend container health..."
@@ -371,7 +343,7 @@ health-check-staging:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
-    - migrate-staging
+    - deploy-staging
 
 health-check-production:
   stage: post-deploy
@@ -392,4 +364,4 @@ health-check-production:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   needs:
-    - migrate-production
+    - deploy-production
