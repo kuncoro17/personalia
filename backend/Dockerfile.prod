@@ -4,12 +4,12 @@ FROM node:20-alpine AS base
 FROM base AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --omit=optional && npm cache clean --force
 
 FROM base AS deps-dev
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci --omit=optional && npm cache clean --force
 
 FROM base AS dev
 WORKDIR /app
@@ -18,17 +18,11 @@ COPY . .
 EXPOSE 3001
 CMD ["npm", "run", "dev"]
 
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps-dev /app/node_modules ./node_modules
-COPY . .
-RUN npm run build 2>/dev/null || echo "No build script found, using source directly"
-
 FROM base AS production
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app ./
+COPY . .
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 hono \
