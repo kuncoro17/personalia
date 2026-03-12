@@ -50,6 +50,9 @@ default:
     - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
     - 'echo "Using registry image: $CONTAINER_IMAGE"'
     - docker info
+    - docker system df || true
+    - docker system prune -af --volumes || true
+    - docker system df || true
 
 # ==================== VALIDATE ====================
 
@@ -231,6 +234,7 @@ deploy-staging:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
     - '[ -n "$STAGING_SERVER_IP" ] || (echo "Missing CI variable: STAGING_SERVER_IP" && exit 1)'
     - export STAGING_SERVER_PORT="22"
+    - export STAGING_SSH_PORT="${STAGING_SSH_PORT:-$STAGING_SERVER_PORT}"
     - export STAGING_TARGET="${STAGING_SERVER_USER}@${STAGING_SERVER_IP}"
     - export STAGING_TMP_DIR="/tmp/${APP_NAME}-${CI_PIPELINE_ID}-staging"
     - echo "Deploying to staging server..."
@@ -263,6 +267,10 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
+
+    # Run migrations
+    - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml exec -T backend node --import tsx src/scripts/migrate.ts up"
+    # - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml exec -T backend npm run seed:run"
 
     # Diagnostics
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
