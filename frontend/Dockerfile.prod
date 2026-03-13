@@ -4,13 +4,7 @@ FROM ${NODE_IMAGE} AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Install ALL dependencies (include devDependencies needed for build)
-RUN npm ci && npm cache clean --force
-
-# Copy source code
+# Copy source code (use .dockerignore to keep context small)
 COPY . .
 
 # Build-time env for Vite (values can be overridden from docker-compose args)
@@ -26,8 +20,12 @@ ENV VITE_CLERK_SIGN_IN_URL=$VITE_CLERK_SIGN_IN_URL
 ENV VITE_CLERK_DOMAIN=$VITE_CLERK_DOMAIN
 ENV VITE_CLERK_IS_SATELLITE=$VITE_CLERK_IS_SATELLITE
 
-# Build the application
-RUN npm run build
+# Install deps, build, and cleanup in one layer to avoid persisting `node_modules`
+# in intermediate image layers (reduces Docker disk usage in CI).
+RUN npm ci --no-audit --no-fund && \
+    npm run build && \
+    npm cache clean --force && \
+    rm -rf node_modules
 
 # Production stage
 FROM ${NODE_IMAGE} AS production

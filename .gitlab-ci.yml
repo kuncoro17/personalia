@@ -10,6 +10,7 @@ variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ""
   DOCKER_HOST: tcp://docker:2375
+  GIT_DEPTH: "1"
   APP_NAME: "personalia-jkt"
   CONTAINER_IMAGE: "$CONTAINER_IMAGE"
   NPM_CONFIG_CACHE: "/tmp/.npm"
@@ -51,6 +52,8 @@ default:
     - docker info
     - docker system df || true
     - docker system prune -af --volumes || true
+    - docker builder prune -af || true
+    - docker buildx prune -af || true
     - docker system df || true
 
 # ==================== VALIDATE ====================

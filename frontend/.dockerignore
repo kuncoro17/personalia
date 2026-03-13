@@ -9,6 +9,8 @@ pnpm-debug.log*
 dist
 dist-ssr
 *.local
+*.zip
+*.pem
 
 # Environment files
 .env
