@@ -4,7 +4,7 @@ import { sequelize } from '../config/database';
 export interface PrsDokumenAttributes {
   readonly id: string;
   readonly karyawan_id: string;
-  readonly dokumen_path: string;
+  readonly dokumen_path: string | null;
   readonly tipe_dokumen_id: string;
   readonly created_at?: Date;
   readonly updated_at?: Date;
@@ -22,7 +22,7 @@ class PrsDokumen
 {
   public id!: string;
   public karyawan_id!: string;
-  public dokumen_path!: string;
+  public dokumen_path!: string | null;
   public tipe_dokumen_id!: string;
   public created_at!: Date;
   public updated_at!: Date;
@@ -42,7 +42,7 @@ PrsDokumen.init(
     },
     dokumen_path: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+      allowNull: true,
     },
     tipe_dokumen_id: {
       type: DataTypes.UUID,

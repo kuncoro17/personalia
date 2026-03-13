@@ -74,7 +74,7 @@ export const updateDokumenService = async (
   await existing.update({
     karyawan_id: data.karyawan_id ?? existing.karyawan_id,
     tipe_dokumen_id: data.tipe_dokumen_id ?? existing.tipe_dokumen_id,
-    dokumen_path: uploadedPath ?? existing.dokumen_path,
+    dokumen_path: uploadedPath ?? existing.dokumen_path ?? '',
   });
 
   return existing.toJSON();
