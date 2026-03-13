@@ -374,10 +374,7 @@ export default function Family() {
               </p>
 
               <div className="flex gap-5">
-                <button
-                  type="button"
-                  onClick={() => onRemove(index)}
-                >
+                <button type="button" onClick={() => onRemove(index)}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"

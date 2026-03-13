@@ -11,7 +11,14 @@ module.exports = {
     "plugin:react-hooks/recommended",
     "plugin:jsx-a11y/recommended",
   ],
-  plugins: ["react", "unused-imports", "import", "@typescript-eslint", "jsx-a11y", "prettier"],
+  plugins: [
+    "react",
+    "unused-imports",
+    "import",
+    "@typescript-eslint",
+    "jsx-a11y",
+    "prettier",
+  ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaFeatures: {
@@ -48,7 +55,16 @@ module.exports = {
     "import/order": [
       "warn",
       {
-        groups: ["type", "builtin", "object", "external", "internal", "parent", "sibling", "index"],
+        groups: [
+          "type",
+          "builtin",
+          "object",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index",
+        ],
         pathGroups: [
           {
             pattern: "~/**",
@@ -73,7 +89,11 @@ module.exports = {
       "warn",
       { blankLine: "always", prev: "*", next: "return" },
       { blankLine: "always", prev: ["const", "let", "var"], next: "*" },
-      { blankLine: "any", prev: ["const", "let", "var"], next: ["const", "let", "var"] },
+      {
+        blankLine: "any",
+        prev: ["const", "let", "var"],
+        next: ["const", "let", "var"],
+      },
     ],
   },
 };

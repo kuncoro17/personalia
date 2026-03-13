@@ -1394,7 +1394,6 @@
                     i = '',
                     a = r.charCodeAt(0);
                   ++o < n;
-
                 )
                   0 != (e = r.charCodeAt(o))
                     ? (i +=
@@ -3095,7 +3094,6 @@
             for (
               var r = -1, n = null == t ? 0 : t.length, o = Array(n);
               ++r < n;
-
             )
               o[r] = e(t[r], r, t);
             return o;
@@ -4522,7 +4520,6 @@
                   for (
                     var r = f(t), o = arguments.length, a = 1, p = u.f, h = c.f;
                     o > a;
-
                   )
                     for (
                       var y,
@@ -4531,7 +4528,6 @@
                         m = g.length,
                         v = 0;
                       m > v;
-
                     )
                       ((y = g[v++]), (n && !i(h, _, y)) || (r[y] = _[y]));
                   return r;
@@ -4997,7 +4993,6 @@
                 a = this._len,
                 s = 0;
               s < i;
-
             ) {
               for (var u = a % n, c = Math.min(i - s, n - u), f = 0; f < c; f++)
                 r[u + f] = t[s + f];
@@ -6611,7 +6606,6 @@
               for (
                 var i = r.length, a = e ? i : -1, s = Object(r);
                 (e ? a-- : ++a < i) && !1 !== o(s[a], a, s);
-
               );
               return r;
             };
@@ -7430,7 +7424,6 @@
                   for (
                     var o;
                     !(o = r.next()).done && !1 !== t(o.value, n++, this);
-
                   );
                 return n;
               }),
@@ -7450,7 +7443,6 @@
                 for (
                   var r, n = this._iterator, o = this._iteratorCache, i = 0;
                   i < o.length;
-
                 )
                   if (!1 === t(o[i], i++, this)) return i;
                 for (; !(r = n.next()).done; ) {
@@ -8462,7 +8454,6 @@
                 for (
                   var r, n = 0, o = iterateList(this, e);
                   (r = o()) !== et && !1 !== t(r, n++, this);
-
                 );
                 return n;
               }),
@@ -8674,7 +8665,6 @@
               for (
                 var h = getTailOffset(i), d = getTailOffset(c);
                 d >= 1 << (f + a);
-
               )
                 ((l = new VNode(l && l.array.length ? [l] : [], n)), (f += a));
               var y = t._tail,
@@ -9312,7 +9302,6 @@
                   for (
                     var r, n = this.__iterator(h, e), o = 0;
                     !(r = n.next()).done && !1 !== t(r.value, o++, this);
-
                   );
                   return o;
                 }),
@@ -10017,7 +10006,6 @@
                 for (
                   var r = 0, n = this._head;
                   n && !1 !== t(n.value, r++, this);
-
                 )
                   n = n.next;
                 return r;
@@ -10315,7 +10303,6 @@
                   for (
                     var r, n = this, o = forceIterator(t);
                     !(r = o.next()).done;
-
                   ) {
                     var i = r.value;
                     if ((n = n && n.get ? n.get(i, c) : c) === c) return e;
@@ -10834,7 +10821,6 @@
             for (
               var r = -1, n = null == t ? 0 : t.length, o = 0, i = [];
               ++r < n;
-
             ) {
               var a = t[r];
               e(a, r, t) && (i[o++] = a);
@@ -11568,7 +11554,6 @@
             for (
               var r, n = /\r?\n|\r|\0/g, o = [0], i = [], a = -1;
               (r = n.exec(t.buffer));
-
             )
               (i.push(r.index),
                 o.push(r.index + r[0].length),
@@ -12526,7 +12511,6 @@
                 n++,
                 t.lineIndent = 0;
               32 === o;
-
             )
               (t.lineIndent++, (o = t.input.charCodeAt(++t.position)));
           }
@@ -12570,7 +12554,6 @@
               throwError(t, 'tab characters must not be used in indentation')),
             45 === n) &&
             is_WS_OR_EOL(t.input.charCodeAt(t.position + 1));
-
           )
             if (
               ((s = !0),
@@ -12676,7 +12659,6 @@
               r = t.input.charCodeAt(++t.position),
               e = t.position;
             0 !== r && !is_WS_OR_EOL(r) && !is_FLOW_INDICATOR(r);
-
           )
             r = t.input.charCodeAt(++t.position);
           return (
@@ -12759,7 +12741,6 @@
                           null !== t.anchor && (t.anchorMap[t.anchor] = p),
                             c = t.input.charCodeAt(t.position);
                           0 !== c;
-
                         ) {
                           if (
                             (g ||
@@ -12784,7 +12765,6 @@
                               for (
                                 c = t.input.charCodeAt(t.position);
                                 is_WHITE_SPACE(c);
-
                               )
                                 c = t.input.charCodeAt(++t.position);
                               if (58 === c)
@@ -12909,7 +12889,6 @@
                       null !== t.anchor && (t.anchorMap[t.anchor] = i),
                         h = t.input.charCodeAt(++t.position);
                       0 !== h;
-
                     ) {
                       if (
                         (skipSeparationSpace(t, !0, e),
@@ -13038,7 +13017,6 @@
                               t.lineIndent = 0,
                               i = t.input.charCodeAt(t.position);
                             (!c || t.lineIndent < f) && 32 === i;
-
                           )
                             (t.lineIndent++,
                               (i = t.input.charCodeAt(++t.position)));
@@ -13071,7 +13049,6 @@
                                 l = 0,
                                 r = t.position;
                               !is_EOL(i) && 0 !== i;
-
                             )
                               i = t.input.charCodeAt(++t.position);
                             captureSegment(t, r, t.position, !1);
@@ -13089,7 +13066,6 @@
                           t.position++,
                           n = o = t.position;
                         0 !== (r = t.input.charCodeAt(t.position));
-
                       )
                         if (39 === r) {
                           if (
@@ -13128,7 +13104,6 @@
                           t.position++,
                           r = n = t.position;
                         0 !== (s = t.input.charCodeAt(t.position));
-
                       ) {
                         if (34 === s)
                           return (
@@ -13198,7 +13173,6 @@
                               0 !== n &&
                               !is_WS_OR_EOL(n) &&
                               !is_FLOW_INDICATOR(n);
-
                             )
                               n = t.input.charCodeAt(++t.position);
                             return (
@@ -13258,7 +13232,6 @@
                                 o = i = t.position,
                                 a = !1;
                               0 !== f;
-
                             ) {
                               if (58 === f) {
                                 if (
@@ -13404,12 +13377,10 @@
             (skipSeparationSpace(t, !0, -1),
             (o = t.input.charCodeAt(t.position)),
             !(t.lineIndent > 0 || 37 !== o));
-
           ) {
             for (
               a = !0, o = t.input.charCodeAt(++t.position), e = t.position;
               0 !== o && !is_WS_OR_EOL(o);
-
             )
               o = t.input.charCodeAt(++t.position);
             for (
@@ -13420,7 +13391,6 @@
                     'directive name must not be less than one character in length'
                   );
               0 !== o;
-
             ) {
               for (; is_WHITE_SPACE(o); ) o = t.input.charCodeAt(++t.position);
               if (35 === o) {
@@ -13479,7 +13449,6 @@
               throwError(r, 'null byte is not allowed in input')),
               r.input += '\0';
             32 === r.input.charCodeAt(r.position);
-
           )
             ((r.lineIndent += 1), (r.position += 1));
           for (; r.position < r.length - 1; ) readDocument(r);
@@ -13602,7 +13571,6 @@
           for (
             var r, n = J.repeat(' ', e), o = 0, i = -1, a = '', s = t.length;
             o < s;
-
           )
             (-1 === (i = t.indexOf('\n', o))
               ? ((r = t.slice(o)), (o = s))
@@ -13847,7 +13815,6 @@
           for (
             var r, n, o = / [^ ]/g, i = 0, a = 0, s = 0, u = '';
             (r = o.exec(t));
-
           )
             ((s = r.index) - i > e &&
               ((n = a > i ? a : s), (u += '\n' + t.slice(i, n)), (i = n + 1)),

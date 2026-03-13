@@ -9,18 +9,18 @@ variables:
   # Docker settings
   LOG_LEVEL: INFO
   DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ''
+  DOCKER_TLS_CERTDIR: ""
   DOCKER_HOST: tcp://docker:2375
 
   # Application settings
-  APP_NAME: 'be-sas-personalia'
+  APP_NAME: "be-sas-personalia"
 
   # Docker registry settings
-  CONTAINER_IMAGE: '${CI_REGISTRY_IMAGE}'
+  CONTAINER_IMAGE: "${CI_REGISTRY_IMAGE}"
 
   # Environment-specific variables
-  STAGING_DOMAIN: '${STAGING_DOMAIN}'
-  PRODUCTION_DOMAIN: '${PRODUCTION_DOMAIN}'
+  STAGING_DOMAIN: "${STAGING_DOMAIN}"
+  PRODUCTION_DOMAIN: "${PRODUCTION_DOMAIN}"
 
 default:
   image: node:18-alpine
@@ -107,7 +107,7 @@ build-staging:
     - name: docker:20.10.16-dind
       alias: docker
   variables:
-    DOCKER_TLS_CERTDIR: ''
+    DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
@@ -126,7 +126,7 @@ build-production:
     - name: docker:20.10.16-dind
       alias: docker
   variables:
-    DOCKER_TLS_CERTDIR: ''
+    DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY

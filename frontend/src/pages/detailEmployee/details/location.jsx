@@ -21,7 +21,8 @@ const extractUnitKerjaRows = (res) => {
   if (Array.isArray(payload?.unit_kerja)) return payload.unit_kerja;
   if (Array.isArray(payload?.unit_kerja_karyawan))
     return payload.unit_kerja_karyawan;
-  if (Array.isArray(payload?.unitkerja_karyawan)) return payload.unitkerja_karyawan;
+  if (Array.isArray(payload?.unitkerja_karyawan))
+    return payload.unitkerja_karyawan;
 
   return [];
 };
@@ -365,10 +366,7 @@ export default function Location() {
 
                 <div className="flex gap-5">
                   {index > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => onRemove(index)}
-                    >
+                    <button type="button" onClick={() => onRemove(index)}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="20"

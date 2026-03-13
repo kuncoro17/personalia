@@ -27,7 +27,6 @@ default:
     - chmod 600 ~/.ssh/id_rsa
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
-
 .docker-build-template: &docker-build-template
   stage: build
   image: docker:24.0.7
@@ -239,7 +238,6 @@ deploy-staging:
     - export STAGING_TMP_DIR="/tmp/${APP_NAME}-${CI_PIPELINE_ID}-staging"
     - echo "Deploying to staging server..."
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
-
 
     # Copy deployment artifacts
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend &&

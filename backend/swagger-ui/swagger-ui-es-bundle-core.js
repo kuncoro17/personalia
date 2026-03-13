@@ -2786,7 +2786,6 @@ var Ce = {
             s = this._len,
             l = 0;
           l < o;
-
         ) {
           for (var i = s % n, c = Math.min(o - l, n - i), u = 0; u < c; u++)
             r[i + u] = e[l + u];
@@ -3079,7 +3078,6 @@ var Ce = {
           !t.reading &&
           !t.ended &&
           (t.length < t.highWaterMark || (t.flowing && 0 === t.length));
-
         ) {
           var r = t.length;
           if ((c('maybeReadMore read 0'), e.read(0), r === t.length)) break;

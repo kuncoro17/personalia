@@ -1,6 +1,7 @@
 # Personalia JKT (Fullstack)
 
 Monorepo fullstack untuk aplikasi Personalia JKT:
+
 - `backend` (Node.js API)
 - `frontend` (Vite)
 - `deployment` (Docker Compose, Nginx template, observability)
@@ -10,16 +11,19 @@ Monorepo fullstack untuk aplikasi Personalia JKT:
 Staging dijalankan dengan Docker Compose di server, sedangkan Nginx berjalan di host (manual, bukan container).
 
 Service utama di server:
+
 - Frontend container: `127.0.0.1:3000`
 - Backend container: `127.0.0.1:3001`
 - Loki: `127.0.0.1:3100`
 - Promtail: `127.0.0.1:9080`
 
 Domain staging:
+
 - Frontend: `https://staging-personalia.bpkpenaburjakarta.or.id`
 - API publik: `https://api-staging-personalia.bpkpenaburjakarta.or.id`
 
 Routing Nginx host:
+
 - `staging-personalia...` path `/` -> `127.0.0.1:3000`
 - `staging-personalia...` path `/api/` -> `127.0.0.1:3001`
 - `api-staging-personalia...` -> `127.0.0.1:3001`
@@ -58,6 +62,7 @@ docker compose \
 ```
 
 Akses default lokal:
+
 - FE: `http://localhost:3003`
 - BE: `http://localhost:3002`
 
@@ -70,6 +75,7 @@ docker compose -f deployment/compose/docker-compose.local.yml down
 ## CI/CD (GitLab)
 
 Pipeline utama tetap:
+
 - `validate`
 - `test`
 - `build`
@@ -111,6 +117,7 @@ Deploy production dilakukan manual dari branch `main`.
 - `PRODUCTION_FE_CLERK_IS_SATELLITE` (default: `false`)
 
 Catatan:
+
 - File `frontend/.env` hanya untuk lokal/developer machine.
 - Build image frontend di CI memakai `--build-arg` dari CI variables, bukan dari `frontend/.env`.
 
@@ -136,6 +143,7 @@ docker compose -f deployment/compose/docker-compose.staging.yml ps
 ## Nginx Host (Manual)
 
 File template ada di repo:
+
 - `deployment/nginx/staging/frontend.conf`
 - `deployment/nginx/staging/api.conf`
 
@@ -154,6 +162,7 @@ SSL dijalankan manual di server (Let's Encrypt).
 ## Health Checks
 
 Health-check staging mengecek:
+
 - container backend/frontend/loki/promtail
 - endpoint lokal:
   - `http://127.0.0.1:3001/health`
@@ -165,15 +174,18 @@ Health-check staging mengecek:
 ## Troubleshooting Singkat
 
 1. `Missing CI variable: STAGING_FE_CLERK_PUBLISHABLE_KEY`
+
 - Tambahkan variable tersebut di GitLab CI/CD.
 
 2. Loki restart / unhealthy
+
 - Cek `deployment/observability/loki-config.yaml` sudah tersalin benar.
 - Cek log: `docker logs personalia-loki --tail 200`.
 
 3. Promtail `unhealthy` karena `wget not found`
+
 - Gunakan compose terbaru (healthcheck promtail sudah dihapus di staging).
 
 4. `no space left on device` saat deploy
-- Bersihkan Docker cache/image/container di server staging.
 
+- Bersihkan Docker cache/image/container di server staging.

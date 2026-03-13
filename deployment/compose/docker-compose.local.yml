@@ -14,7 +14,10 @@ services:
       - ../be/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
       test:
-        ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-personalia}"]
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-personalia}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
