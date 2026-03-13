@@ -196,10 +196,10 @@ build-frontend-staging:
         --build-arg VITE_CLERK_SIGN_IN_URL="$STAGING_FE_CLERK_SIGN_IN_URL" \
         --build-arg VITE_CLERK_DOMAIN="$STAGING_FE_CLERK_DOMAIN" \
         --build-arg VITE_CLERK_IS_SATELLITE="${VITE_CLERK_IS_SATELLITE:-true}" \
-        -t "$CONTAINER_IMAGE:frontend-staging" \
+        -t "$CONTAINER_IMAGE:personalia-frontend" \
         -f frontend/Dockerfile.prod \
         frontend
-    - docker push "$CONTAINER_IMAGE:frontend-staging"
+    - docker push "$CONTAINER_IMAGE:personalia-frontend"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   needs:
@@ -268,15 +268,15 @@ deploy-staging:
       sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME"
     # Pull + run services
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
 
     # Run migrations
-    - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' BACKEND_HOST_PORT='$STAGING_BACKEND_HOST_PORT' && docker compose -f deployment/compose/docker-compose.staging.yml exec -T backend node --import tsx src/scripts/migrate.ts up"
-    # - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml exec -T backend npm run seed:run"
+    - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' BACKEND_HOST_PORT='$STAGING_BACKEND_HOST_PORT' && docker compose -f deployment/compose/docker-compose.staging.yml exec -T backend node --import tsx src/scripts/migrate.ts up"
+    # - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml exec -T backend npm run seed:run"
 
     # Diagnostics
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-staging' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
 
