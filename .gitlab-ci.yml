@@ -38,6 +38,8 @@ default:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
   before_script:
+    - rm -rf frontend/node_modules backend/node_modules frontend/dist backend/dist || true
+    - rm -f node20-alpine.tar frontend/dist.zip || true
     - |
       if [ -z "$CI_REGISTRY" ]; then
         echo "Missing CI_REGISTRY"
