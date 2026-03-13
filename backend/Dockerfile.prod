@@ -1,5 +1,6 @@
 # Multi-stage build for backend
-FROM node:20-alpine AS base
+ARG NODE_IMAGE=node:20-alpine
+FROM ${NODE_IMAGE} AS base
 
 FROM base AS deps
 WORKDIR /app

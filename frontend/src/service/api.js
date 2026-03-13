@@ -92,7 +92,14 @@ const stripLeadingSlash = (path = "") => path.replace(/^\/+/, "");
 export const apiService = async (method, api, params, body = {}) => {
   try {
     const endpoint = stripLeadingSlash(params);
-    const response = await api[method](endpoint, body);
+    const normalizedMethod = String(method || "").toLowerCase();
+    const response =
+      normalizedMethod === "delete"
+        ? await api.delete(
+            endpoint,
+            body && Object.keys(body).length > 0 ? { data: body } : undefined,
+          )
+        : await api[normalizedMethod](endpoint, body);
 
     return response?.data ?? null;
   } catch {

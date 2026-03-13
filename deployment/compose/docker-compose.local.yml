@@ -44,6 +44,8 @@ services:
       context: ../../backend
       dockerfile: Dockerfile.prod
       target: production
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:20-alpine}
     image: personalia/backend:local
     container_name: personalia-backend-local
     ports:
@@ -90,6 +92,7 @@ services:
       dockerfile: Dockerfile.prod
       target: production
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:20-alpine}
         VITE_API_URL: ${VITE_API_URL:-http://localhost:3002}
         VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:-pk_test_bWlnaHR5LW9yaW9sZS00Ni5jbGVyay5hY2NvdW50cy5kZXYk}
         VITE_CLERK_SIGN_IN_URL: ${VITE_CLERK_SIGN_IN_URL:-https://staging-new-sas.bpkpenaburjakarta.or.id/}

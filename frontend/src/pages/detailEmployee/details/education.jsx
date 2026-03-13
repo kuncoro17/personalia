@@ -22,13 +22,15 @@ export default function Education() {
   const { state } = useLocation();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
+  const employeeId = state?.id ?? state?.id_karyawan ?? null;
   const [selectedEdit, setSelectedEdit] = useState(null);
 
   const { data: pendidikan, isFetching: pendidikanFetching } = useMaster(
     api,
-    [`pendidikan-${state.id}`],
-    DETAILENDPOINT.get.education(state.id),
+    [`pendidikan-${employeeId}`],
+    DETAILENDPOINT.get.education(employeeId),
     {
+      enabled: Boolean(employeeId),
       select: (data) => data.data.map((i) => formatDataDetail("pendidikan", i)),
     },
   );
@@ -68,7 +70,7 @@ export default function Education() {
       ).value;
 
       const requestBody = {
-        karyawan_id: state.id,
+        karyawan_id: employeeId,
         rpk_id: rpkId,
       };
 
@@ -98,7 +100,7 @@ export default function Education() {
       const response = await apiService(
         "put",
         api,
-        DETAILENDPOINT.update.education(state.id, rpkId),
+        DETAILENDPOINT.update.education(employeeId, rpkId),
         requestBody,
       );
 
@@ -111,7 +113,7 @@ export default function Education() {
         return;
       }
 
-      queryClient.invalidateQueries([`pendidikan-${state.id}`]);
+      queryClient.invalidateQueries([`pendidikan-${employeeId}`]);
 
       onClose();
     } catch (err) {
@@ -122,7 +124,7 @@ export default function Education() {
   const onNew = async (value, onClose) => {
     try {
       const requestBody = {
-        karyawan_id: state.id,
+        karyawan_id: employeeId,
         rpk_id: crypto.randomUUID(),
       };
 
@@ -178,11 +180,45 @@ export default function Education() {
         return;
       }
 
-      queryClient.invalidateQueries([`pendidikan-${state.id}`]);
+      queryClient.invalidateQueries([`pendidikan-${employeeId}`]);
 
       onClose();
     } catch (err) {
       console.error("Error creating education:", err);
+    }
+  };
+
+  const onRemove = async (index) => {
+    try {
+      const item = pendidikan?.[index];
+      if (!item) return;
+
+      const rpkId = item.find((i) => i.title === "Id")?.value ?? null;
+      if (!rpkId) return;
+
+      const response = await apiService(
+        "delete",
+        api,
+        DETAILENDPOINT.delete.education(rpkId),
+      );
+
+      if (!response?.success) {
+        addToast({
+          title: "Gagal menghapus",
+          description: "Data pendidikan gagal dihapus.",
+          color: "danger",
+        });
+        return;
+      }
+
+      await queryClient.invalidateQueries([`pendidikan-${employeeId}`]);
+    } catch (err) {
+      console.error("Error deleting education:", err);
+      addToast({
+        title: "Gagal menghapus",
+        description: "Terjadi kesalahan saat menghapus data pendidikan.",
+        color: "danger",
+      });
     }
   };
 
@@ -254,7 +290,7 @@ export default function Education() {
                 </p>
 
                 <div className="flex gap-5">
-                  <button>
+                  <button type="button" onClick={() => onRemove(index)}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="20"

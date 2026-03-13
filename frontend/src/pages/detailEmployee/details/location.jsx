@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useDisclosure } from "@heroui/react";
 import { useAuth } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,13 +8,23 @@ import { apiClient, apiService } from "../../../service/api";
 import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
-import { cloneDeep, setByPath } from "../../../utils/flatten";
-import { onDelete } from "../../../utils/detailService";
 import { uniqById } from "../../../utils/uniqueValue";
 import { formatDataDetail } from "../../../utils/format";
 
 import { PROPERTIES } from "../constant";
 import { DETAILENDPOINT, MASTERENDPOINT } from "../../../constants/api";
+
+const extractUnitKerjaRows = (res) => {
+  const payload = res?.data ?? res;
+
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.unit_kerja)) return payload.unit_kerja;
+  if (Array.isArray(payload?.unit_kerja_karyawan))
+    return payload.unit_kerja_karyawan;
+  if (Array.isArray(payload?.unitkerja_karyawan)) return payload.unitkerja_karyawan;
+
+  return [];
+};
 
 export default function Location() {
   const { getToken } = useAuth();
@@ -24,23 +34,21 @@ export default function Location() {
   const { state } = useLocation();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
+  const employeeId = state?.id ?? state?.id_karyawan ?? null;
+
   const [selectedEdit, setSelectedEdit] = useState(null);
 
   const { data: location, isFetching: locationFetching } = useMaster(
     api,
-    [`lokasi-${state.id}`],
-    DETAILENDPOINT.get.location(state.id),
+    [`lokasi-${employeeId}`],
+    DETAILENDPOINT.get.location(employeeId),
     {
+      enabled: Boolean(employeeId),
       select: (res) => {
-        const rows = Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res?.data?.unit_kerja)
-            ? res.data.unit_kerja
-            : [];
-
+        const rows = extractUnitKerjaRows(res);
         return rows.map((d) => {
           const formatted = formatDataDetail("lokasi", d);
-          formatted.id = d.id;
+          formatted.id = d?.id ?? d?.ukk_id ?? d?.ukkId ?? null;
           return formatted;
         });
       },
@@ -54,7 +62,8 @@ export default function Location() {
     {
       enabled: isOpen,
       select: (data) => {
-        const unique = uniqById(data.data, "nama_mapel");
+        const rows = Array.isArray(data?.data) ? data.data : [];
+        const unique = uniqById(rows, "nama_mapel");
         return unique.map((i) => ({
           id: i.mapel_id,
           name: i.nama_mapel,
@@ -130,7 +139,8 @@ export default function Location() {
     {
       enabled: isOpen,
       select: (data) => {
-        const unique = uniqById(data.data, "jabatan");
+        const rows = Array.isArray(data?.data) ? data.data : [];
+        const unique = uniqById(rows, "jabatan");
         return unique.map((i) => ({
           id: i.kode_jab,
           name: i.jabatan,
@@ -147,7 +157,9 @@ export default function Location() {
   const locationInput = useMemo(() => {
     let updatedLocation = PROPERTIES.lokasi;
 
-    if (selectedEdit !== null) updatedLocation = location[selectedEdit];
+    if (selectedEdit !== null && Array.isArray(location)) {
+      updatedLocation = location[selectedEdit] ?? PROPERTIES.lokasi;
+    }
 
     if (isOpen && !isLoading && location) {
       return updatedLocation.map((item) => {
@@ -210,7 +222,13 @@ export default function Location() {
         jamMengajarPayload[key] = value[key];
       });
 
-      const ukkId = location[selectedEdit].id;
+      const ukkId =
+        location?.[selectedEdit]?.id ??
+        location?.[selectedEdit]?.ukk_id ??
+        location?.[selectedEdit]?.ukkId ??
+        null;
+
+      if (!ukkId) return;
 
       if (Object.keys(unitKerjaPayload).length > 0) {
         await apiService(
@@ -225,21 +243,13 @@ export default function Location() {
         await apiService(
           "put",
           api,
-          DETAILENDPOINT.update.locationMapel(state.id, ukkId),
+          DETAILENDPOINT.update.locationMapel(employeeId, ukkId),
           jamMengajarPayload,
         );
       }
 
-      queryClient.setQueryData([`lokasi-${state.id}`], (oldRaw) => {
-        if (!oldRaw) return oldRaw;
-
-        const next = cloneDeep(oldRaw);
-
-        for (const [path, v] of Object.entries(value || {})) {
-          setByPath(next, `${selectedEdit}.${path}`, v);
-        }
-
-        return next;
+      await queryClient.invalidateQueries({
+        queryKey: [`lokasi-${employeeId}`],
       });
 
       onClose();
@@ -260,7 +270,7 @@ export default function Location() {
       if (!lokasiSelected?.id || !jabatanSelected?.id) return;
 
       const dataValue = {
-        karyawan_id: state.id,
+        karyawan_id: employeeId,
         unit_kerja: lokasiSelected.id,
         jab_id: jabatanSelected.id,
         lokasi_penggajian: "",
@@ -276,10 +286,36 @@ export default function Location() {
       if (!resp?.success) throw resp;
 
       await queryClient.invalidateQueries({
-        queryKey: [`lokasi-${state.id}`],
+        queryKey: [`lokasi-${employeeId}`],
       });
 
       onClose?.();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const onRemove = async (index) => {
+    try {
+      const ukkId =
+        location?.[index]?.id ??
+        location?.[index]?.ukk_id ??
+        location?.[index]?.ukkId ??
+        null;
+
+      if (!ukkId) return;
+
+      const resp = await apiService(
+        "delete",
+        api,
+        DETAILENDPOINT.update.location(ukkId),
+      );
+
+      if (!resp?.success) throw resp;
+
+      await queryClient.invalidateQueries({
+        queryKey: [`lokasi-${employeeId}`],
+      });
     } catch (err) {
       console.error(err);
     }
@@ -330,14 +366,8 @@ export default function Location() {
                 <div className="flex gap-5">
                   {index > 0 && (
                     <button
-                      onClick={() =>
-                        onDelete(
-                          queryClient,
-                          index,
-                          "unit_kerja_karyawan",
-                          `lokasi-${state.id}`,
-                        )
-                      }
+                      type="button"
+                      onClick={() => onRemove(index)}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

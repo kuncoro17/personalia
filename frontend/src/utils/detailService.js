@@ -1,11 +1,17 @@
 export const onDelete = (queryClient, index, field, key) => {
-  queryClient.setQueryData([key], (oldData) => ({
-    ...oldData,
-    data: {
-      ...oldData.data,
-      [field]: oldData.data[field].filter((_, i) => i !== index),
-    },
-  }));
+  queryClient.setQueryData([key], (oldData) => {
+    const target = oldData?.data?.[field];
+
+    if (!Array.isArray(target)) return oldData;
+
+    return {
+      ...oldData,
+      data: {
+        ...oldData.data,
+        [field]: target.filter((_, i) => i !== index),
+      },
+    };
+  });
 };
 
 export const onAddNew = (value, queryClient, field, key) => {

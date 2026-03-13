@@ -43,6 +43,12 @@ export const DETAILENDPOINT = {
     family: () => `personalia/keluarga`,
     address: (employeeId) => `master-alamat/create/${employeeId}/alamat`,
   },
+  delete: {
+    education: (eduId) => `riw-pendidikan-kar/${eduId}`,
+    emergencyContact: (contactId) =>
+      `personalia/kontak-darurat/delete/${contactId}`,
+    family: (familyId) => `personalia/keluarga/${familyId}`,
+  },
 };
 
 export const MASTERENDPOINT = {

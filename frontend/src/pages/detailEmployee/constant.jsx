@@ -21,7 +21,7 @@ export const HEADER = [
   {
     title: "Kontrak Kerja",
     content: <Contract />,
-    // disable: true,
+   
   },
   {
     title: "Alamat",

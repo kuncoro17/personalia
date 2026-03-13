@@ -4,11 +4,11 @@ import { useDisclosure } from "@heroui/react";
 import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 
-import { apiClient } from "../../../service/api";
+import { apiClient, apiService } from "../../../service/api";
 import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
-import { onAddNew, onDelete } from "../../../utils/detailService";
+import { onAddNew } from "../../../utils/detailService";
 import { formatDataDetail } from "../../../utils/format";
 import { PROPERTIES } from "../constant";
 import { DETAILENDPOINT } from "../../../constants/api";
@@ -21,22 +21,49 @@ export default function EmergencyContact() {
   const { state } = useLocation();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
+  const employeeId = state?.id ?? state?.id_karyawan ?? null;
   const [selectedEdit, setSelectedEdit] = useState(null);
 
   const { data: darurat, isFetching: daruratFetching } = useMaster(
     api,
-    [`darurat-${state.id}`],
-    DETAILENDPOINT.get.emergencyContact(state.id),
+    [`darurat-${employeeId}`],
+    DETAILENDPOINT.get.emergencyContact(employeeId),
     {
       select: (res) => {
-        return res.data.map((d) => formatDataDetail("darurat", d));
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        return rows.map((d) => formatDataDetail("darurat", d));
       },
+      enabled: Boolean(employeeId),
     },
   );
 
+  const onRemove = async (index) => {
+    try {
+      const selectedData = darurat?.[index];
+      const contactId = Array.isArray(selectedData)
+        ? selectedData.find((item) => item.properties === "id")?.value
+        : selectedData?.id;
+
+      if (!contactId) return;
+
+      const resp = await apiService(
+        "delete",
+        api,
+        DETAILENDPOINT.delete.emergencyContact(contactId),
+      );
+
+      if (!resp?.success) throw resp;
+
+      await queryClient.invalidateQueries([`darurat-${employeeId}`]);
+    } catch (error) {
+      console.error("Delete Error:", error);
+      alert("Gagal menghapus kontak darurat. Silakan coba lagi.");
+    }
+  };
+
   const onUpdate = async (value, onClose) => {
     try {
-      const rawCache = queryClient.getQueryData([`darurat-${state.id}`]);
+      const rawCache = queryClient.getQueryData([`darurat-${employeeId}`]);
 
       let dataArray = null;
 
@@ -89,7 +116,7 @@ export default function EmergencyContact() {
       };
 
       const payload = {
-        id_karyawan: state.id,
+        id_karyawan: employeeId,
         id: contactId,
         nama_kondar: getFieldValue(value.nama_kondar, rawData.nama_kondar),
         hubungan_kondar: getFieldValue(
@@ -109,11 +136,11 @@ export default function EmergencyContact() {
       };
 
       await api.put(
-        DETAILENDPOINT.update.emergencyContact(state.id, contactId),
+        DETAILENDPOINT.update.emergencyContact(employeeId, contactId),
         payload,
       );
 
-      await queryClient.invalidateQueries([`darurat-${state.id}`]);
+      await queryClient.invalidateQueries([`darurat-${employeeId}`]);
 
       onClose();
     } catch (error) {
@@ -196,14 +223,8 @@ export default function EmergencyContact() {
 
               <div className="flex gap-5">
                 <button
-                  onClick={() =>
-                    onDelete(
-                      queryClient,
-                      index,
-                      "kontak_darurat",
-                      `darurat-${state.id}`,
-                    )
-                  }
+                  type="button"
+                  onClick={() => onRemove(index)}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -293,7 +314,7 @@ export default function EmergencyContact() {
                 value,
                 queryClient,
                 "kontak_darurat",
-                `darurat-${state.id}`,
+                `darurat-${employeeId}`,
                 onClose,
               )
         }

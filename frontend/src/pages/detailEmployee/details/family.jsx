@@ -5,11 +5,10 @@ import { useMemo, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { toast } from "react-hot-toast";
 
-import { apiClient } from "../../../service/api";
+import { apiClient, apiService } from "../../../service/api";
 import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
-import { onDelete } from "../../../utils/detailService";
 import { formatDataDetail } from "../../../utils/format";
 import { uniqById } from "../../../utils/uniqueValue";
 import { PROPERTIES } from "../constant";
@@ -24,13 +23,15 @@ export default function Family() {
   const { state } = useLocation();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
+  const employeeId = state?.id ?? state?.id_karyawan ?? null;
   const [selectedEdit, setSelectedEdit] = useState(null);
 
   const { data: keluarga, isFetching: keluargaFetching } = useMaster(
     api,
-    [`keluarga-${state.id}`],
-    DETAILENDPOINT.get.family(state.id),
+    [`keluarga-${employeeId}`],
+    DETAILENDPOINT.get.family(employeeId),
     {
+      enabled: Boolean(employeeId),
       select: (res) => {
         const d = res.data || "-";
 
@@ -221,7 +222,7 @@ export default function Family() {
       payload.keterangan = formData.keterangan;
 
     if (!isEdit) {
-      payload.karyawan_id = state.id;
+      payload.karyawan_id = employeeId;
     }
 
     return payload;
@@ -230,14 +231,14 @@ export default function Family() {
   const updateFamilyMutation = useMutation({
     mutationFn: async ({ familyId, payload }) => {
       const response = await api.put(
-        DETAILENDPOINT.update.family(state.id, familyId),
+        DETAILENDPOINT.update.family(employeeId, familyId),
         payload,
       );
       return response.data;
     },
     onSuccess: () => {
       toast.success("Data keluarga berhasil diperbarui");
-      queryClient.invalidateQueries([`keluarga-${state.id}`]);
+      queryClient.invalidateQueries([`keluarga-${employeeId}`]);
     },
     onError: (error) => {
       console.error("Update family error:", error);
@@ -254,7 +255,7 @@ export default function Family() {
     },
     onSuccess: () => {
       toast.success("Anggota keluarga berhasil ditambahkan");
-      queryClient.invalidateQueries([`keluarga-${state.id}`]);
+      queryClient.invalidateQueries([`keluarga-${employeeId}`]);
     },
     onError: (error) => {
       console.error("Create family error:", error);
@@ -263,6 +264,33 @@ export default function Family() {
       );
     },
   });
+
+  const onRemove = async (index) => {
+    try {
+      const familyId =
+        displayData?.[index]?.find((item) => item.properties === "id")?.value ??
+        null;
+
+      if (!familyId) {
+        toast.error("ID keluarga tidak ditemukan");
+        return;
+      }
+
+      const resp = await apiService(
+        "delete",
+        api,
+        DETAILENDPOINT.delete.family(familyId),
+      );
+
+      if (!resp?.success) throw resp;
+
+      toast.success("Anggota keluarga berhasil dihapus");
+      await queryClient.invalidateQueries([`keluarga-${employeeId}`]);
+    } catch (error) {
+      console.error("Delete family error:", error);
+      toast.error(error?.message || "Gagal menghapus anggota keluarga");
+    }
+  };
 
   const onUpdate = (value, onClose) => {
     if (selectedEdit !== null) {
@@ -347,14 +375,8 @@ export default function Family() {
 
               <div className="flex gap-5">
                 <button
-                  onClick={() =>
-                    onDelete(
-                      queryClient,
-                      index,
-                      "keluarga_karyawan",
-                      `keluarga-${state.id}`,
-                    )
-                  }
+                  type="button"
+                  onClick={() => onRemove(index)}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

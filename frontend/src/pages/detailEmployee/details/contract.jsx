@@ -252,11 +252,16 @@ export default function Contract() {
     DETAILENDPOINT.get.location(state.id),
     {
       select: (res) => {
-        const rows = Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res?.data?.unit_kerja)
-            ? res.data.unit_kerja
-            : [];
+        const payload = res?.data ?? res;
+        const rows = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.unit_kerja)
+            ? payload.unit_kerja
+            : Array.isArray(payload?.unit_kerja_karyawan)
+              ? payload.unit_kerja_karyawan
+              : Array.isArray(payload?.unitkerja_karyawan)
+                ? payload.unitkerja_karyawan
+                : [];
 
         return rows
           .map((item) => item?.id ?? item?.ukk_id ?? null)
