@@ -1,5 +1,6 @@
 import { DataTypes, QueryTypes } from 'sequelize';
 import type { Model, ModelStatic, Sequelize, Transaction } from 'sequelize';
+import { randomUUID } from 'crypto';
 
 import AppLog from '../models/AppLog';
 import HistoryModels from '../models/HistoryModels';
@@ -81,11 +82,11 @@ const MODELS: SyncModel[] = [
   PrsUnitKerja,
   PrsUnitKerjaKaryawan,
   TransaksiLemburDetail,
-  prsDokumenModel,
   prsJabatan,
   prsJamMengajarKaryawan,
   prsKontakDarurat,
   prsTipeDokumenModel,
+  prsDokumenModel,
   userModel,
 ];
 
@@ -125,6 +126,36 @@ const tableHasRows = async (
   );
 
   return rows.length > 0;
+};
+
+const ensureDefaultTipeDokumenId = async (
+  sequelize: Sequelize,
+  transaction: Transaction
+): Promise<string> => {
+  const existing = await sequelize.query<{ id: string }>(
+    `SELECT id FROM ${quoteQualifiedTable('prs_tipe_dokumen')}
+     WHERE tipe_dokumen IN ('LAINNYA', 'UNKNOWN', 'Tidak Diketahui')
+     ORDER BY tipe_dokumen ASC
+     LIMIT 1`,
+    { type: QueryTypes.SELECT, transaction }
+  );
+
+  if (existing.length > 0) return existing[0].id;
+
+  const id = randomUUID();
+  await sequelize.query(
+    `INSERT INTO ${quoteQualifiedTable('prs_tipe_dokumen')}
+      (id, tipe_dokumen, created_at, updated_at)
+     VALUES
+      (:id, :tipe, NOW(), NOW())`,
+    {
+      type: QueryTypes.INSERT,
+      transaction,
+      replacements: { id, tipe: 'LAINNYA' },
+    }
+  );
+
+  return id;
 };
 
 const buildColumnDefinition = (attribute: AttributeLike): ColumnDefinition => {
@@ -199,6 +230,9 @@ const migration: Migration = {
           columnDefinition.defaultValue !== undefined &&
           columnDefinition.defaultValue !== null;
 
+        const isDokumenTipeDokumenId =
+          tableName === 'prs_dokumen' && columnName === 'tipe_dokumen_id';
+
         const isTimestampColumn =
           columnName === 'createdAt' ||
           columnName === 'updatedAt' ||
@@ -222,6 +256,40 @@ const migration: Migration = {
             transaction
           );
           if (tableHasData) {
+            if (isDokumenTipeDokumenId) {
+              await queryInterface.addColumn(
+                tableName,
+                columnName,
+                { ...columnDefinition, allowNull: true } as any,
+                { transaction }
+              );
+
+              const defaultTipeDokumenId = await ensureDefaultTipeDokumenId(
+                sequelize,
+                transaction
+              );
+
+              await sequelize.query(
+                `UPDATE ${quoteQualifiedTable(tableName)}
+                 SET ${quoteIdent(columnName)} = :defaultId
+                 WHERE ${quoteIdent(columnName)} IS NULL`,
+                {
+                  type: QueryTypes.UPDATE,
+                  transaction,
+                  replacements: { defaultId: defaultTipeDokumenId },
+                }
+              );
+
+              await queryInterface.changeColumn(
+                tableName,
+                columnName,
+                { ...columnDefinition, allowNull: false } as any,
+                { transaction }
+              );
+
+              continue;
+            }
+
             throw new Error(
               `Tidak bisa menambahkan kolom NOT NULL tanpa default ke tabel yang sudah berisi data: ${tableName}.${columnName}. ` +
                 'Solusi: buat migration manual (backfill dulu, lalu set NOT NULL) atau set defaultValue/allowNull di model.'

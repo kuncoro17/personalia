@@ -22,7 +22,6 @@ default:
   image: alpine:3.20
   before_script:
     - apk add --no-cache openssh-client rsync docker-cli
-    - apk add --no-cache openssh-client docker-cli
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
@@ -51,6 +50,9 @@ default:
       fi
     - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
     - 'echo "Using registry image: $CONTAINER_IMAGE"'
+    - echo "=== Runner filesystem (build job container) ==="
+    - df -h || true
+    - df -i || true
     - docker info
     - docker system df || true
     - docker system prune -af --volumes || true
@@ -268,6 +270,20 @@ deploy-staging:
       sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME"
     # Pull + run services
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - |
+      ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "\
+        echo '=== Server disk (before pull) ===' && \
+        df -h / /var /var/lib/docker 2>/dev/null || df -h && \
+        echo '=== Server inodes (before pull) ===' && \
+        df -i / /var /var/lib/docker 2>/dev/null || df -i && \
+        echo '=== Docker disk usage (before prune) ===' && \
+        docker system df || true && \
+        echo '=== Pruning unused Docker data (pre-pull) ===' && \
+        docker container prune -f || true && \
+        docker image prune -af || true && \
+        docker builder prune -af || true && \
+        echo '=== Docker disk usage (after prune) ===' && \
+        docker system df || true"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
 
@@ -313,6 +329,20 @@ deploy-production:
 
     # Pull + run services
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - |
+      ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "\
+        echo '=== Server disk (before pull) ===' && \
+        df -h / /var /var/lib/docker 2>/dev/null || df -h && \
+        echo '=== Server inodes (before pull) ===' && \
+        df -i / /var /var/lib/docker 2>/dev/null || df -i && \
+        echo '=== Docker disk usage (before prune) ===' && \
+        docker system df || true && \
+        echo '=== Pruning unused Docker data (pre-pull) ===' && \
+        docker container prune -f || true && \
+        docker image prune -af || true && \
+        docker builder prune -af || true && \
+        echo '=== Docker disk usage (after prune) ===' && \
+        docker system df || true"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
 
