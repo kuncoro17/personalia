@@ -1,36 +1,36 @@
-import { spawn } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { spawn } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, "..");
 
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const services = [
-  { name: 'backend', cwd: path.join(repoRoot, 'backend') },
-  { name: 'frontend', cwd: path.join(repoRoot, 'frontend') },
+  { name: "backend", cwd: path.join(repoRoot, "backend") },
+  { name: "frontend", cwd: path.join(repoRoot, "frontend") },
 ];
 
-const children = services.map(service => {
-  const child = spawn(npmCommand, ['run', 'dev'], {
+const children = services.map((service) => {
+  const child = spawn(npmCommand, ["run", "dev"], {
     cwd: service.cwd,
     env: process.env,
-    stdio: 'inherit',
+    stdio: "inherit",
   });
 
-  child.on('exit', code => {
+  child.on("exit", (code) => {
     if (shuttingDown) {
       return;
     }
 
     if (code !== 0) {
-      console.error(`[${service.name}] exited with code ${code ?? 'unknown'}`);
+      console.error(`[${service.name}] exited with code ${code ?? "unknown"}`);
       shutdown(1);
     }
   });
 
-  child.on('error', error => {
+  child.on("error", (error) => {
     if (shuttingDown) {
       return;
     }
@@ -53,14 +53,14 @@ function shutdown(exitCode = 0) {
 
   for (const child of children) {
     if (!child.killed) {
-      child.kill('SIGTERM');
+      child.kill("SIGTERM");
     }
   }
 
   setTimeout(() => {
     for (const child of children) {
       if (!child.killed) {
-        child.kill('SIGKILL');
+        child.kill("SIGKILL");
       }
     }
   }, 1_500).unref();
@@ -68,5 +68,5 @@ function shutdown(exitCode = 0) {
   process.exit(exitCode);
 }
 
-process.on('SIGINT', () => shutdown(0));
-process.on('SIGTERM', () => shutdown(0));
+process.on("SIGINT", () => shutdown(0));
+process.on("SIGTERM", () => shutdown(0));

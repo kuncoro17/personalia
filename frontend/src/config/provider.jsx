@@ -10,7 +10,8 @@ const queryClient = new QueryClient();
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const RAW_CLERK_DOMAIN = import.meta.env.VITE_CLERK_DOMAIN || undefined;
-const RAW_CLERK_SIGN_IN_URL = import.meta.env.VITE_CLERK_SIGN_IN_URL || undefined;
+const RAW_CLERK_SIGN_IN_URL =
+  import.meta.env.VITE_CLERK_SIGN_IN_URL || undefined;
 const RAW_CLERK_IS_SATELLITE =
   String(import.meta.env.VITE_CLERK_IS_SATELLITE).toLowerCase() === "true";
 const IS_LOCAL_HOST =
