@@ -1,9 +1,15 @@
+import { addToast } from "@heroui/toast";
+import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDisclosure } from "@heroui/react";
 import { useAuth } from "@clerk/clerk-react";
 
-import { apiClient, apiService } from "../../../service/api";
+import {
+  apiClient,
+  apiService,
+  resolveApiAssetUrl,
+} from "../../../service/api";
 import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
@@ -23,7 +29,10 @@ export default function Additional() {
     [`tambahan-${state.id}`],
     DETAILENDPOINT.get.additional(state.id),
     {
-      select: (data) => formatDataDetail("tambahan", data.data),
+      select: (data) => ({
+        foto: data.data?.foto || "",
+        fields: formatDataDetail("tambahan", data.data),
+      }),
     },
   );
 
@@ -35,6 +44,7 @@ export default function Additional() {
       }
 
       const requestBody = {};
+      const fotoFile = value.foto instanceof File ? value.foto : null;
 
       const allowedFields = [
         "kewarganegaraan",
@@ -72,57 +82,114 @@ export default function Additional() {
         }
       });
 
-      if (Object.keys(requestBody).length === 0) {
+      const hasAdditionalFieldChange = Object.keys(requestBody).length > 0;
+
+      if (!hasAdditionalFieldChange && !fotoFile) {
         onClose();
         return;
       }
 
-      await apiService(
-        "put",
-        api,
-        DETAILENDPOINT.update.additional(state.id),
-        requestBody,
-      );
+      if (hasAdditionalFieldChange) {
+        await apiService(
+          "put",
+          api,
+          DETAILENDPOINT.update.additional(state.id),
+          requestBody,
+        );
+      }
 
-      queryClient.setQueryData([`tambahan-${state.id}`], (oldData) => {
-        if (!oldData || !Array.isArray(oldData)) return oldData;
+      if (fotoFile) {
+        const formData = new FormData();
+        formData.append("foto", fotoFile);
 
-        return oldData.map((item) => {
-          const newValue = value[item.properties];
-          if (newValue !== undefined) {
-            return {
-              ...item,
-              value: newValue,
-            };
-          }
-          return item;
+        await api.put(DETAILENDPOINT.update.additional(state.id), formData);
+      }
+
+      if (hasAdditionalFieldChange) {
+        queryClient.setQueryData([`tambahan-${state.id}`], (oldData) => {
+          if (!oldData || !Array.isArray(oldData?.fields)) return oldData;
+
+          const fields = oldData.fields.map((item) => {
+            const newValue = value[item.properties];
+            if (newValue !== undefined) {
+              return {
+                ...item,
+                value: newValue,
+              };
+            }
+            return item;
+          });
+
+          return {
+            ...oldData,
+            fields,
+          };
         });
-      });
+      }
 
       queryClient.invalidateQueries([`tambahan-${state.id}`]);
+      queryClient.invalidateQueries([`profile-${state.id}`]);
 
       onClose();
     } catch (err) {
       console.error("Error updating additional data:", err);
-      console.error("Error details:", err.response?.data);
+      console.error("Error details:", err?.payload ?? err?.response?.data ?? err);
+      addToast({
+        title: "Gagal menyimpan",
+        description: "Data tambahan atau foto gagal diperbarui.",
+        color: "danger",
+      });
     }
   };
+
+  const additionalFields = tambahan?.fields ?? [];
+  const modalFields = useMemo(
+    () => [
+      ...additionalFields,
+      {
+        title: "Foto",
+        properties: "foto",
+        form: "file",
+        accept: "image/*",
+        value: tambahan?.foto || "",
+      },
+    ],
+    [additionalFields, tambahan?.foto],
+  );
+  const imagePreview =
+    (tambahan?.foto ? resolveApiAssetUrl(tambahan.foto) : "") ||
+    "/assets/images/profile.jpg";
 
   if (tambahanFetching) return <Loading />;
 
   return (
     <div className="w-full justify-between flex flex-col flex-1 gap-5">
-      <div className="grid grid-cols-4 gap-x-5 gap-y-10">
-        {tambahan.map((item) => (
-          <div key={item.title}>
-            <p className="font-Poppins font-normal opacity-50 text-sm">
-              {item.title}
-            </p>
-            <p className="font-Poppins font-semibold truncate text-primary">
-              {item.value || "-"}
-            </p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+        <div className="md:col-span-1">
+          <p className="font-Poppins font-normal opacity-50 text-sm">Foto</p>
+          <img
+            src={imagePreview}
+            alt="Foto karyawan"
+            className="mt-2 h-40 w-full rounded-lg object-cover border border-[#00000010]"
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = "/assets/images/profile.jpg";
+            }}
+          />
+        </div>
+
+        <div className="grid grid-cols-4 gap-x-5 gap-y-10 md:col-span-4">
+          {additionalFields.map((item) => (
+            <div key={item.title}>
+              <p className="font-Poppins font-normal opacity-50 text-sm">
+                {item.title}
+              </p>
+              <p className="font-Poppins font-semibold truncate text-primary">
+                {item.value || "-"}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <button
@@ -133,7 +200,7 @@ export default function Additional() {
       </button>
 
       <Modals
-        data={tambahan}
+        data={modalFields}
         title="Edit Tambahan"
         isOpen={isOpen}
         onOpenChange={onOpenChange}
