@@ -22,6 +22,11 @@ Domain staging:
 - Frontend: `https://staging-personalia.bpkpenaburjakarta.or.id`
 - API publik: `https://api-staging-personalia.bpkpenaburjakarta.or.id`
 
+Catatan CORS (testing dari localhost):
+
+- Kalau frontend dijalankan di `http://localhost:5173` dan kamu set `VITE_API_URL` ke domain staging, browser akan melakukan request cross-origin ke `api-staging...`.
+- Pastikan backend staging mengizinkan origin tersebut lewat `CORS_ALLOWED_ORIGINS` (contoh: `http://localhost:5173`) dan request tidak diblok oleh layer WAF/Cloudflare, kalau tidak akan muncul error `Access-Control-Allow-Origin missing` (403).
+
 Routing Nginx host:
 
 - `staging-personalia...` path `/` -> `127.0.0.1:3000`

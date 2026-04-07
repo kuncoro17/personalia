@@ -58,6 +58,19 @@ export const apiClient = (getToken) => {
           data?.error ||
           `Server responded with status ${status}`;
 
+        if (
+          status === 401 &&
+          typeof data?.message === "string" &&
+          /missing authorization/i.test(data.message)
+        ) {
+          showToastOnce("Authentication required", {
+            title: "Unauthorized",
+            description:
+              "Request ditolak karena tidak ada header Authorization. Pastikan sudah login dan token berhasil dibuat.",
+            color: "danger",
+          });
+        }
+
         return Promise.reject({
           type: "HTTP_ERROR",
           status,
@@ -67,15 +80,37 @@ export const apiClient = (getToken) => {
       }
 
       if (error.request) {
-        showToastOnce("Tidak mendapat respons dari server", {
-          title: "No Response",
-          description: "Tidak mendapat respons dari server",
+        const isBrowser = typeof window !== "undefined";
+        const frontendOrigin = isBrowser ? window.location.origin : "";
+        const message = "Tidak mendapat respons dari server";
+
+        const apiOrigin = (() => {
+          try {
+            return API_URL ? new URL(API_URL).origin : "";
+          } catch {
+            return "";
+          }
+        })();
+
+        const likelyCorsIssue =
+          isBrowser &&
+          apiOrigin &&
+          frontendOrigin &&
+          apiOrigin !== frontendOrigin;
+
+        showToastOnce(message, {
+          title: likelyCorsIssue ? "CORS Blocked" : "No Response",
+          description: likelyCorsIssue
+            ? `Browser memblokir request cross-origin (${frontendOrigin} → ${apiOrigin}). Pastikan backend mengizinkan Origin ini (CORS_ALLOWED_ORIGINS) dan tidak diblok WAF/Cloudflare.`
+            : message,
           color: "danger",
         });
 
         return Promise.reject({
           type: "NO_RESPONSE",
-          message: "Tidak mendapat respons dari server. Cek koneksi internet?",
+          message: likelyCorsIssue
+            ? `Kemungkinan diblok CORS (${frontendOrigin} → ${apiOrigin}). Cek CORS_ALLOWED_ORIGINS / Cloudflare.`
+            : "Tidak mendapat respons dari server. Cek koneksi internet?",
         });
       }
 
