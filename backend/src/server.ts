@@ -59,7 +59,7 @@ app.use(
   '*',
   cors({
     origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
   })
 );
