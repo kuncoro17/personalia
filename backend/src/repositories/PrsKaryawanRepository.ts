@@ -1370,6 +1370,7 @@ export class PrsKaryawanRepository {
     return await PrsKaryawan.findOne({
       where: { id_karyawan },
       attributes: [
+        'foto',
         'gol_darah',
         'kewarganegaraan',
         'gender',

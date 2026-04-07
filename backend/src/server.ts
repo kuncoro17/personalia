@@ -3,7 +3,6 @@ import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import { swaggerUI } from '@hono/swagger-ui';
 import { serveStatic } from '@hono/node-server/serve-static';
-import path from 'path';
 import 'dotenv/config';
 
 import { errorHandler } from './middlewares/error.middleware';
@@ -101,7 +100,16 @@ app.doc('/openapi.json', {
 app.use(
   '/swagger/*',
   serveStatic({
-    root: path.join(process.cwd(), 'node_modules/swagger-ui-dist'),
+    root: './node_modules/swagger-ui-dist',
+    rewriteRequestPath: requestPath => requestPath.replace(/^\/swagger/, ''),
+  })
+);
+
+app.use(
+  '/uploads/*',
+  serveStatic({
+    root: './uploads',
+    rewriteRequestPath: requestPath => requestPath.replace(/^\/uploads/, ''),
   })
 );
 

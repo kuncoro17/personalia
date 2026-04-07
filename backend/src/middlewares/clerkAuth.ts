@@ -37,6 +37,13 @@ const extractBearerToken = (authHeader?: string): string | null => {
 export const clerkAuthMiddleware: MiddlewareHandler<{
   Variables: { auth: ClerkAuthPayload };
 }> = async (c, next) => {
+  const requestPath = c.req.path;
+
+  // Public static files should stay accessible without auth token.
+  if (requestPath.startsWith('/uploads/')) {
+    return next();
+  }
+
   const token = extractBearerToken(c.req.header('Authorization'));
   if (!token) {
     return c.json({ message: 'Missing Authorization header' }, 401);

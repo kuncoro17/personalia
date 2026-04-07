@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 
 import Layout from "../../components/layout";
-import { apiClient } from "../../service/api";
+import { apiClient, resolveApiAssetUrl } from "../../service/api";
 import { useMaster } from "../../hooks/useMaster";
 import { DETAILENDPOINT } from "../../constants/api";
 import Detail from "./details";
@@ -73,6 +73,7 @@ export default function EmployeeDetail() {
 
         return {
           id_karyawan: rawData.id_karyawan || state.id,
+          foto: rawData.foto || "",
           nama_lengkap: rawData.nama_lengkap || "-",
           jabatan: rawData.jabatan || "-",
           status: statusKaryawan,
@@ -89,9 +90,17 @@ export default function EmployeeDetail() {
           <div className="fixed w-48 p-5 flex flex-col gap-20">
             <div className="flex flex-col flex-1 items-center gap-1">
               <img
-                src="/assets/images/profile.jpg"
+                src={
+                  data?.foto
+                    ? resolveApiAssetUrl(data.foto)
+                    : "/assets/images/profile.jpg"
+                }
                 alt="Foto karyawan"
                 className="rounded-md aspect-square w-full"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = "/assets/images/profile.jpg";
+                }}
               />
 
               <p className="font-Poppins font-semibold text-primary text-center">

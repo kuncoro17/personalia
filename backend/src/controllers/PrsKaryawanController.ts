@@ -2075,7 +2075,45 @@ export const updateAdditional = async (c: Context) => {
     );
   }
 
-  const payload = await c.req.json<Record<string, unknown>>();
+  const contentType = c.req.header('content-type') ?? '';
+  const payload: Record<string, unknown> = {};
+  let file: File | null = null;
+
+  if (contentType.includes('multipart/form-data')) {
+    const form = await c.req.formData();
+    file = form.get('foto') as File | null;
+
+    form.forEach((value, key) => {
+      if (key === 'foto') return;
+      if (typeof value === 'string') {
+        payload[key] = value;
+      }
+    });
+  } else if (contentType.includes('application/json')) {
+    const body = await c.req.json<Record<string, unknown>>();
+
+    Object.entries(body).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        payload[key] = value;
+      }
+    });
+  } else {
+    return c.json({ success: false, message: 'Unsupported Content-Type' }, 400);
+  }
+
+  if (file && file.name) {
+    const ext = path.extname(file.name);
+    const filename = `${uuidv4()}${ext}`;
+    const uploadDir = path.join('uploads', 'karyawan');
+    const filepath = path.join(uploadDir, filename);
+
+    await fs.mkdir(uploadDir, { recursive: true });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(filepath, buffer);
+
+    payload.foto = `uploads/karyawan/${filename}`;
+  }
+
   if (!payload || Object.keys(payload).length === 0) {
     return c.json(
       { success: false, message: 'Payload tidak boleh kosong' },
@@ -2113,6 +2151,20 @@ export const updateAdditional = async (c: Context) => {
         id_karyawan,
         tipe_perubahan: `kode_golongan: ${newGol}`,
         value_lama: `kode_golongan: ${oldGol}`,
+      });
+    }
+  }
+
+  const newFotoRaw = payload.foto;
+  if (newFotoRaw !== undefined && newFotoRaw !== null) {
+    const newFoto = String(newFotoRaw).trim();
+    const oldFoto = String(beforeUpdatePlain.foto ?? '').trim();
+
+    if (oldFoto !== newFoto) {
+      await historyService.createHistory({
+        id_karyawan,
+        tipe_perubahan: 'foto: diganti',
+        value_lama: `foto: ${oldFoto}`,
       });
     }
   }

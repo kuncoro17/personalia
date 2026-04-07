@@ -5,7 +5,9 @@ FROM ${NODE_IMAGE} AS base
 FROM base AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev --omit=optional && npm cache clean --force
+RUN npm ci --omit=optional --no-audit --no-fund \
+  && test -f /app/node_modules/tsx/dist/cli.mjs \
+  && npm cache clean --force
 
 FROM base AS deps-dev
 WORKDIR /app

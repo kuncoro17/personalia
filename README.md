@@ -63,13 +63,34 @@ docker compose \
 
 Akses default lokal:
 
-- FE: `http://localhost:3003`
-- BE: `http://localhost:3002`
+- FE: `http://localhost:3002`
+- BE: `http://localhost:3001`
 
 Stop:
 
 ```bash
 docker compose -f deployment/compose/docker-compose.local.yml down
+```
+
+## Menjalankan Lokal Otomatis
+
+Untuk local dev tanpa mengetik beberapa command manual:
+
+```bash
+npm run dev
+```
+
+Command ini akan:
+
+- build frontend di host dengan `VITE_API_URL=http://localhost:3001`
+- menyalakan `postgres`, `redis`, `backend`, dan `frontend` via Docker Compose
+- menunggu backend sehat di `http://localhost:3001`
+- menjalankan frontend Docker di `http://localhost:3002`
+
+Untuk menghentikan container Docker yang dinyalakan flow ini:
+
+```bash
+npm run dev:stop
 ```
 
 ## CI/CD (GitLab)

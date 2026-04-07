@@ -3,7 +3,23 @@ import axios from "axios";
 
 import { useToastSlice } from "../stores/useToast";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const getResolvedApiUrl = () => {
+  const configuredApiUrl = String(import.meta.env.VITE_API_URL || "").trim();
+  const isLocalHost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const pointsToStaging = /staging-personalia\.bpkpenaburjakarta\.or\.id/i.test(
+    configuredApiUrl,
+  );
+
+  if (isLocalHost && pointsToStaging) {
+    return "http://localhost:3001";
+  }
+
+  return configuredApiUrl;
+};
+
+const API_URL = getResolvedApiUrl();
 
 export const apiClient = (getToken) => {
   const showToastOnce = (toastMessage, toastConfig) => {
@@ -86,6 +102,39 @@ export const apiClient = (getToken) => {
 
 // Backward-compatible export for existing imports.
 export const useApiClient = apiClient;
+
+export const resolveApiAssetUrl = (assetPath) => {
+  if (!assetPath) return "";
+
+  const rawPath = String(assetPath)
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
+
+  if (!rawPath) return "";
+
+  const normalizedPath = rawPath.replace(/\\/g, "/");
+
+  if (/^(data:|blob:|https?:\/\/)/i.test(normalizedPath)) {
+    return normalizedPath;
+  }
+
+  if (/^\/\//.test(normalizedPath)) {
+    const protocol =
+      typeof window !== "undefined" ? window.location.protocol : "https:";
+
+    return `${protocol}${normalizedPath}`;
+  }
+
+  // Handle domain/path values stored without protocol, e.g. cloudinary.com/...
+  if (/^[a-z0-9.-]+\.[a-z]{2,}(?:\/|$)/i.test(normalizedPath)) {
+    return `https://${normalizedPath}`;
+  }
+
+  const normalizedBase = String(API_URL || "").replace(/\/+$/, "");
+  const relativePath = normalizedPath.replace(/^\.?\/+/, "");
+
+  return normalizedBase ? `${normalizedBase}/${relativePath}` : normalizedPath;
+};
 
 const stripLeadingSlash = (path = "") => path.replace(/^\/+/, "");
 

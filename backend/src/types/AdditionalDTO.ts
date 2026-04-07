@@ -1,4 +1,5 @@
 export interface AdditionalDTO {
+  foto?: string;
   gol_darah?: string;
   tempat_lahir?: string;
   gender?: string;

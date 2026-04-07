@@ -123,6 +123,32 @@ export default function Modals({
     const key = item.properties;
     const currentValue = value[key];
 
+    if (item.form === "file") {
+      const selectedFileName =
+        currentValue instanceof File
+          ? currentValue.name
+          : typeof currentValue === "string" && currentValue !== ""
+            ? "File saat ini sudah tersimpan"
+            : "Belum ada file dipilih";
+
+      return (
+        <div className="flex flex-col gap-2 w-full">
+          <input
+            id={fieldId}
+            name={key}
+            aria-labelledby={labelId}
+            type="file"
+            accept={item.accept || "image/*"}
+            className="block w-full text-sm font-Poppins text-primary file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-white file:cursor-pointer cursor-pointer"
+            onChange={(event) =>
+              setFieldValue(key, event.target.files?.[0] || "")
+            }
+          />
+          <p className="text-xs font-Poppins opacity-60">{selectedFileName}</p>
+        </div>
+      );
+    }
+
     if (item.form === "select") {
       const options = (item?.listSelect || []).map((entry) => {
         if (typeof entry === "string") {

@@ -750,6 +750,7 @@ export class PrsKaryawanService {
   ) {
     const sanitizedId = xss(id_karyawan);
     const allowedFields = [
+      'foto',
       'gol_darah',
       'tempat_lahir',
       'gender',

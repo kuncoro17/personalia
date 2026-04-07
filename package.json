@@ -2,6 +2,11 @@
   "name": "personalia-jkt",
   "private": true,
   "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:direct": "node scripts/dev-direct.mjs",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:stop": "docker compose -f deployment/compose/docker-compose.local.yml --env-file .env.example down",
     "lint:check": "npm --prefix backend run lint:check && npm --prefix frontend run lint:check",
     "format:check": "npm --prefix backend run format:check && npm --prefix frontend run format:check",
     "test:ci": "npm --prefix backend run test:ci",

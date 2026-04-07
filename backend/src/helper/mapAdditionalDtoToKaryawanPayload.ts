@@ -10,6 +10,7 @@ const parseDate = (value?: string): Date | undefined => {
 export const mapAdditionalDtoToKaryawanPayload = (
   dto: Partial<AdditionalDTO>
 ): Partial<KaryawanAttributes> => ({
+  foto: dto.foto,
   gol_darah: dto.gol_darah,
   tempat_lahir: dto.tempat_lahir,
   gender: dto.gender,

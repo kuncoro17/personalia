@@ -4,8 +4,8 @@
   "type": "module",
   "main": "app.ts",
   "scripts": {
-    "dev": "tsx watch app.ts",
-    "start": "tsx src/app.ts",
+    "dev": "node scripts/dev.mjs",
+    "start": "node --import tsx src/app.ts",
     "db:sync": "node --import tsx src/scripts/sync-models.ts",
     "migrate": "node --import tsx src/scripts/migrate.ts up",
     "migrate:status": "node --import tsx src/scripts/migrate.ts status",
