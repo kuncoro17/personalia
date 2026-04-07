@@ -9,10 +9,17 @@ import "@flaticon/flaticon-uicons/css/all/all.css";
 const queryClient = new QueryClient();
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-const CLERK_DOMAIN = import.meta.env.VITE_CLERK_DOMAIN || undefined;
-const CLERK_SIGN_IN_URL = import.meta.env.VITE_CLERK_SIGN_IN_URL || undefined;
-const CLERK_IS_SATELLITE =
+const RAW_CLERK_DOMAIN = import.meta.env.VITE_CLERK_DOMAIN || undefined;
+const RAW_CLERK_SIGN_IN_URL = import.meta.env.VITE_CLERK_SIGN_IN_URL || undefined;
+const RAW_CLERK_IS_SATELLITE =
   String(import.meta.env.VITE_CLERK_IS_SATELLITE).toLowerCase() === "true";
+const IS_LOCAL_HOST =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+const CLERK_DOMAIN = IS_LOCAL_HOST ? undefined : RAW_CLERK_DOMAIN;
+const CLERK_SIGN_IN_URL = IS_LOCAL_HOST ? undefined : RAW_CLERK_SIGN_IN_URL;
+const CLERK_IS_SATELLITE = IS_LOCAL_HOST ? false : RAW_CLERK_IS_SATELLITE;
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Add your Clerk Publishable Key to the .env file");

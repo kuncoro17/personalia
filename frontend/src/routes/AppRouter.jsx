@@ -6,7 +6,11 @@ import { Spinner } from "@heroui/react";
 import { apiClient } from "../service/api";
 import { ROUTE } from "../constants/routes";
 
-const signInUrl = import.meta.env.VITE_CLERK_SIGN_IN_URL;
+const rawSignInUrl = import.meta.env.VITE_CLERK_SIGN_IN_URL;
+const isLocalHost =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const signInUrl = isLocalHost ? undefined : rawSignInUrl;
 
 function AppRouter() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
