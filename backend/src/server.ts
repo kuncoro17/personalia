@@ -1,6 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { logger } from 'hono/logger';
-import { cors } from 'hono/cors';
 import { swaggerUI } from '@hono/swagger-ui';
 import { serveStatic } from '@hono/node-server/serve-static';
 import 'dotenv/config';
@@ -50,17 +49,46 @@ const app = new OpenAPIHono({
   },
 });
 
-app.use(
-  '*',
-  cors({
-    // Permissive CORS by default: reflect request Origin.
-    // This avoids needing environment-specific allowlists during development.
-    // If you want to tighten this for production, replace with an explicit allowlist.
-    origin: origin => origin || '*',
-    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+const CORS_ALLOW_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
+const CORS_ALLOW_HEADERS = 'Content-Type, Authorization';
+
+app.use('*', async (c, next) => {
+  const requestOrigin = c.req.header('origin');
+  const allowOrigin = requestOrigin || '*';
+
+  if (c.req.method === 'OPTIONS') {
+    const headers = new Headers();
+    headers.set('Access-Control-Allow-Origin', allowOrigin);
+    headers.set('Access-Control-Allow-Methods', CORS_ALLOW_METHODS);
+    headers.set('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
+    if (requestOrigin) headers.set('Vary', 'Origin');
+
+    return new Response(null, {
+      status: 204,
+      headers,
+    });
+  }
+
+  await next();
+
+  c.header('Access-Control-Allow-Origin', allowOrigin);
+  c.header('Access-Control-Allow-Methods', CORS_ALLOW_METHODS);
+  c.header('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
+
+  if (requestOrigin) {
+    const vary = c.res.headers.get('Vary');
+    if (!vary) {
+      c.header('Vary', 'Origin');
+    } else if (
+      !vary
+        .toLowerCase()
+        .split(',')
+        .some(v => v.trim() === 'origin')
+    ) {
+      c.header('Vary', `${vary}, Origin`);
+    }
+  }
+});
 
 app.use('*', logger());
 app.onError(errorHandler);

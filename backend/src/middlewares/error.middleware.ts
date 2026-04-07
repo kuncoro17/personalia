@@ -43,9 +43,37 @@ export const errorHandler = (err: unknown, c: Context) => {
   const message =
     err instanceof Error ? err.message : 'Terjadi kesalahan internal';
   const status = resolveStatus(err);
+  const requestOrigin = c.req.header('origin');
+  const allowOrigin = requestOrigin || '*';
 
-  return c.json(
+  const response = c.json(
     { status: 'fail', message },
     { status } // sekarang sudah type-safe
   );
+
+  response.headers.set('Access-Control-Allow-Origin', allowOrigin);
+  response.headers.set(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+  );
+  response.headers.set(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization'
+  );
+
+  if (requestOrigin) {
+    const vary = response.headers.get('Vary');
+    if (!vary) {
+      response.headers.set('Vary', 'Origin');
+    } else if (
+      !vary
+        .toLowerCase()
+        .split(',')
+        .some(value => value.trim() === 'origin')
+    ) {
+      response.headers.set('Vary', `${vary}, Origin`);
+    }
+  }
+
+  return response;
 };
