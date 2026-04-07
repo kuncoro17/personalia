@@ -133,7 +133,10 @@ export default function Additional() {
       onClose();
     } catch (err) {
       console.error("Error updating additional data:", err);
-      console.error("Error details:", err?.payload ?? err?.response?.data ?? err);
+      console.error(
+        "Error details:",
+        err?.payload ?? err?.response?.data ?? err,
+      );
       addToast({
         title: "Gagal menyimpan",
         description: "Data tambahan atau foto gagal diperbarui.",

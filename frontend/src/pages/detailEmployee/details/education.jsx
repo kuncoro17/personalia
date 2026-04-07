@@ -35,8 +35,6 @@ export default function Education() {
     },
   );
 
-  
-  
   const {
     data: masterUniv,
     isFetching: masterUnivFetching,
