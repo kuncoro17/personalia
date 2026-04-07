@@ -41,11 +41,13 @@ export default function Education() {
     error: masterUnivError,
   } = useMaster(
     api,
-    ["master-riwayat-pendidikan"],
+    ["master-riwayat-pendidikan", "education-modal"],
     MASTERENDPOINT.universitas,
     {
       enabled: isOpen,
       returnEmptyOnError: false,
+      staleTime: 0,
+      refetchOnMount: "always",
       select: (data) => {
         const rows = Array.isArray(data)
           ? data
@@ -78,6 +80,18 @@ export default function Education() {
       color: "danger",
     });
   }, [masterUnivError, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || masterUnivFetching || masterUnivError) return;
+    if (!Array.isArray(masterUniv) || masterUniv.length > 0) return;
+
+    addToast({
+      title: "Institusi tidak ditemukan",
+      description:
+        "Endpoint /riwayat-pendidikan tidak mengembalikan data institusi pendidikan.",
+      color: "warning",
+    });
+  }, [isOpen, masterUniv, masterUnivFetching, masterUnivError]);
 
   const master = { masterUniv: Array.isArray(masterUniv) ? masterUniv : [] };
 
