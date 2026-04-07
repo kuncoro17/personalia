@@ -185,10 +185,6 @@ export const apiService = async (method, api, params, body = {}) => {
 
     return response?.data ?? null;
   } catch (error) {
-    if (normalizedMethod === "get") {
-      return [];
-    }
-
     throw error;
   }
 };

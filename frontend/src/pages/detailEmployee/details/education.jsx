@@ -88,7 +88,7 @@ export default function Education() {
     addToast({
       title: "Institusi tidak ditemukan",
       description:
-        "Endpoint /riwayat-pendidikan tidak mengembalikan data institusi pendidikan.",
+        "Endpoint /riwayat-pendidikan terbaca, tetapi frontend tidak menerima opsi institusi yang bisa ditampilkan.",
       color: "warning",
     });
   }, [isOpen, masterUniv, masterUnivFetching, masterUnivError]);
@@ -261,11 +261,13 @@ export default function Education() {
   const educationInput = useMemo(() => {
     let updatedPendidikan = PROPERTIES.pendidikan;
 
-    if (selectedEdit !== null) updatedPendidikan = pendidikan[selectedEdit];
+    if (selectedEdit !== null && pendidikan?.[selectedEdit]) {
+      updatedPendidikan = pendidikan[selectedEdit];
+    }
 
-    if (isOpen && !isLoading && pendidikan) {
+    if (isOpen && !isLoading) {
       return updatedPendidikan.map((item) => {
-        if (item.form === "select" && master[item.master]) {
+        if (item.form === "select" && item.master && master[item.master]) {
           return {
             ...item,
             listSelect: master[item.master],
