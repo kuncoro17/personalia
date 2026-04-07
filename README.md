@@ -121,8 +121,8 @@ Deploy production dilakukan manual dari branch `main`.
 
 ### CI Variables Opsional (Staging)
 
-- `STAGING_API_DOMAIN` (default: `api-staging-personalia.bpkpenaburjakarta.or.id`)
-- `STAGING_FE_API_URL` (default: `/api`)
+- `STAGING_FE_API_URL` (default: `/api`, direkomendasikan untuk same-origin via Nginx frontend)
+- `STAGING_API_DOMAIN` (dipakai jika `STAGING_FE_API_URL` tidak diisi; default fallback: `api-staging-personalia.bpkpenaburjakarta.or.id`)
 - `STAGING_FE_CLERK_SIGN_IN_URL`
 - `STAGING_FE_CLERK_DOMAIN`
 - `STAGING_FE_CLERK_IS_SATELLITE` (default: `true`)

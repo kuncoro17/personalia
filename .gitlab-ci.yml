@@ -182,16 +182,22 @@ build-backend-staging:
 build-frontend-staging:
   <<: *docker-build-template
   script:
-    - '[ -n "$STAGING_API_DOMAIN" ] || (echo "Missing CI variable: STAGING_API_DOMAIN" && exit 1)'
     - '[ -n "$STAGING_FE_CLERK_PUBLISHABLE_KEY" ] || (echo "Missing CI variable: STAGING_FE_CLERK_PUBLISHABLE_KEY" && exit 1)'
     - '[ -n "$STAGING_FE_CLERK_SIGN_IN_URL" ] || (echo "Missing CI variable: STAGING_FE_CLERK_SIGN_IN_URL" && exit 1)'
     - '[ -n "$STAGING_FE_CLERK_DOMAIN" ] || (echo "Missing CI variable: STAGING_FE_CLERK_DOMAIN" && exit 1)'
     - |
-      if echo "$STAGING_API_DOMAIN" | grep -Eq '^https?://'; then
-        STAGING_VITE_API_URL="$STAGING_API_DOMAIN"
+      if [ -n "$STAGING_FE_API_URL" ]; then
+        STAGING_VITE_API_URL="$STAGING_FE_API_URL"
+      elif [ -n "$STAGING_API_DOMAIN" ]; then
+        if echo "$STAGING_API_DOMAIN" | grep -Eq '^https?://'; then
+          STAGING_VITE_API_URL="$STAGING_API_DOMAIN"
+        else
+          STAGING_VITE_API_URL="https://$STAGING_API_DOMAIN"
+        fi
       else
-        STAGING_VITE_API_URL="https://$STAGING_API_DOMAIN"
+        STAGING_VITE_API_URL="/api"
       fi
+      echo "Using staging frontend API URL: $STAGING_VITE_API_URL"
       docker build \
         --build-arg VITE_API_URL="$STAGING_VITE_API_URL" \
         --build-arg VITE_CLERK_PUBLISHABLE_KEY="$STAGING_FE_CLERK_PUBLISHABLE_KEY" \

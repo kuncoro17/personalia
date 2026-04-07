@@ -101,7 +101,7 @@ export const apiClient = (getToken) => {
         showToastOnce(message, {
           title: likelyCorsIssue ? "CORS Blocked" : "No Response",
           description: likelyCorsIssue
-            ? `Browser memblokir request cross-origin (${frontendOrigin} → ${apiOrigin}). Pastikan backend mengizinkan Origin ini (CORS_ALLOWED_ORIGINS) dan tidak diblok WAF/Cloudflare.`
+            ? `Browser memblokir request cross-origin (${frontendOrigin} → ${apiOrigin}). Gunakan same-origin '/api' di staging atau pastikan request tidak diblok WAF/Cloudflare.`
             : message,
           color: "danger",
         });
@@ -109,7 +109,7 @@ export const apiClient = (getToken) => {
         return Promise.reject({
           type: "NO_RESPONSE",
           message: likelyCorsIssue
-            ? `Kemungkinan diblok CORS (${frontendOrigin} → ${apiOrigin}). Cek CORS_ALLOWED_ORIGINS / Cloudflare.`
+            ? `Kemungkinan diblok CORS (${frontendOrigin} → ${apiOrigin}). Gunakan '/api' di staging atau cek Cloudflare/WAF.`
             : "Tidak mendapat respons dari server. Cek koneksi internet?",
         });
       }
