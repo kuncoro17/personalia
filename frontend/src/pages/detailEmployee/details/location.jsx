@@ -1,3 +1,4 @@
+import { addToast } from "@heroui/toast";
 import { useLocation } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useDisclosure } from "@heroui/react";
@@ -38,6 +39,21 @@ export default function Location() {
   const employeeId = state?.id ?? state?.id_karyawan ?? null;
 
   const [selectedEdit, setSelectedEdit] = useState(null);
+
+  const resolveErrorMessage = (error, fallbackMessage) => {
+    if (!error) return fallbackMessage;
+
+    if (error.type === "HTTP_ERROR") {
+      return (
+        error.payload?.message ||
+        error.payload?.error ||
+        error.message ||
+        fallbackMessage
+      );
+    }
+
+    return error.message || fallbackMessage;
+  };
 
   const { data: location, isFetching: locationFetching } = useMaster(
     api,
@@ -255,7 +271,16 @@ export default function Location() {
 
       onClose();
     } catch (err) {
-      console.error(err);
+      const message = resolveErrorMessage(
+        err,
+        "Perubahan lokasi kerja gagal disimpan.",
+      );
+      console.error("Update lokasi kerja gagal:", err);
+      addToast({
+        title: "Gagal menyimpan",
+        description: message,
+        color: "danger",
+      });
     }
   };
 
@@ -292,7 +317,16 @@ export default function Location() {
 
       onClose?.();
     } catch (err) {
-      console.error(err);
+      const message = resolveErrorMessage(
+        err,
+        "Data lokasi kerja gagal ditambahkan.",
+      );
+      console.error("Tambah lokasi kerja gagal:", err);
+      addToast({
+        title: "Gagal menambah",
+        description: message,
+        color: "danger",
+      });
     }
   };
 
@@ -318,7 +352,16 @@ export default function Location() {
         queryKey: [`lokasi-${employeeId}`],
       });
     } catch (err) {
-      console.error(err);
+      const message = resolveErrorMessage(
+        err,
+        "Data lokasi kerja gagal dihapus.",
+      );
+      console.error("Hapus lokasi kerja gagal:", err);
+      addToast({
+        title: "Gagal menghapus",
+        description: message,
+        color: "danger",
+      });
     }
   };
 

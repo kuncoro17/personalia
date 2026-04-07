@@ -171,9 +171,10 @@ export const resolveApiAssetUrl = (assetPath) => {
 const stripLeadingSlash = (path = "") => path.replace(/^\/+/, "");
 
 export const apiService = async (method, api, params, body = {}) => {
+  const normalizedMethod = String(method || "").toLowerCase();
+
   try {
     const endpoint = stripLeadingSlash(params);
-    const normalizedMethod = String(method || "").toLowerCase();
     const response =
       normalizedMethod === "delete"
         ? await api.delete(
@@ -183,7 +184,11 @@ export const apiService = async (method, api, params, body = {}) => {
         : await api[normalizedMethod](endpoint, body);
 
     return response?.data ?? null;
-  } catch {
-    return [];
+  } catch (error) {
+    if (normalizedMethod === "get") {
+      return [];
+    }
+
+    throw error;
   }
 };
