@@ -44,11 +44,6 @@ import { historyRoutes } from './routes/historyRoutes';
 import { presensiRoutes } from './routes/routesphp';
 // import { sdmCheckInOutRoutes } from './routes/sdmcheckinoutRoutes';
 
-const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
-  .split(',')
-  .map(origin => origin.trim())
-  .filter(Boolean);
-
 const app = new OpenAPIHono({
   defaultHook: (result, c) => {
     if (!result.success) return c.json({ error: result.error }, 400);
@@ -58,7 +53,10 @@ const app = new OpenAPIHono({
 app.use(
   '*',
   cors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+    // Permissive CORS by default: reflect request Origin.
+    // This avoids needing environment-specific allowlists during development.
+    // If you want to tighten this for production, replace with an explicit allowlist.
+    origin: origin => origin || '*',
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
   })
