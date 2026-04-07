@@ -120,10 +120,7 @@ export default function Additional() {
         const formData = new FormData();
         formData.append("foto", fotoFile);
 
-        await api.put(
-          DETAILENDPOINT.update.additional(state.id),
-          formData,
-        );
+        await api.put(DETAILENDPOINT.update.additional(state.id), formData);
       }
 
       if (hasAdditionalFieldChange) {
@@ -154,7 +151,10 @@ export default function Additional() {
       onClose();
     } catch (err) {
       console.error("Error updating additional data:", err);
-      console.error("Error details:", err?.payload ?? err?.response?.data ?? err);
+      console.error(
+        "Error details:",
+        err?.payload ?? err?.response?.data ?? err,
+      );
     }
   };
 
@@ -172,10 +172,7 @@ export default function Additional() {
       const formData = new FormData();
       formData.append("foto", file);
 
-      await api.put(
-        DETAILENDPOINT.update.additional(state.id),
-        formData,
-      );
+      await api.put(DETAILENDPOINT.update.additional(state.id), formData);
 
       queryClient.invalidateQueries({ queryKey: [`tambahan-${state.id}`] });
       queryClient.invalidateQueries({ queryKey: [`profile-${state.id}`] });
@@ -187,7 +184,10 @@ export default function Additional() {
       });
     } catch (err) {
       console.error("Error uploading image:", err);
-      console.error("Error details:", err?.payload ?? err?.response?.data ?? err);
+      console.error(
+        "Error details:",
+        err?.payload ?? err?.response?.data ?? err,
+      );
       addToast({
         title: "Gagal",
         description: "Foto karyawan gagal diperbarui",
