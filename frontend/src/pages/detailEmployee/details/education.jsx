@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { useDisclosure } from "@heroui/react";
 import { addToast } from "@heroui/toast";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 
 import { apiClient, apiService } from "../../../service/api";
@@ -35,12 +35,17 @@ export default function Education() {
     },
   );
 
-  const { data: masterUniv, isFetching: masterUnivFetching } = useMaster(
+  const {
+    data: masterUniv,
+    isFetching: masterUnivFetching,
+    error: masterUnivError,
+  } = useMaster(
     api,
     ["master-riwayat-pendidikan"],
     MASTERENDPOINT.universitas,
     {
       enabled: isOpen,
+      returnEmptyOnError: false,
       select: (data) => {
         const rows = Array.isArray(data)
           ? data
@@ -59,7 +64,22 @@ export default function Education() {
     },
   );
 
-  const master = { masterUniv };
+  useEffect(() => {
+    if (!masterUnivError || !isOpen) return;
+
+    const message =
+      masterUnivError?.payload?.message ||
+      masterUnivError?.message ||
+      "Data master institusi pendidikan gagal dimuat.";
+
+    addToast({
+      title: "Gagal memuat institusi",
+      description: message,
+      color: "danger",
+    });
+  }, [masterUnivError, isOpen]);
+
+  const master = { masterUniv: Array.isArray(masterUniv) ? masterUniv : [] };
 
   const onUpdate = async (value, onClose) => {
     if (selectedEdit === null) return;

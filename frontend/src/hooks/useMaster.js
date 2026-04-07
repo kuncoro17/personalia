@@ -26,24 +26,28 @@ export const DEFAULT_QUERY_OPTIONS = {
   refetchOnWindowFocus: false,
 };
 
-export const useMaster = (api, key, url, option = {}) =>
-  useQuery({
+export const useMaster = (api, key, url, option = {}) => {
+  const { returnEmptyOnError = true, ...queryOptions } = option;
+
+  return useQuery({
     queryKey: key,
     queryFn: async () => {
       try {
         const response = await apiService("get", api, url);
 
-        // Kembalikan data meskipun kosong atau null
         return response || [];
       } catch (error) {
         console.error(`Error fetching ${url}:`, error);
 
-        // Kembalikan array kosong jika error, bukan throw error
-        return [];
+        if (returnEmptyOnError) {
+          return [];
+        }
+
+        throw error;
       }
     },
     ...DEFAULT_QUERY_OPTIONS,
-    // Tambahkan retry: false agar tidak retry terus menerus
     retry: false,
-    ...option,
+    ...queryOptions,
   });
+};
