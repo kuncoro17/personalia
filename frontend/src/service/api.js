@@ -8,12 +8,8 @@ const getResolvedApiUrl = () => {
   const isLocalHost =
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  const pointsToStaging =
-    /(?:api-)?staging-personalia\.bpkpenaburjakarta\.or\.id/i.test(
-      configuredApiUrl,
-    );
 
-  if (isLocalHost && pointsToStaging) {
+  if (!configuredApiUrl && isLocalHost) {
     return "http://localhost:3001";
   }
 
