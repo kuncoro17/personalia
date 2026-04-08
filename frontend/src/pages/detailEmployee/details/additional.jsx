@@ -137,9 +137,13 @@ export default function Additional() {
         "Error details:",
         err?.payload ?? err?.response?.data ?? err,
       );
+
+      const description =
+        err?.message || "Data tambahan atau foto gagal diperbarui.";
+
       addToast({
         title: "Gagal menyimpan",
-        description: "Data tambahan atau foto gagal diperbarui.",
+        description,
         color: "danger",
       });
     }

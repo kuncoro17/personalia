@@ -37,6 +37,15 @@ const getResolvedApiUrl = () => {
 
 const API_URL = getResolvedApiUrl();
 
+const isCloudflareChallengePayload = (payload) => {
+  if (typeof payload !== "string") return false;
+
+  return (
+    /<title>Just a moment\.\.\.<\/title>/i.test(payload) ||
+    /cf-challenge|cloudflare/i.test(payload)
+  );
+};
+
 export const apiClient = (getToken) => {
   const showToastOnce = (toastMessage, toastConfig) => {
     const { message, setMessage, deleteMessage } = useToastSlice.getState();
@@ -70,12 +79,24 @@ export const apiClient = (getToken) => {
     async (error) => {
       if (error.response) {
         const { status, data } = error.response;
+        const isCloudflareChallenge = isCloudflareChallengePayload(data);
 
         const message =
+          (isCloudflareChallenge &&
+            "Request diblok oleh Cloudflare/WAF sebelum mencapai API.") ||
           data?.detail ||
           data?.message ||
           data?.error ||
           `Server responded with status ${status}`;
+
+        if (isCloudflareChallenge) {
+          showToastOnce("Cloudflare blocked request", {
+            title: "Blocked by Cloudflare",
+            description:
+              "Request diblok oleh halaman challenge Cloudflare/WAF. Backend API kemungkinan belum menerima request ini.",
+            color: "danger",
+          });
+        }
 
         if (
           status === 401 &&
@@ -93,7 +114,13 @@ export const apiClient = (getToken) => {
         return Promise.reject({
           type: "HTTP_ERROR",
           status,
-          payload: data,
+          payload: isCloudflareChallenge
+            ? {
+                provider: "cloudflare",
+                challenge: true,
+                raw: data,
+              }
+            : data,
           message,
         });
       }
