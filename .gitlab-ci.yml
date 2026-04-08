@@ -195,7 +195,7 @@ build-frontend-staging:
           STAGING_VITE_API_URL="https://$STAGING_API_DOMAIN"
         fi
       else
-        STAGING_VITE_API_URL="https://api-staging-personalia.bpkpenaburjakarta.or.id"
+        STAGING_VITE_API_URL="/api"
       fi
       echo "Using staging frontend API URL: $STAGING_VITE_API_URL"
       docker build \

@@ -295,11 +295,16 @@ export default function Location() {
 
       if (!lokasiSelected?.id || !jabatanSelected?.id) return;
 
+      const lokasiPenggajian =
+        value?.lokasi_penggajian?.trim() ||
+        lokasiSelected.name ||
+        lokasiSelected.id;
+
       const dataValue = {
         karyawan_id: employeeId,
         unit_kerja: lokasiSelected.id,
         jab_id: jabatanSelected.id,
-        lokasi_penggajian: "",
+        lokasi_penggajian: lokasiPenggajian,
       };
 
       const resp = await apiService(
