@@ -19,6 +19,8 @@ export const DETAILENDPOINT = {
   update: {
     profile: (employeeId) =>
       `personalia/karyawan/employee/profile/${employeeId}`,
+    employee: (employeeId) =>
+      `personalia/karyawan/employee/update/${employeeId}`,
     contract: (contractId) => `personalia/kontrak/${contractId}`,
     profileUnitKerja: (employeeId) =>
       `unit-kerja-karyawan/jabatan/${employeeId}`,
@@ -31,7 +33,8 @@ export const DETAILENDPOINT = {
       `riw-pendidikan-kar/pendidikan/${employeeId}/${eduId}`,
     emergencyContact: (employeeId, contactID) =>
       `personalia/karyawan/kontak-darurat/${employeeId}/${contactID}`,
-    additional: (employeeId) => `personalia/karyawan/additional/${employeeId}`,
+    additional: (employeeId) =>
+      `personalia/karyawan/employee/update/${employeeId}`,
     family: (employeeId, familyId) =>
       `personalia/karyawan/update-keluarga/${employeeId}/${familyId}`,
     salary: (employeeId) => `personalia/karyawan/InfoPenggajian/${employeeId}`,
