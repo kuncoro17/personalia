@@ -5,39 +5,12 @@ import { useToastSlice } from "../stores/useToast";
 
 const getResolvedApiUrl = () => {
   const configuredApiUrl = String(import.meta.env.VITE_API_URL || "").trim();
-  const isBrowser = typeof window !== "undefined";
-  const currentHostname = isBrowser ? window.location.hostname : "";
-  const currentOrigin = isBrowser ? window.location.origin : "";
-  const isLocalHost = ["localhost", "127.0.0.1"].includes(currentHostname);
-  const isStagingFrontend =
-    currentHostname === "staging-personalia.bpkpenaburjakarta.or.id";
+  const isLocalHost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
   if (!configuredApiUrl && isLocalHost) {
     return "http://localhost:3001";
-  }
-
-  if (isBrowser && configuredApiUrl) {
-    const normalizedConfiguredApiUrl = configuredApiUrl.replace(/\/+$/, "");
-
-    if (isStagingFrontend) {
-      const configuredOrigin = (() => {
-        try {
-          return new URL(normalizedConfiguredApiUrl).origin;
-        } catch {
-          return "";
-        }
-      })();
-
-      const pointsToApiStaging =
-        configuredOrigin ===
-        "https://api-staging-personalia.bpkpenaburjakarta.or.id";
-      const pointsToStagingFrontendRoot =
-        normalizedConfiguredApiUrl === currentOrigin;
-
-      if (pointsToApiStaging || pointsToStagingFrontendRoot) {
-        return `${currentOrigin}/api`;
-      }
-    }
   }
 
   return configuredApiUrl;
