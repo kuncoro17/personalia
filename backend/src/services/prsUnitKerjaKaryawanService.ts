@@ -45,10 +45,12 @@ function sanitizeInput(
   input: Partial<UnitKerjaInput>
 ): Partial<UnitKerjaInput> {
   const sanitized: Partial<UnitKerjaInput> = {};
-  if (input.karyawan_id) sanitized.karyawan_id = xss(input.karyawan_id);
-  if (input.unit_kerja) sanitized.unit_kerja = xss(input.unit_kerja);
-  if (input.jab_id) sanitized.jab_id = xss(input.jab_id);
-  if (input.lokasi_penggajian)
+  if (input.karyawan_id !== undefined)
+    sanitized.karyawan_id = xss(input.karyawan_id);
+  if (input.unit_kerja !== undefined)
+    sanitized.unit_kerja = xss(input.unit_kerja);
+  if (input.jab_id !== undefined) sanitized.jab_id = xss(input.jab_id);
+  if (input.lokasi_penggajian !== undefined)
     sanitized.lokasi_penggajian = xss(input.lokasi_penggajian);
   return sanitized;
 }
