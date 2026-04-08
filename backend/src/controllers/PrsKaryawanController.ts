@@ -668,6 +668,7 @@ export const updateKaryawan = async (c: Context): Promise<Response> => {
       const filename = `${uuidv4()}${ext}`;
       const filepath = path.join('uploads/karyawan', filename);
 
+      await fs.mkdir(path.dirname(filepath), { recursive: true });
       const buffer = Buffer.from(await file.arrayBuffer());
       await fs.writeFile(filepath, buffer);
 
