@@ -89,20 +89,23 @@ export default function Additional() {
         return;
       }
 
-      if (hasAdditionalFieldChange) {
+      if (fotoFile) {
+        const formData = new FormData();
+        Object.entries(requestBody).forEach(([key, fieldValue]) => {
+          formData.append(key, String(fieldValue ?? ""));
+        });
+        formData.append("foto", fotoFile);
+
+        await api.put(DETAILENDPOINT.update.additional(state.id), formData, {
+          timeout: 60_000,
+        });
+      } else if (hasAdditionalFieldChange) {
         await apiService(
           "put",
           api,
           DETAILENDPOINT.update.additional(state.id),
           requestBody,
         );
-      }
-
-      if (fotoFile) {
-        const formData = new FormData();
-        formData.append("foto", fotoFile);
-
-        await api.put(DETAILENDPOINT.update.additional(state.id), formData);
       }
 
       if (hasAdditionalFieldChange) {
