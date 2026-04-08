@@ -5,12 +5,31 @@ import { useToastSlice } from "../stores/useToast";
 
 const getResolvedApiUrl = () => {
   const configuredApiUrl = String(import.meta.env.VITE_API_URL || "").trim();
-  const isLocalHost =
-    typeof window !== "undefined" &&
-    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const isBrowser = typeof window !== "undefined";
+  const hostName = isBrowser ? window.location.hostname : "";
+  const origin = isBrowser ? window.location.origin : "";
+  const isLocalHost = ["localhost", "127.0.0.1"].includes(hostName);
+  const isStagingFrontendHost =
+    hostName === "staging-personalia.bpkpenaburjakarta.or.id";
+  const pointsToStagingApi =
+    /https?:\/\/api-staging-personalia\.bpkpenaburjakarta\.or\.id/i.test(
+      configuredApiUrl,
+    );
+  const pointsToStagingFrontendRoot =
+    /https?:\/\/staging-personalia\.bpkpenaburjakarta\.or\.id\/?$/i.test(
+      configuredApiUrl,
+    );
 
   if (!configuredApiUrl && isLocalHost) {
     return "http://localhost:3001";
+  }
+
+  // On staging frontend, prefer the same-origin Nginx proxy to avoid CORS.
+  if (
+    isStagingFrontendHost &&
+    (pointsToStagingApi || pointsToStagingFrontendRoot)
+  ) {
+    return `${origin}/api`;
   }
 
   return configuredApiUrl;
