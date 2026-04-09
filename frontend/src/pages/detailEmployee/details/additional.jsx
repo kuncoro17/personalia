@@ -51,7 +51,6 @@ export default function Additional() {
         "tempat_lahir",
         "birth_date",
         "gol_darah",
-        "foto",
         "instagram",
         "twitter",
         "no_kitas",
@@ -67,6 +66,10 @@ export default function Additional() {
       ];
 
       Object.keys(value).forEach((key) => {
+        if (key === "foto") {
+          return;
+        }
+
         if (!allowedFields.includes(key)) {
           return;
         }
