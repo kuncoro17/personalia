@@ -342,7 +342,9 @@ export default function EmergencyContact() {
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onUpdate={(value, onClose) =>
-          selectedEdit !== null ? onUpdate(value, onClose) : onCreate(value, onClose)
+          selectedEdit !== null
+            ? onUpdate(value, onClose)
+            : onCreate(value, onClose)
         }
       />
     </div>

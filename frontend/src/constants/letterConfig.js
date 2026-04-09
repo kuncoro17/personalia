@@ -261,7 +261,7 @@ export const LETTERS_REGISTRY = {
     component: pengangkatanKasek,
     label: "Surat Pengangkatan Kepala Sekolah",
     allowedStatus: ["ALL"],
-    apiEndpoint: (id) => `/surat_keterangan/${id}`,
+    apiEndpoint: (_id) => `/surat_keterangan/${_id}`,
     hasEndpoint: true,
   },
   // pengangkatanNonStruktural: {
@@ -512,7 +512,7 @@ export const getAvailableLetters = (employeeStatus) => {
   const statusUpper = employeeStatus.toUpperCase().trim();
 
   const filtered = Object.entries(activeLetters)
-    .filter(([key, letter]) => {
+    .filter(([, letter]) => {
       if (letter.allowedStatus.includes("ALL")) return true;
 
       return letter.allowedStatus.some((allowed) =>

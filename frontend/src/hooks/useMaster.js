@@ -37,8 +37,6 @@ export const useMaster = (api, key, url, option = {}) => {
 
         return response || [];
       } catch (error) {
-        console.error(`Error fetching ${url}:`, error);
-
         if (returnEmptyOnError) {
           return [];
         }
