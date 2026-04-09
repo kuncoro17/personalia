@@ -33,8 +33,7 @@ export const DETAILENDPOINT = {
       `riw-pendidikan-kar/pendidikan/${employeeId}/${eduId}`,
     emergencyContact: (employeeId, contactID) =>
       `personalia/karyawan/kontak-darurat/${employeeId}/${contactID}`,
-    additional: (employeeId) =>
-      `personalia/karyawan/employee/update/${employeeId}`,
+    additional: (employeeId) => `personalia/karyawan/additional/${employeeId}`,
     family: (employeeId, familyId) =>
       `personalia/karyawan/update-keluarga/${employeeId}/${familyId}`,
     salary: (employeeId) => `personalia/karyawan/InfoPenggajian/${employeeId}`,
