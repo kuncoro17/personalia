@@ -2102,6 +2102,47 @@ export const updateAdditional = async (c: Context) => {
     return c.json({ success: false, message: 'Unsupported Content-Type' }, 400);
   }
 
+  const fotoBase64Raw =
+    typeof payload.foto_base64 === 'string'
+      ? payload.foto_base64
+      : typeof payload.foto === 'string' && payload.foto.startsWith('data:')
+        ? payload.foto
+        : null;
+
+  if (fotoBase64Raw) {
+    const matched = fotoBase64Raw.match(/^data:(.+?);base64,(.+)$/);
+
+    if (!matched) {
+      return c.json(
+        { success: false, message: 'Format foto base64 tidak valid' },
+        400
+      );
+    }
+
+    const [, mimeType, base64Content] = matched;
+    const filenameHint =
+      typeof payload.foto_filename === 'string' ? payload.foto_filename : '';
+    const filenameExt = path.extname(filenameHint).toLowerCase();
+    const mimeExtensions: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+      'image/gif': '.gif',
+    };
+    const ext = filenameExt || mimeExtensions[mimeType] || '.bin';
+    const filename = `${uuidv4()}${ext}`;
+    const uploadDir = path.join('uploads', 'karyawan');
+    const filepath = path.join(uploadDir, filename);
+
+    await fs.mkdir(uploadDir, { recursive: true });
+    await fs.writeFile(filepath, Buffer.from(base64Content, 'base64'));
+
+    payload.foto = `uploads/karyawan/${filename}`;
+    delete payload.foto_base64;
+    delete payload.foto_filename;
+  }
+
   if (file && file.name) {
     const ext = path.extname(file.name);
     const filename = `${uuidv4()}${ext}`;

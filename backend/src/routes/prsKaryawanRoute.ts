@@ -1607,6 +1607,8 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
           content: {
             'application/json': {
               schema: z.object({
+                foto_base64: z.string().optional(),
+                foto_filename: z.string().optional(),
                 kewarganegaraan: z.string().optional(),
                 tempat_lahir: z.string().optional(),
                 birth_date: z.string().optional(),

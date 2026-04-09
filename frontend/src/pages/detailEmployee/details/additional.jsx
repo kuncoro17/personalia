@@ -16,6 +16,16 @@ import { useMaster } from "../../../hooks/useMaster";
 import { DETAILENDPOINT } from "../../../constants/api";
 import { formatDataDetail } from "../../../utils/format";
 
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Gagal membaca file foto."));
+
+    reader.readAsDataURL(file);
+  });
+
 export default function Additional() {
   const { getToken } = useAuth();
   const api = apiClient(getToken);
@@ -94,16 +104,11 @@ export default function Additional() {
       }
 
       if (fotoFile) {
-        const formData = new FormData();
-        Object.entries(requestBody).forEach(([key, fieldValue]) => {
-          formData.append(key, String(fieldValue ?? ""));
-        });
-        formData.append("foto", fotoFile);
+        requestBody.foto_base64 = await readFileAsDataUrl(fotoFile);
+        requestBody.foto_filename = fotoFile.name || "foto";
+      }
 
-        await api.put(DETAILENDPOINT.update.additional(state.id), formData, {
-          timeout: 60_000,
-        });
-      } else if (hasAdditionalFieldChange) {
+      if (hasAdditionalFieldChange || fotoFile) {
         await apiService(
           "put",
           api,
