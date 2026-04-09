@@ -184,7 +184,7 @@ export default function Additional() {
   return (
     <div className="w-full justify-between flex flex-col flex-1 gap-5">
       <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
-        <div className="md:col-span-1">
+        {/* <div className="md:col-span-1">
           <p className="font-Poppins font-normal opacity-50 text-sm">Foto</p>
           <img
             src={imagePreview}
@@ -195,7 +195,7 @@ export default function Additional() {
               event.currentTarget.src = "/assets/images/profile.jpg";
             }}
           />
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-4 gap-x-5 gap-y-10 md:col-span-4">
           {additionalFields.map((item) => (
