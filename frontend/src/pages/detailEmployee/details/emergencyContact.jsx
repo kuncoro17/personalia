@@ -8,7 +8,6 @@ import { apiClient, apiService } from "../../../service/api";
 import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
-import { onAddNew } from "../../../utils/detailService";
 import { formatDataDetail } from "../../../utils/format";
 import { PROPERTIES } from "../constant";
 import { DETAILENDPOINT } from "../../../constants/api";
@@ -180,6 +179,44 @@ export default function EmergencyContact() {
     }
   };
 
+  const onCreate = async (value, onClose) => {
+    try {
+      const getFieldValue = (fieldValue) => {
+        if (fieldValue === undefined || fieldValue === null) return "";
+        return typeof fieldValue === "string" ? fieldValue.trim() : fieldValue;
+      };
+
+      const payload = {
+        karyawan_id: employeeId,
+        nama_kondar: getFieldValue(value.nama_kondar),
+        hubungan_kondar: getFieldValue(value.hubungan_kondar),
+        alamat_kondar: getFieldValue(value.alamat_kondar),
+        telp_darurat: getFieldValue(value.telp_darurat),
+        no_hp: getFieldValue(value.no_hp),
+      };
+
+      await apiService(
+        "post",
+        api,
+        DETAILENDPOINT.create.emergencyContact(),
+        payload,
+      );
+
+      await queryClient.invalidateQueries([`darurat-${employeeId}`]);
+      onClose();
+    } catch (error) {
+      console.error("Create Error:", error);
+
+      if (error.type === "HTTP_ERROR") {
+        alert(`Gagal menambah:\n\n${error.message || "Unknown error"}`);
+      } else if (error.type === "NO_RESPONSE") {
+        alert("Server tidak merespons. Periksa koneksi internet.");
+      } else {
+        alert("Terjadi kesalahan. Silakan coba lagi.");
+      }
+    }
+  };
+
   if (daruratFetching) return <Loading />;
 
   return (
@@ -305,15 +342,7 @@ export default function EmergencyContact() {
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onUpdate={(value, onClose) =>
-          selectedEdit !== null
-            ? onUpdate(value, onClose)
-            : onAddNew(
-                value,
-                queryClient,
-                "kontak_darurat",
-                `darurat-${employeeId}`,
-                onClose,
-              )
+          selectedEdit !== null ? onUpdate(value, onClose) : onCreate(value, onClose)
         }
       />
     </div>

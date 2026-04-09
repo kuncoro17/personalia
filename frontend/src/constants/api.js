@@ -42,6 +42,7 @@ export const DETAILENDPOINT = {
     contract: () => `personalia/kontrak`,
     location: () => `unit-kerja-karyawan/created`,
     education: () => `riw-pendidikan-kar`,
+    emergencyContact: () => `personalia/kontak-darurat/create`,
     family: () => `personalia/keluarga`,
     address: (employeeId) => `master-alamat/create/${employeeId}/alamat`,
   },
