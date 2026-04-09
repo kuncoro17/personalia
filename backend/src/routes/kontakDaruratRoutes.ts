@@ -50,9 +50,13 @@ export const prsKontakDaruratRoutes = (app: OpenAPIHono) => {
     .object({
       id: z.string().uuid().optional(),
       karyawan_id: z.string().uuid(),
-      nama_kontak: z.string(),
-      hubungan: z.string(),
-      nomor_telepon: z.string(),
+      nama_kondar: z.string(),
+      telp_darurat: z.string().nullable().optional(),
+      email: z.string().email().nullable().optional(),
+      kategori_kontak: z.string().nullable().optional(),
+      no_hp: z.string().nullable().optional(),
+      hubungan_kondar: z.string().nullable().optional(),
+      alamat_kondar: z.string().nullable().optional(),
     })
     .openapi('KontakDarurat');
 
