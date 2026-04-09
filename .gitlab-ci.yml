@@ -261,7 +261,7 @@ deploy-staging:
     # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
 
     # Copy backend
-    - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $STAGING_SERVER_PORT" backend/ "$STAGING_TARGET:/opt/$APP_NAME/backend/"
+    - rsync -rlvz --delete --no-perms --no-owner --no-group --exclude 'uploads/' --exclude 'uploads/**' -e "ssh -p $STAGING_SERVER_PORT" backend/ "$STAGING_TARGET:/opt/$APP_NAME/backend/"
 
     # Copy frontend
     - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $STAGING_SERVER_PORT" frontend/ "$STAGING_TARGET:/opt/$APP_NAME/frontend/"
