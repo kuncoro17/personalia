@@ -253,8 +253,9 @@ deploy-staging:
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
 
     # Copy deployment artifacts
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend &&
-      sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/backend/uploads/karyawan /opt/$APP_NAME/backend/uploads/docs /opt/$APP_NAME/frontend &&
+      sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME &&
+      sudo chown -R 1001:1001 /opt/$APP_NAME/backend/uploads"
     # - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "mkdir -p /opt/$APP_NAME"
     # - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
     # - rsync -avz -e "ssh -p $STAGING_SERVER_PORT" deployment/ $STAGING_SERVER_USER@$STAGING_SERVER_IP:/opt/$APP_NAME/personalia-jkt
@@ -267,13 +268,14 @@ deploy-staging:
 
     - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $STAGING_SERVER_PORT" deployment/ "$STAGING_TARGET:/opt/$APP_NAME/deployment/"
     - scp -P "$STAGING_SERVER_PORT" backend/.env.staging "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/backend/uploads/karyawan /opt/$APP_NAME/backend/uploads/docs /opt/$APP_NAME/frontend"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging'"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "rm -rf '$STAGING_TMP_DIR'"
 
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/frontend &&
-      sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/backend/uploads/karyawan /opt/$APP_NAME/backend/uploads/docs /opt/$APP_NAME/frontend &&
+      sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME &&
+      sudo chown -R 1001:1001 /opt/$APP_NAME/backend/uploads"
     # Pull + run services
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
     - |
@@ -328,7 +330,8 @@ deploy-production:
     # Copy deployment artifacts
     - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $PRODUCTION_SERVER_PORT" deployment/ "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/"
     - scp -P "$PRODUCTION_SERVER_PORT" /tmp/.env.production "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/.env.production"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo mkdir -p /opt/$APP_NAME/deployment /opt/$APP_NAME/backend/uploads /opt/$APP_NAME/backend/uploads/karyawan /opt/$APP_NAME/backend/uploads/docs &&
+      sudo chown -R 1001:1001 /opt/$APP_NAME/backend/uploads && sudo chmod -R 775 /opt/$APP_NAME/backend/uploads"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production'"
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "rm -rf '$PRODUCTION_TMP_DIR'"
