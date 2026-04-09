@@ -51,6 +51,7 @@ export default function Additional() {
         "tempat_lahir",
         "birth_date",
         "gol_darah",
+        "foto",
         "instagram",
         "twitter",
         "no_kitas",
