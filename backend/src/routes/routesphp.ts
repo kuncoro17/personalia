@@ -43,6 +43,8 @@ export const presensiRoutes = (app: OpenAPIHono) => {
           },
         },
         400: { description: 'Bad request, userid wajib diisi' },
+        502: { description: 'Upstream PHP mengembalikan response tidak valid' },
+        504: { description: 'Upstream PHP timeout atau tidak dapat dihubungi' },
         500: { description: 'Server error' },
       },
     }),

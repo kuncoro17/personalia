@@ -13,6 +13,11 @@ export const getPresensi = async (c: Context) => {
     const phpResponse = await PresensiService.getLatest(userid);
     return c.json(phpResponse); // kembalikan langsung JSON PHP
   } catch (err: any) {
-    return c.json({ success: false, message: err.message }, 500);
+    const status =
+      typeof err?.status === 'number' && err.status >= 100 && err.status <= 599
+        ? err.status
+        : 500;
+
+    return c.json({ success: false, message: err.message }, status);
   }
 };
