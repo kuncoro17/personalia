@@ -9,8 +9,11 @@ import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import Barcode from "react-barcode";
 
+import { resolveApiAssetUrl } from "../../../service/api";
+
 function CardFront({ item }) {
   const barcodeValue = String(item?.nik ?? "").trim() || "000000";
+  const imageSrc = item?.foto ? resolveApiAssetUrl(item.foto) : "";
 
   return (
     <div
@@ -30,7 +33,19 @@ function CardFront({ item }) {
         />
       </div>
 
-      <div className="overflow-hidden bg-green-200 w-[100px] [aspect-ratio:1]" />
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt={item?.nama_lengkap || "Foto karyawan"}
+          className="overflow-hidden w-[100px] [aspect-ratio:1] rounded-md object-cover"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : (
+        <div className="overflow-hidden bg-green-200 w-[100px] [aspect-ratio:1]" />
+      )}
 
       <div className="text-center">
         <p className="font-bold font-TimesNewRoman">{item?.nama_lengkap}</p>

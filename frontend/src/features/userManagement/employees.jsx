@@ -2,6 +2,7 @@ import { Modal, Tooltip, useDisclosure } from "@heroui/react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { resolveApiAssetUrl } from "../../service/api";
 import { TableViewer } from "./components/tableViewer";
 import { CardViewer } from "./components/cardViewer";
 import {
@@ -22,6 +23,18 @@ export default function Employees({
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   const [selectedPrint, setSelectedPrint] = useState(null);
+
+  const getEmployeeImageSrc = (item) => {
+    if (item?.foto) {
+      return resolveApiAssetUrl(item.foto);
+    }
+
+    if (!String(item?.nik ?? "").trim()) {
+      return "/image/1.svg";
+    }
+
+    return "/assets/images/profile.jpg";
+  };
 
   const dataTable = useMemo(
     () =>
@@ -76,9 +89,15 @@ export default function Employees({
           >
             <div className="flex justify-center">
               <img
-                src="/assets/images/profile.jpg"
-                alt="logo"
-                className="h-full aspect-square rounded-md"
+                src={getEmployeeImageSrc(item)}
+                alt={item.nama_lengkap || "Foto karyawan"}
+                className="h-full aspect-square rounded-md object-cover"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = !String(item?.nik ?? "").trim()
+                    ? "/image/1.svg"
+                    : "/assets/images/profile.jpg";
+                }}
               />
             </div>
 
