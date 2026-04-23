@@ -4,10 +4,12 @@ FROM ${NODE_IMAGE} AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first so dependency install can be cached separately.
 COPY package*.json ./
 
-# Install ALL dependencies (include devDependencies needed for build)
+# Build needs devDependencies such as TypeScript and Vite.
+# `npm ci` has been flaky in this Alpine-based image on local Docker,
+# so use `npm install` for a more reliable builder setup.
 RUN npm install --include=dev --no-audit --no-fund && npm cache clean --force
 
 # Copy source code
@@ -26,13 +28,14 @@ ENV VITE_CLERK_SIGN_IN_URL=$VITE_CLERK_SIGN_IN_URL
 ENV VITE_CLERK_DOMAIN=$VITE_CLERK_DOMAIN
 ENV VITE_CLERK_IS_SATELLITE=$VITE_CLERK_IS_SATELLITE
 
-# Build the application
-RUN npm run build
+# Build the production assets, then drop node_modules from the builder layer.
+RUN npm run build && rm -rf node_modules
 
 # Production stage
 FROM ${NODE_IMAGE} AS production
 
 WORKDIR /app
+ENV PORT=3002
 
 # Install dumb-init for proper signal handling.
 RUN if command -v apk >/dev/null 2>&1; then \
@@ -58,12 +61,12 @@ COPY --from=builder --chown=reactjs:nodejs /app/dist ./dist
 USER reactjs
 
 # Expose production port
-EXPOSE 3000
+EXPOSE 3002
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+  CMD ["sh", "-c", "wget --no-verbose --tries=1 --spider http://localhost:${PORT}/ || exit 1"]
 
 # Start the application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT}"]

@@ -6,7 +6,7 @@ import {
 // src/services/servicephp.ts
 export class PresensiService {
   static async getLatest(userid: string) {
-    const url = `https://plims.bpkpenaburjakarta.or.id/presensi/absensi/latest?userid=${encodeURIComponent(userid)}`;
+    const url = `https://plims.bpkpenaburjakarta.or.id/presensi/latest?userid=${encodeURIComponent(userid)}`;
 
     let res: Response;
 
