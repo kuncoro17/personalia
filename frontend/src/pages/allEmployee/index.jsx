@@ -36,12 +36,7 @@ export default function AllKaryawan() {
     [limitPage],
   );
 
-  const {
-    data,
-    isFetching,
-    refetch,
-    error,
-  } = useMaster(
+  const { data, isFetching, refetch, error } = useMaster(
     api,
     ["allKaryawan", page, limitPage],
     EMPLOYEEENDPOINT.getAll(page.initial, selectedLimit),
@@ -216,7 +211,9 @@ export default function AllKaryawan() {
           ) : error || searchError ? (
             <div className="w-full flex items-center justify-center min-h-20">
               <p className="font-Poppins text-primary opacity-70 text-center">
-                {searchError?.message || error?.message || "Gagal memuat data karyawan"}
+                {searchError?.message ||
+                  error?.message ||
+                  "Gagal memuat data karyawan"}
               </p>
             </div>
           ) : (data?.data?.length ?? 0) === 0 ||

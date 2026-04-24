@@ -14,27 +14,22 @@ export default function EmployeeStatus() {
     data: statusSummary = {},
     isFetching,
     error,
-  } = useMaster(
-    api,
-    ["statusKaryawan"],
-    MASTERENDPOINT.statusKaryawan,
-    {
-      enabled: isLoaded && isSignedIn,
-      returnEmptyOnError: false,
-      select: (response) => {
-        const rows = response?.data ?? [];
-        if (!rows.length) return {};
+  } = useMaster(api, ["statusKaryawan"], MASTERENDPOINT.statusKaryawan, {
+    enabled: isLoaded && isSignedIn,
+    returnEmptyOnError: false,
+    select: (response) => {
+      const rows = response?.data ?? [];
+      if (!rows.length) return {};
 
-        return rows.reduce((acc, item) => {
-          const code = (item.stat_karyawan_gp ?? "").trim().replace("-", " ");
+      return rows.reduce((acc, item) => {
+        const code = (item.stat_karyawan_gp ?? "").trim().replace("-", " ");
 
-          if (!code) return acc;
-          acc[code] = (acc[code] ?? 0) + 1;
-          return acc;
-        }, {});
-      },
+        if (!code) return acc;
+        acc[code] = (acc[code] ?? 0) + 1;
+        return acc;
+      }, {});
     },
-  );
+  });
 
   if (isFetching) return <Loading />;
   if (error)
