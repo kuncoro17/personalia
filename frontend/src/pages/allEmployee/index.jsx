@@ -22,7 +22,7 @@ import { EMPLOYEEENDPOINT } from "../../constants/api";
 import { LIMITPAGE, PROPFORM } from "../../constants/ui";
 
 export default function AllKaryawan() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const api = apiClient(getToken);
   const queryClient = useQueryClient();
 
@@ -36,11 +36,18 @@ export default function AllKaryawan() {
     [limitPage],
   );
 
-  const { data, isFetching, refetch } = useMaster(
+  const {
+    data,
+    isFetching,
+    refetch,
+    error,
+  } = useMaster(
     api,
     ["allKaryawan", page, limitPage],
     EMPLOYEEENDPOINT.getAll(page.initial, selectedLimit),
     {
+      enabled: isLoaded && isSignedIn,
+      returnEmptyOnError: false,
       select: (data) => {
         const rows = data?.data?.data ?? [];
         const pagination = data?.data?.pagination ?? {};
@@ -70,8 +77,10 @@ export default function AllKaryawan() {
     data: searchData,
     isFetching: searchFetching,
     refetch: searchRefetch,
+    error: searchError,
   } = useMaster(api, ["search"], EMPLOYEEENDPOINT.search(search), {
     enabled: false,
+    returnEmptyOnError: false,
     select: (data) => {
       const rows = data?.data?.data ?? [];
 
@@ -203,6 +212,12 @@ export default function AllKaryawan() {
           {isFetching || searchFetching ? (
             <div className="w-full flex items-center justify-center min-h-20">
               <Spinner size="md" color="primary" />
+            </div>
+          ) : error || searchError ? (
+            <div className="w-full flex items-center justify-center min-h-20">
+              <p className="font-Poppins text-primary opacity-70 text-center">
+                {searchError?.message || error?.message || "Gagal memuat data karyawan"}
+              </p>
             </div>
           ) : (data?.data?.length ?? 0) === 0 ||
             ((searchData?.data?.length ?? 0) === 0 &&

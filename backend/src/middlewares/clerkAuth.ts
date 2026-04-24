@@ -27,6 +27,41 @@ const normalizeMultilineEnv = (value?: string): string | undefined => {
   return stripOptionalQuotes(value)?.replace(/\\n/g, '\n');
 };
 
+const DEFAULT_AUTHORIZED_PARTIES = [
+  'https://staging-new-sas.bpkpenaburjakarta.or.id',
+  'http://localhost:5173',
+];
+
+const getAuthorizedParties = (): string[] => {
+  const configured = stripOptionalQuotes(process.env.CLERK_AUTHORIZED_PARTIES);
+
+  if (!configured) return DEFAULT_AUTHORIZED_PARTIES;
+
+  const parsedConfigured = configured
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+
+  return Array.from(
+    new Set([...DEFAULT_AUTHORIZED_PARTIES, ...parsedConfigured])
+  );
+};
+
+const buildClerkVerifyOptions = (): VerifyTokenOptions => {
+  const secretKey = stripOptionalQuotes(process.env.CLERK_SECRET_KEY);
+  const jwtKey = normalizeMultilineEnv(process.env.CLERK_JWT_KEY);
+  const authorizedParties = getAuthorizedParties();
+  const verifyOptions: VerifyTokenOptions = {};
+
+  if (secretKey) verifyOptions.secretKey = secretKey;
+  if (jwtKey) verifyOptions.jwtKey = jwtKey;
+  if (authorizedParties.length > 0) {
+    verifyOptions.authorizedParties = authorizedParties;
+  }
+
+  return verifyOptions;
+};
+
 const extractBearerToken = (authHeader?: string): string | null => {
   if (!authHeader) return null;
   const [scheme, token] = authHeader.trim().split(/\s+/);
@@ -51,13 +86,7 @@ export const clerkAuthMiddleware: MiddlewareHandler<{
 
   // 🔹 1. Clerk verification
   try {
-    const secretKey = stripOptionalQuotes(process.env.CLERK_SECRET_KEY);
-    const jwtKey = normalizeMultilineEnv(process.env.CLERK_JWT_KEY);
-    const verifyOptions: VerifyTokenOptions = {};
-
-    if (secretKey) verifyOptions.secretKey = secretKey;
-    if (jwtKey) verifyOptions.jwtKey = jwtKey;
-
+    const verifyOptions = buildClerkVerifyOptions();
     const payload = await verifyToken(token, verifyOptions);
     c.set('auth', payload as ClerkAuthPayload);
     return await next();
@@ -95,13 +124,7 @@ export const getCurrentUser: MiddlewareHandler<{
   }
 
   try {
-    const secretKey = stripOptionalQuotes(process.env.CLERK_SECRET_KEY);
-    const jwtKey = normalizeMultilineEnv(process.env.CLERK_JWT_KEY);
-    const verifyOptions: VerifyTokenOptions = {
-      ...(secretKey ? { secretKey } : {}),
-      ...(jwtKey ? { jwtKey } : {}),
-    };
-
+    const verifyOptions = buildClerkVerifyOptions();
     const payload = await verifyToken(token, verifyOptions);
     if (!payload.email) {
       throw new HTTPException(401, { message: 'Email not found in token' });

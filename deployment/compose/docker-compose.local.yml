@@ -1,7 +1,9 @@
+name: personalia-jkt
+
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: personalia-postgres-local
+    container_name: personalia-jkt-postgres-local
     ports:
       - "${DB_EXTERNAL_PORT:-5433}:5432"
     environment:
@@ -27,7 +29,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: personalia-redis-local
+    container_name: personalia-jkt-redis-local
     ports:
       - "${REDIS_EXTERNAL_PORT:-6380}:6379"
     command: redis-server --appendonly yes --appendfsync everysec
@@ -50,7 +52,7 @@ services:
       args:
         NODE_IMAGE: ${NODE_IMAGE:-node:20-alpine}
     image: personalia/backend:local
-    container_name: personalia-backend-local
+    container_name: personalia-jkt-backend-local
     ports:
       - "${BACKEND_EXTERNAL_PORT:-3001}:3001"
     env_file:
@@ -91,7 +93,7 @@ services:
 
   frontend:
     image: ${NODE_IMAGE:-node:20-alpine}
-    container_name: personalia-frontend-local
+    container_name: personalia-jkt-frontend-local
     command: ["node", "/app/serve-static.mjs", "/app/dist", "3000"]
     ports:
       - "${FRONTEND_EXTERNAL_PORT:-3002}:3000"
@@ -119,7 +121,7 @@ services:
 
   loki:
     image: grafana/loki:2.9.0
-    container_name: personalia-loki-local
+    container_name: personalia-jkt-loki-local
     ports:
       - "${LOKI_EXTERNAL_PORT:-3100}:3100"
     command: -config.file=/etc/loki/local-config.yaml
@@ -145,7 +147,7 @@ services:
 
   promtail:
     image: grafana/promtail:2.9.0
-    container_name: personalia-promtail-local
+    container_name: personalia-jkt-promtail-local
     command: -config.file=/etc/promtail/config.yml -config.expand-env=true
     environment:
       LOKI_ENDPOINT: ${LOKI_ENDPOINT:-http://loki:3100/loki/api/v1/push}

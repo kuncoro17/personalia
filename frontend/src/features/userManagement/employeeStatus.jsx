@@ -7,14 +7,20 @@ import { useMaster } from "../../hooks/useMaster";
 import { MASTERENDPOINT } from "../../constants/api";
 
 export default function EmployeeStatus() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const api = apiClient(getToken);
 
-  const { data: statusSummary = {}, isFetching } = useMaster(
+  const {
+    data: statusSummary = {},
+    isFetching,
+    error,
+  } = useMaster(
     api,
     ["statusKaryawan"],
     MASTERENDPOINT.statusKaryawan,
     {
+      enabled: isLoaded && isSignedIn,
+      returnEmptyOnError: false,
       select: (response) => {
         const rows = response?.data ?? [];
         if (!rows.length) return {};
@@ -31,6 +37,14 @@ export default function EmployeeStatus() {
   );
 
   if (isFetching) return <Loading />;
+  if (error)
+    return (
+      <div className="w-full flex items-center justify-center min-h-20">
+        <p className="font-Poppins text-primary opacity-70 text-center">
+          {error.message || "Gagal memuat status karyawan"}
+        </p>
+      </div>
+    );
   if (!Object.keys(statusSummary).length) return <NoData />;
 
   return (

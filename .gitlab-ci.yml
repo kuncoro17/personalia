@@ -301,8 +301,8 @@ deploy-staging:
 
     # Diagnostics
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-jkt-backend --since 5m --tail 80 || true"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker logs personalia-jkt-frontend --since 5m --tail 80 || true"
 
   environment:
     name: staging
@@ -357,8 +357,8 @@ deploy-production:
 
     # Diagnostics
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-production' FRONTEND_IMAGE='$CONTAINER_IMAGE:frontend-production' BACKEND_ENV_FILE='.env.production' && docker compose -f deployment/compose/docker-compose.staging.yml ps"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-backend --since 5m --tail 80 || true"
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-frontend --since 5m --tail 80 || true"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-jkt-backend --since 5m --tail 80 || true"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker logs personalia-jkt-frontend --since 5m --tail 80 || true"
 
   environment:
     name: production
@@ -383,11 +383,11 @@ health-check-staging:
     - echo "Waiting for services to be ready..."
     - sleep 20
     - echo "Running migrations..."
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker exec personalia-backend npm run migrate"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker exec personalia-jkt-backend npm run migrate"
     - echo "Checking backend container health..."
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-backend | grep -q '^healthy$'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-backend | grep -q '^healthy$'"
     - echo "Checking frontend container health..."
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-frontend | grep -q '^healthy$'"
+    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-frontend | grep -q '^healthy$'"
     - 'echo "Public endpoint check (non-blocking): https://$STAGING_DOMAIN/health"'
     - 'wget -q --spider "https://$STAGING_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
   rules:
@@ -406,9 +406,9 @@ health-check-production:
     - echo "Waiting for services to be ready..."
     - sleep 20
     - echo "Checking backend container health..."
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-backend | grep -q '^healthy$'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-backend | grep -q '^healthy$'"
     - echo "Checking frontend container health..."
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-frontend | grep -q '^healthy$'"
+    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-frontend | grep -q '^healthy$'"
     - 'echo "Public endpoint check (non-blocking): https://$PRODUCTION_DOMAIN/health"'
     - 'wget -q --spider "https://$PRODUCTION_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
   rules:
