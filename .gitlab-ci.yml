@@ -298,8 +298,10 @@ deploy-staging:
         export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && \
         echo '=== Stopping existing staging stack before deploy ===' && \
         docker compose -f deployment/compose/docker-compose.staging.yml down --remove-orphans || true && \
-        echo '=== Removing legacy observability containers that may still hold port 3100 ===' && \
-        docker rm -f personalia-loki personalia-promtail || true"
+        echo '=== Removing legacy containers that may still hold staging ports ===' && \
+        docker rm -f personalia-backend personalia-frontend personalia-loki personalia-promtail || true && \
+        echo '=== Current port owners after cleanup ===' && \
+        docker ps --format 'table {{.Names}}\t{{.Ports}}' || true"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml pull"
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "cd /opt/$APP_NAME && export BACKEND_IMAGE='$CONTAINER_IMAGE:backend-staging' FRONTEND_IMAGE='$CONTAINER_IMAGE:personalia-frontend' BACKEND_ENV_FILE='.env.staging' && docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans"
 
