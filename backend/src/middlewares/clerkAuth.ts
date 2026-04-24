@@ -29,6 +29,7 @@ const normalizeMultilineEnv = (value?: string): string | undefined => {
 
 const DEFAULT_AUTHORIZED_PARTIES = [
   'https://staging-new-sas.bpkpenaburjakarta.or.id',
+  'https://staging-personalia.bpkpenaburjakarta.or.id',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3002',
