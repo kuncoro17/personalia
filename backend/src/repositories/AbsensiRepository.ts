@@ -4,6 +4,9 @@ import { AbsensiPivotRow } from '../types/AbsensiPivot';
 import { QueryTypes, Transaction } from 'sequelize';
 import AbsensiPivot from '../models/AbsensiModelBagian';
 
+
+
+
 export class AbsensiRepository {
   async getAbsensiPivot(
     startDate: string,
