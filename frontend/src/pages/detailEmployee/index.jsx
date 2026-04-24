@@ -91,15 +91,13 @@ export default function EmployeeDetail() {
             <div className="flex flex-col flex-1 items-center gap-1">
               <img
                 src={
-                  data?.foto
-                    ? resolveApiAssetUrl(data.foto)
-                    : "/assets/images/profile.jpg"
+                  data?.foto ? resolveApiAssetUrl(data.foto) : "/image/1.svg"
                 }
                 alt="Foto karyawan"
                 className="rounded-md aspect-square w-full"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
-                  event.currentTarget.src = "/assets/images/profile.jpg";
+                  event.currentTarget.src = "/image/1.svg";
                 }}
               />
 

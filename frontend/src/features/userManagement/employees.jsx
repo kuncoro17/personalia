@@ -29,11 +29,7 @@ export default function Employees({
       return resolveApiAssetUrl(item.foto);
     }
 
-    if (!String(item?.nik ?? "").trim()) {
-      return "/image/1.svg";
-    }
-
-    return "/assets/images/profile.jpg";
+    return "/image/1.svg";
   };
 
   const dataTable = useMemo(
@@ -87,16 +83,14 @@ export default function Employees({
               }
             }}
           >
-            <div className="flex justify-center">
+            <div className="flex justify-center w-24 h-24">
               <img
                 src={getEmployeeImageSrc(item)}
                 alt={item.nama_lengkap || "Foto karyawan"}
-                className="h-full aspect-square rounded-md object-cover"
+                className="w-full h-full rounded-md object-cover"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
-                  event.currentTarget.src = !String(item?.nik ?? "").trim()
-                    ? "/image/1.svg"
-                    : "/assets/images/profile.jpg";
+                  event.currentTarget.src = "/image/1.svg";
                 }}
               />
             </div>
