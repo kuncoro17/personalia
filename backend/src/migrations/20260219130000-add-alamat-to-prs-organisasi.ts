@@ -10,9 +10,32 @@ const TARGET_TABLES = [
   'prs_direktur',
 ];
 
+const normalizeTableName = (table: unknown): string => {
+  if (typeof table === 'string') return table;
+
+  if (
+    table &&
+    typeof table === 'object' &&
+    'tableName' in table &&
+    typeof (table as { tableName?: unknown }).tableName === 'string'
+  ) {
+    return (table as { tableName: string }).tableName;
+  }
+
+  return '';
+};
+
 const migration: Migration = {
   async up({ queryInterface, transaction }) {
+    const existingTables = new Set(
+      (await queryInterface.showAllTables())
+        .map(normalizeTableName)
+        .filter(Boolean)
+    );
+
     for (const tableName of TARGET_TABLES) {
+      if (!existingTables.has(tableName)) continue;
+
       const table = await queryInterface.describeTable(tableName);
       if (COLUMN_NAME in table) continue;
 
@@ -30,7 +53,15 @@ const migration: Migration = {
   },
 
   async down({ queryInterface, transaction }) {
+    const existingTables = new Set(
+      (await queryInterface.showAllTables())
+        .map(normalizeTableName)
+        .filter(Boolean)
+    );
+
     for (const tableName of TARGET_TABLES) {
+      if (!existingTables.has(tableName)) continue;
+
       const table = await queryInterface.describeTable(tableName);
       if (!(COLUMN_NAME in table)) continue;
 
