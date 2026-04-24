@@ -14,6 +14,7 @@ const loadEnv = (): void => {
     path.resolve(process.cwd(), '.env.local'),
     path.resolve(process.cwd(), 'backend/.env'),
     path.resolve(process.cwd(), 'backend/.env.local'),
+     path.resolve(process.cwd(), 'backend/.env.staging'),
   ];
 
   for (const envPath of candidates) {
