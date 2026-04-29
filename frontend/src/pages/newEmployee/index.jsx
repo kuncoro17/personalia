@@ -22,6 +22,9 @@ export default function NewEmployeePage() {
 
   return (
     <Layout>
+      <head>
+        <meta name="robots" content="noindex, nofollow"/>
+      </head>
       <section className="container px-4 flex-grow flex-1 flex flex-col gap-4">
         <div className="flex items-center bg-primary min-h-52 w-full rounded-2xl px-7 relative">
           <div className="flex flex-col gap-3">
