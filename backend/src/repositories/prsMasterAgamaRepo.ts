@@ -3,11 +3,11 @@ import PrsMasterAgama from '../models/PrsMasterAgama';
 
 class PrsMasterAgamaRepository {
   async findAll() {
-  return await PrsMasterAgama.findAll({
-    raw: true,
-    order: [['kode_agama', 'ASC']],
-  });
-}
+    return await PrsMasterAgama.findAll({
+      raw: true,
+      order: [['kode_agama', 'ASC']],
+    });
+  }
 
   async findById(kode_agama: number) {
     return await PrsMasterAgama.findByPk(kode_agama, { raw: true });
