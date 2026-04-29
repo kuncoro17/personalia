@@ -117,7 +117,7 @@ export default function AllKaryawan() {
   return (
     <Layout>
       <head>
-        <meta name="robots" content="noindex, nofollow"/>
+        <meta name="robots" content="noindex, nofollow" />
       </head>
       <section className="flex flex-col gap-10 flex-1 px-6 pb-5">
         <EmployeeStatus />

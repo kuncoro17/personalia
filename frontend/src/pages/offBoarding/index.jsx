@@ -4,7 +4,7 @@ export default function OffBoardingPage() {
   return (
     <Layout>
       <head>
-        <meta name="robots" content="noindex, nofollow"/>
+        <meta name="robots" content="noindex, nofollow" />
       </head>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10"></section>
     </Layout>
