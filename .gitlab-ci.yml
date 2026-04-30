@@ -1,9 +1,18 @@
+# stages:
+#   - validate
+#   - test
+#   - build
+#   - deploy
+#   - post-deploy
+
 stages:
   - validate
   - test
   - build
-  - deploy
-  - post-deploy
+  - deploy-staging
+  - smoke-staging
+  - deploy-production
+  - smoke-production
 
 variables:
   LOG_LEVEL: INFO
@@ -240,7 +249,7 @@ build-frontend-production:
 # ==================== DEPLOY ====================
 
 deploy-staging:
-  stage: deploy
+  stage: deploy-staging
   <<: *deploy-template
   script:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
@@ -324,7 +333,7 @@ deploy-staging:
     - build-frontend-staging
 
 deploy-production:
-  stage: deploy
+  stage: deploy-production
   <<: *deploy-template
   script:
     - echo "Deploying to production server..."
@@ -376,6 +385,7 @@ deploy-production:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
+  allow_failure: false
   needs:
     - build-backend-production
     - build-frontend-production
@@ -383,7 +393,7 @@ deploy-production:
 # ==================== POST-DEPLOY ====================
 
 health-check-staging:
-  stage: post-deploy
+  stage:  smoke-staging
   <<: *deploy-template
   script:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'
@@ -406,7 +416,7 @@ health-check-staging:
     - deploy-staging
 
 health-check-production:
-  stage: post-deploy
+  stage: smoke-production
   <<: *deploy-template
   script:
     - '[ -n "$PRODUCTION_SERVER_USER" ] || (echo "Missing CI variable: PRODUCTION_SERVER_USER" && exit 1)'

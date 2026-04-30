@@ -1,14 +1,23 @@
-# Personalia JKT (Fullstack)
+# Personalia JKT
 
-Monorepo fullstack untuk aplikasi Personalia JKT:
+Monorepo fullstack untuk aplikasi Personalia JKT.
 
-- `backend` (Node.js API)
-- `frontend` (Vite)
-- `deployment` (Docker Compose, Nginx template, observability)
+- `backend`: Node.js API berbasis Hono
+- `frontend`: React, Vite, Tailwind CSS, dan HeroUI
+- `deployment`: Docker Compose, konfigurasi Nginx, dan observability
+
+Repo ini memakai alur branch `dev` untuk staging dan `main` untuk production. Perubahan developer sebaiknya masuk lewat branch feature, dibuat Merge Request, lalu dimerge ke branch target sesuai kebutuhan release.
+
+## Stack
+
+- Node.js 20
+- Backend: Hono, TypeScript, Sequelize, PostgreSQL, Redis
+- Frontend: React 18, Vite, Tailwind CSS, HeroUI, React Router
+- Auth: Clerk
+- Runtime: Docker + Nginx
+- CI/CD: GitLab CI
 
 ## Arsitektur Staging
-
-Staging dijalankan dengan Docker Compose di server, sedangkan Nginx berjalan di host (manual, bukan container).
 
 Service utama di server:
 
@@ -22,16 +31,16 @@ Domain staging:
 - Frontend: `https://staging-personalia.bpkpenaburjakarta.or.id`
 - API publik: `https://api-staging-personalia.bpkpenaburjakarta.or.id`
 
-Catatan CORS (testing dari localhost):
-
-- Kalau frontend dijalankan di `http://localhost:5173` dan kamu set `VITE_API_URL` ke domain staging, browser akan melakukan request cross-origin ke `api-staging...`.
-- Pastikan backend staging mengizinkan origin tersebut lewat `CORS_ALLOWED_ORIGINS` (contoh: `http://localhost:5173`) dan request tidak diblok oleh layer WAF/Cloudflare, kalau tidak akan muncul error `Access-Control-Allow-Origin missing` (403).
-
 Routing Nginx host:
 
 - `staging-personalia...` path `/` -> `127.0.0.1:3000`
 - `staging-personalia...` path `/api/` -> `127.0.0.1:3001`
 - `api-staging-personalia...` -> `127.0.0.1:3001`
+
+Catatan CORS untuk testing dari localhost:
+
+- Kalau frontend dijalankan di `http://localhost:5173` dan `VITE_API_URL` diarahkan ke domain staging, browser akan melakukan request cross-origin ke `api-staging...`.
+- Pastikan backend staging mengizinkan origin tersebut lewat `CORS_ALLOWED_ORIGINS`, contoh `http://localhost:5173`.
 
 ## Struktur Folder
 
@@ -51,13 +60,50 @@ deployment/
   observability/
     loki-config.yaml
     promtail-config.yaml
-    promtail-staging-config.yaml
 .gitlab-ci.yml
 ```
 
-## Menjalankan Lokal (Docker)
+## Local Development
 
-Contoh cepat:
+Gunakan Node.js 20 atau versi LTS yang kompatibel.
+
+Install dependency backend dan frontend:
+
+```bash
+npm --prefix backend ci
+npm --prefix frontend ci
+```
+
+Jalankan backend:
+
+```bash
+npm --prefix backend run dev
+```
+
+Jalankan frontend:
+
+```bash
+npm --prefix frontend run dev
+```
+
+Default Vite dev server biasanya berjalan di:
+
+```text
+http://localhost:5173
+```
+
+Untuk cek sebelum membuat Merge Request:
+
+```bash
+npm run lint:check
+npm run format:check
+npm run test:ci
+npm run build
+```
+
+## Local Docker
+
+Contoh menjalankan stack lokal lewat Docker Compose:
 
 ```bash
 docker compose \
@@ -68,10 +114,10 @@ docker compose \
 
 Akses default lokal:
 
-- FE: `http://localhost:3002`
-- BE: `http://localhost:3001`
+- Frontend: `http://localhost:3003`
+- Backend: `http://localhost:3002`
 
-Stop:
+Stop service:
 
 ```bash
 docker compose -f deployment/compose/docker-compose.local.yml down
@@ -85,12 +131,7 @@ Untuk local dev tanpa mengetik beberapa command manual:
 npm run dev
 ```
 
-Command ini akan:
-
-- build frontend di host dengan `VITE_API_URL=http://localhost:3001`
-- menyalakan `postgres`, `redis`, `backend`, dan `frontend` via Docker Compose
-- menunggu backend sehat di `http://localhost:3001`
-- menjalankan frontend Docker di `http://localhost:3002`
+Command ini akan menyiapkan frontend, menjalankan service Docker Compose yang dibutuhkan, menunggu backend sehat, lalu membuka flow lokal sesuai konfigurasi project.
 
 Untuk menghentikan container Docker yang dinyalakan flow ini:
 
@@ -98,58 +139,140 @@ Untuk menghentikan container Docker yang dinyalakan flow ini:
 npm run dev:stop
 ```
 
-## CI/CD (GitLab)
+## Environment Variables
 
-Pipeline utama tetap:
+Contoh variable ada di `.env.example`.
+
+Untuk local development, buat file `.env` sendiri:
+
+```bash
+cp .env.example .env
+```
+
+Jangan commit file berikut:
+
+- `.env`
+- `.env.local`
+- `.env.staging`
+- `.env.production`
+- secret key atau credential apa pun
+
+Variable secret untuk staging dan production harus disimpan di GitLab CI/CD Variables, bukan di repository.
+
+## Developer Workflow
+
+Jangan kerja langsung di `main`.
+
+Mulai dari branch terbaru:
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feature/login
+```
+
+Kerjakan perubahan, lalu cek di local sebelum push:
+
+```bash
+npm run lint:check
+npm run format:check
+npm run test:ci
+npm run build
+```
+
+Jika sudah aman, commit dan push branch:
+
+```bash
+git add .
+git commit -m "Add login feature"
+git push -u origin feature/login
+```
+
+Setelah push selesai, buka GitLab web untuk membuat Merge Request.
+
+## Membuat Merge Request di GitLab Web
+
+1. Buka halaman project di GitLab.
+2. Biasanya GitLab menampilkan tombol **Create merge request** untuk branch yang baru dipush.
+3. Klik **Create merge request**.
+4. Pastikan source branch adalah branch developer, contoh `feature/login`.
+5. Pilih target branch sesuai tujuan:
+   - `dev` untuk perubahan yang akan masuk staging.
+   - `main` untuk release production.
+6. Isi title dengan ringkas, contoh `Add login feature`.
+7. Isi description dengan poin perubahan dan cara test jika ada.
+8. Tunggu pipeline selesai.
+9. Jika pipeline hijau dan review sudah oke, MR bisa di-merge.
+
+Contoh nama branch:
+
+- `feature/login`
+- `feature/dashboard-filter`
+- `fix/navbar-mobile`
+- `fix/api-error-state`
+- `chore/update-dependencies`
+
+## CI/CD Flow
+
+Pipeline GitLab menjalankan stage berikut:
 
 - `validate`
-- `test`
 - `build`
-- `deploy`
-- `post-deploy` (health-check)
+- `deploy-staging`
+- `smoke-staging`
+- `deploy-production`
+- `smoke-production`
 
-Deploy staging dilakukan dari branch `dev`.
-Deploy production dilakukan manual dari branch `main`.
+Saat Merge Request dibuat, pipeline menjalankan validasi backend dan frontend.
 
-### CI Variables Wajib (Staging)
+Saat branch `dev` diperbarui:
 
+1. Backend dan frontend divalidasi.
+2. Test backend berjalan.
+3. Build frontend berjalan.
+4. Docker image staging dibuat dan dipush ke registry.
+5. Staging deploy otomatis.
+6. Staging health check berjalan.
+
+Saat branch `main` diperbarui:
+
+1. Backend dan frontend divalidasi.
+2. Test backend berjalan.
+3. Build frontend berjalan.
+4. Docker image production dibuat dan dipush ke registry.
+5. Production deploy tersedia sebagai manual job.
+6. Production health check berjalan setelah deploy sukses.
+
+## Required GitLab CI/CD Variables
+
+Shared:
+
+- `CONTAINER_IMAGE`
 - `SSH_PRIVATE_KEY`
+
+Staging:
+
 - `STAGING_SERVER_USER`
 - `STAGING_SERVER_IP`
 - `STAGING_DOMAIN`
-- `STAGING_FE_CLERK_PUBLISHABLE_KEY`
-
-### CI Variables Opsional (Staging)
-
-- `STAGING_FE_API_URL` (default: `/api`, direkomendasikan untuk same-origin via Nginx frontend)
-- `STAGING_API_DOMAIN` (dipakai jika `STAGING_FE_API_URL` tidak diisi; default fallback: `api-staging-personalia.bpkpenaburjakarta.or.id`)
+- `STAGING_FE_API_URL`
+- `STAGING_API_DOMAIN`
 - `STAGING_FE_CLERK_SIGN_IN_URL`
 - `STAGING_FE_CLERK_DOMAIN`
-- `STAGING_FE_CLERK_IS_SATELLITE` (default: `true`)
+- `STAGING_FE_CLERK_IS_SATELLITE`
 
-### CI Variables Wajib (Production)
+Production:
 
 - `BACKEND_ENV_PRODUCTION`
 - `PRODUCTION_SERVER_USER`
 - `PRODUCTION_SERVER_IP`
 - `PRODUCTION_DOMAIN`
-- `PRODUCTION_FE_CLERK_PUBLISHABLE_KEY`
 
-### CI Variables Opsional (Production)
+Variable tambahan seperti `CLERK_*`, `VITE_*`, database, Redis, dan credential lain mengikuti kebutuhan environment masing-masing.
 
-- `PRODUCTION_FE_API_URL` (default: `/api`)
-- `PRODUCTION_FE_CLERK_SIGN_IN_URL`
-- `PRODUCTION_FE_CLERK_DOMAIN`
-- `PRODUCTION_FE_CLERK_IS_SATELLITE` (default: `false`)
+## Deployment Staging Manual
 
-Catatan:
-
-- File `frontend/.env` hanya untuk lokal/developer machine.
-- Build image frontend di CI memakai `--build-arg` dari CI variables, bukan dari `frontend/.env`.
-
-## Deploy Staging Manual di Server (Jika Diperlukan)
-
-Masuk server:
+Jika perlu deploy manual di server:
 
 ```bash
 cd /opt/personalia-jkt
@@ -166,9 +289,9 @@ Cek service:
 docker compose -f deployment/compose/docker-compose.staging.yml ps
 ```
 
-## Nginx Host (Manual)
+## Nginx Host
 
-File template ada di repo:
+Template konfigurasi Nginx ada di:
 
 - `deployment/nginx/staging/frontend.conf`
 - `deployment/nginx/staging/api.conf`
@@ -183,35 +306,49 @@ sudo ln -sf /etc/nginx/sites-available/personalia-api /etc/nginx/sites-enabled/p
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-SSL dijalankan manual di server (Let's Encrypt).
+SSL dijalankan manual di server, misalnya dengan Let's Encrypt.
 
-## Health Checks
+## Useful Commands
 
-Health-check staging mengecek:
+Update branch feature dengan perubahan terbaru dari `dev`:
 
-- container backend/frontend/loki/promtail
-- endpoint lokal:
-  - `http://127.0.0.1:3001/health`
-  - `http://127.0.0.1:3000/`
-  - `http://127.0.0.1:3100/ready`
-  - `http://127.0.0.1:9080/ready`
-- endpoint publik FE dan API
+```bash
+git checkout dev
+git pull origin dev
+git checkout feature/login
+git merge dev
+```
+
+Hapus branch local setelah MR sudah merge:
+
+```bash
+git checkout dev
+git pull origin dev
+git branch -d feature/login
+```
+
+Preview production build frontend secara local:
+
+```bash
+npm --prefix frontend run build
+npm --prefix frontend run preview
+```
 
 ## Troubleshooting Singkat
 
-1. `Missing CI variable: STAGING_FE_CLERK_PUBLISHABLE_KEY`
+1. Missing CI variable
 
-- Tambahkan variable tersebut di GitLab CI/CD.
+Tambahkan variable yang disebutkan error ke GitLab CI/CD Variables.
 
-2. Loki restart / unhealthy
+2. Container backend/frontend tidak healthy
 
-- Cek `deployment/observability/loki-config.yaml` sudah tersalin benar.
-- Cek log: `docker logs personalia-loki --tail 200`.
+Cek log container di server:
 
-3. Promtail `unhealthy` karena `wget not found`
+```bash
+docker logs personalia-jkt-backend --tail 200
+docker logs personalia-jkt-frontend --tail 200
+```
 
-- Gunakan compose terbaru (healthcheck promtail sudah dihapus di staging).
+3. `no space left on device` saat deploy
 
-4. `no space left on device` saat deploy
-
-- Bersihkan Docker cache/image/container di server staging.
+Bersihkan Docker cache, image lama, dan container yang tidak dipakai di server.
