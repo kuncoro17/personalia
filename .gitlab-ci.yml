@@ -27,6 +27,17 @@ variables:
 default:
   image: node:20-alpine
 ##
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "dev" && $CI_COMMIT_BRANCH != "main"
+    - when: never
+
 .deploy-template: &deploy-template
   image: alpine:3.20
   before_script:
@@ -71,6 +82,22 @@ default:
 
 # ==================== VALIDATE ====================
 
+validate-merge-request:
+  stage: validate
+  before_script:
+    - rm -rf /tmp/.npm && mkdir -p /tmp/.npm
+  script:
+    - npm --prefix backend ci --cache /tmp/.npm --no-audit --no-fund --prefer-online --omit=optional
+    - npm --prefix frontend ci --cache /tmp/.npm --no-audit --no-fund --prefer-online
+    - npm --prefix backend run lint:check
+    - npm --prefix backend run format:check
+    - npm --prefix frontend run lint
+    - npm --prefix frontend run format:check
+    - npm --prefix frontend run build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "dev" && $CI_COMMIT_BRANCH != "main"
+
 lint-backend:
   stage: validate
   before_script:
@@ -84,7 +111,6 @@ lint-backend:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 lint-frontend:
   stage: validate
@@ -99,7 +125,6 @@ lint-frontend:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 # ==================== TEST ====================
 
@@ -156,7 +181,6 @@ test-backend:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   needs:
     - lint-backend
 
@@ -172,7 +196,6 @@ test-frontend:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
     - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   needs:
     - lint-frontend
 
