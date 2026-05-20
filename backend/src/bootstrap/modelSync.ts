@@ -27,6 +27,9 @@ import PrsStatusKaryawan from '../models/PrsStatusKaryawan';
 import PrsUnitKerja from '../models/PrsUnitKerja';
 import PrsUnitKerjaKaryawan from '../models/PrsUnitKerjaKaryawan';
 import { TransaksiLemburDetail } from '../models/TransaksiLemburDetail';
+import KeuCgSlip from '../models/KeuCgSlip';
+import MasterGroupBank from '../models/MasterGroupBank';
+import MasterBankGiro from '../models/MasterBankGiro';
 import prsDokumenModel from '../models/prsDokumenModel';
 import prsJabatan from '../models/prsJabatan';
 import prsJamMengajarKaryawan from '../models/prsJamMengajarKaryawan';
@@ -66,6 +69,9 @@ const SYNCABLE_MODELS: SyncableModel[] = [
   PrsUnitKerja,
   PrsUnitKerjaKaryawan,
   TransaksiLemburDetail,
+  KeuCgSlip,
+  MasterGroupBank,
+  MasterBankGiro,
   prsDokumenModel,
   prsJabatan,
   prsJamMengajarKaryawan,

@@ -8,12 +8,14 @@ import {
 interface DeputiInput {
   kode: string;
   nama_dep: string;
+  alamat?: string;
 }
 
 function sanitize(data: DeputiInput) {
   return {
     kode: xss(data.kode),
     nama_dep: xss(data.nama_dep),
+    alamat: xss(data.alamat ?? ''),
     created_at: new Date(),
     updated_at: new Date(),
   };

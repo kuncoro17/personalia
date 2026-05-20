@@ -18,7 +18,7 @@ export const getAll = async (c: Context): Promise<Response> => {
 
     if (!data || data.length === 0) {
       await logWarn('Tidak ada data agama ditemukan', null);
-      return notFound(c, 'Tidak ada data agama ditemukan');
+      return ok(c, [], 'Tidak ada data agama ditemukan');
     }
 
     await logInfo('Berhasil ambil semua data agama', null);

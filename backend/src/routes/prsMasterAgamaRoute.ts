@@ -25,18 +25,27 @@ export const prsMasterAgamaRoutes = (app: OpenAPIHono) => {
   const basePath = '/master-agama';
 
   const AgamaSchema = z.object({
-    id: z.number().openapi({ example: 1 }),
-    kode_agama: z.string().openapi({ example: 'AG001' }),
-    nama_agama: z.string().openapi({ example: 'Islam' }),
+    kode_agama: z.number().int().openapi({ example: 1 }),
+    agama: z.string().openapi({ example: 'Islam' }),
+    created_at: z
+      .string()
+      .datetime()
+      .optional()
+      .openapi({ example: '2026-05-18T00:00:00.000Z' }),
+    updated_at: z
+      .string()
+      .datetime()
+      .nullable()
+      .optional()
+      .openapi({ example: '2026-05-18T00:00:00.000Z' }),
   });
 
   const CreateAgamaSchema = z.object({
-    kode_agama: z.string().openapi({ example: 'AG001' }),
-    nama_agama: z.string().openapi({ example: 'Islam' }),
+    agama: z.string().min(1).openapi({ example: 'Islam' }),
   });
 
   const UpdateAgamaSchema = z.object({
-    nama_agama: z.string().optional().openapi({ example: 'Kristen' }),
+    agama: z.string().min(1).openapi({ example: 'Kristen' }),
   });
 
   const AgamaArraySchema = z.array(AgamaSchema);
@@ -76,7 +85,10 @@ export const prsMasterAgamaRoutes = (app: OpenAPIHono) => {
       tags: ['Master Agama'],
       request: {
         params: z.object({
-          kode_agama: z.string().openapi({ example: 'AG001' }),
+          kode_agama: z
+            .string()
+            .regex(/^[0-9]+$/)
+            .openapi({ example: '1' }),
         }),
       },
       responses: {
@@ -150,7 +162,12 @@ export const prsMasterAgamaRoutes = (app: OpenAPIHono) => {
       summary: 'Update Agama',
       tags: ['Master Agama'],
       request: {
-        params: z.object({ id: z.string().openapi({ example: '1' }) }),
+        params: z.object({
+          id: z
+            .string()
+            .regex(/^[0-9]+$/)
+            .openapi({ example: '1' }),
+        }),
         body: {
           content: { 'application/json': { schema: UpdateAgamaSchema } },
         },

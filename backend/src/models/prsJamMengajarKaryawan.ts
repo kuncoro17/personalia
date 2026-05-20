@@ -10,7 +10,7 @@ export interface JamMengajarAttributes {
   jmk_id: string;
   ukk_id: string;
   jam_mengajar: number;
-  mengajar_mapel: string;
+  mengajar_mapel: string | null;
   created_at?: Date;
   updated_at?: Date;
   // deleted_at?: Date | null;
@@ -28,7 +28,7 @@ class PrsJamMengajarKaryawan
   declare jmk_id: string;
   declare ukk_id: string;
   declare jam_mengajar: number;
-  declare mengajar_mapel: string;
+  declare mengajar_mapel: string | null;
   declare created_at?: Date;
   declare updated_at?: Date;
   // declare deleted_at?: Date | null;
@@ -69,8 +69,8 @@ PrsJamMengajarKaryawan.init(
       allowNull: false,
     },
     mengajar_mapel: {
-      type: DataTypes.STRING(40),
-      allowNull: false,
+      type: DataTypes.UUID,
+      allowNull: true,
     },
     created_at: DataTypes.DATE,
     updated_at: DataTypes.DATE,

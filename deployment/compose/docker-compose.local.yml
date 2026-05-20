@@ -59,7 +59,7 @@ services:
       - ../../backend/${BACKEND_ENV_FILE:-.env.local.example}
     environment:
       NODE_ENV: ${BACKEND_NODE_ENV:-production}
-      DB_HOST: ${DB_HOST_DOCKER:-host.docker.internal}
+      DB_HOST: ${DB_HOST_DOCKER:-postgres}
       DB_PORT: ${DB_PORT_DOCKER:-5432}
       DB_NAME: ${DB_NAME:-personalia}
       DB_USER: ${DB_USER:-postgres}

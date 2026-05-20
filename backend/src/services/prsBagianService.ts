@@ -13,6 +13,7 @@ class PrsBagianService {
     return {
       kode: data.kode ? xss(data.kode.trim()) : '',
       nama_bag: data.nama_bag ? xss(data.nama_bag.trim()) : '',
+      alamat: data.alamat ? xss(data.alamat.trim()) : '',
       created_at: data.created_at,
       updated_at: data.updated_at,
     };

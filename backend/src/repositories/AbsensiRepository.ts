@@ -40,23 +40,38 @@ export class AbsensiRepository {
     unitType: string = 'BAGIAN',
     unitKode: string | null = null
   ): Promise<AbsensiPivot[]> {
-    try {
-      const result = await sequelize.query(
-        `CALL get_absensi_pivot_bagian(:start, :end, :unitType, :unitKode, 'absensi_cursor'); FETCH ALL FROM absensi_cursor;`,
+    logInfo(
+      `Memanggil repository getAbsensiPivotBagian: ${start} - ${end} (${unitType}${unitKode ? `:${unitKode}` : ''})`
+    );
+
+    return await sequelize.transaction(async (t: Transaction) => {
+      const refCursor = 'absensi_cursor';
+
+      await sequelize.query(
+        'CALL get_absensi_pivot_bagian(:start, :end, :unitType, :unitKode, :cursor)',
         {
-          replacements: { start, end, unitType, unitKode },
-          model: AbsensiPivot, // pakai model
-          mapToModel: true, // hasil langsung map ke AbsensiPivot
-          type: QueryTypes.SELECT,
+          replacements: {
+            start,
+            end,
+            unitType,
+            unitKode,
+            cursor: refCursor,
+          },
+          transaction: t,
         }
       );
 
-      return result as AbsensiPivot[];
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        throw new Error(`Repository error: ${err.message}`);
-      }
-      throw new Error('Repository error: Unknown error');
-    }
+      const rows = await sequelize.query<AbsensiPivot>(
+        `FETCH ALL FROM ${refCursor}`,
+        {
+          model: AbsensiPivot,
+          mapToModel: true,
+          type: QueryTypes.SELECT,
+          transaction: t,
+        }
+      );
+
+      return rows as AbsensiPivot[];
+    });
   }
 }

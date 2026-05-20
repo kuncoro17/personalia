@@ -17,13 +17,15 @@ const divisiSchema = z.object({
     .string()
     .max(255, 'Nama divisi maksimal 255 karakter')
     .nonempty('Nama divisi wajib diisi'),
+  alamat: z.string().max(255).optional(),
 });
 function sanitize(
-  data: PrsDivisiCreationAttributes
+  data: z.infer<typeof divisiSchema>
 ): PrsDivisiCreationAttributes {
   return {
     kode: xss(data.kode ?? '').trim(),
     nama_div: xss(data.nama_div ?? '').trim(),
+    alamat: xss(data.alamat ?? '').trim(),
   };
 }
 

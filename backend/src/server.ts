@@ -41,6 +41,9 @@ import { registerPrsKontrakRoutes } from './routes/prsKontrakRoute';
 import { registerPrsKaryawanRoutes } from './routes/prsKaryawanRoute';
 import { historyRoutes } from './routes/historyRoutes';
 import { presensiRoutes } from './routes/routesphp';
+import { keuCgSlipRoutes } from './routes/keuCgSlipRoutes';
+import { masterGroupBankRoutes } from './routes/masterGroupBankRoutes';
+import { masterBankGiroRoutes } from './routes/masterBankGiroRoutes';
 // import { sdmCheckInOutRoutes } from './routes/sdmcheckinoutRoutes';
 
 const app = new OpenAPIHono({
@@ -184,4 +187,7 @@ prsUnitKerjaRoutes(app);
 LetterRoutes(app);
 historyRoutes(app);
 presensiRoutes(app);
+keuCgSlipRoutes(app);
+masterGroupBankRoutes(app);
+masterBankGiroRoutes(app);
 export default app;

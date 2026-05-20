@@ -8,12 +8,14 @@ import {
 interface DirpelInput {
   kode: string;
   nama_dir: string;
+  alamat?: string;
 }
 
 function sanitize(data: DirpelInput) {
   return {
     kode: xss(data.kode),
     nama_dir: xss(data.nama_dir),
+    alamat: xss(data.alamat ?? ''),
     created_at: new Date(),
     updated_at: new Date(),
   };

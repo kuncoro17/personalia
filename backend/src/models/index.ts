@@ -23,6 +23,8 @@ import PrsMasterKec from './PrsMasterKec';
 import PrsMasterKot from './PrsMasterKot';
 import PrsMasterProv from './PrsMasterProv';
 import History from './HistoryModels';
+import MasterGroupBank from './MasterGroupBank';
+import MasterBankGiro from './MasterBankGiro';
 
 // 1 Karyawan memiliki banyak Keluarga
 
@@ -89,6 +91,19 @@ PrsKeluargaKaryawan.belongsTo(PrsMasterAgama, {
   foreignKey: 'agama',
   targetKey: 'kode_agama',
   as: 'agama_detail',
+});
+
+// Master Group Bank - Master Bank Giro
+MasterGroupBank.hasMany(MasterBankGiro, {
+  foreignKey: 'id_group_bank',
+  sourceKey: 'id',
+  as: 'bank_giro_list',
+});
+
+MasterBankGiro.belongsTo(MasterGroupBank, {
+  foreignKey: 'id_group_bank',
+  targetKey: 'id',
+  as: 'group_bank_detail',
 });
 
 PrsStatusKaryawan.hasMany(PrsKaryawan, {
