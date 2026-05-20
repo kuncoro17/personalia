@@ -416,7 +416,7 @@ deploy-production:
 # ==================== POST-DEPLOY ====================
 
 health-check-staging:
-  stage:  smoke-staging
+  stage: smoke-staging
   <<: *deploy-template
   script:
     - '[ -n "$STAGING_SERVER_USER" ] || (echo "Missing CI variable: STAGING_SERVER_USER" && exit 1)'

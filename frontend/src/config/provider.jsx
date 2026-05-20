@@ -19,7 +19,7 @@ const IS_LOCAL_HOST =
   ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 const CLERK_DOMAIN = IS_LOCAL_HOST ? undefined : RAW_CLERK_DOMAIN;
-const CLERK_SIGN_IN_URL = IS_LOCAL_HOST ? undefined : RAW_CLERK_SIGN_IN_URL;
+const CLERK_SIGN_IN_URL = RAW_CLERK_SIGN_IN_URL;
 const CLERK_IS_SATELLITE = IS_LOCAL_HOST ? false : RAW_CLERK_IS_SATELLITE;
 
 if (!PUBLISHABLE_KEY) {

@@ -7,18 +7,18 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
   app.use('*', clerkAuthMiddleware);
 
   const pivotQuerySchema = z.object({
-    start: z
-      .string()
-      .optional()
-      .openapi({ example: '2026-05-01', description: 'Tanggal mulai (YYYY-MM-DD)' }),
-    end: z
-      .string()
-      .optional()
-      .openapi({ example: '2026-05-19', description: 'Tanggal akhir (YYYY-MM-DD)' }),
-    unitType: z
-      .string()
-      .optional()
-      .openapi({ example: 'BAGIAN', description: 'Jenis unit (default: BAGIAN)' }),
+    start: z.string().optional().openapi({
+      example: '2026-05-01',
+      description: 'Tanggal mulai (YYYY-MM-DD)',
+    }),
+    end: z.string().optional().openapi({
+      example: '2026-05-19',
+      description: 'Tanggal akhir (YYYY-MM-DD)',
+    }),
+    unitType: z.string().optional().openapi({
+      example: 'BAGIAN',
+      description: 'Jenis unit (default: BAGIAN)',
+    }),
     unitKode: z
       .string()
       .optional()

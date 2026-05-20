@@ -170,10 +170,12 @@ const toCreationPayload = (
         ? dto.jenis.trim().startsWith('VA/')
           ? dto.jenis.trim()
           : `VA/${tglGiro} ${dto.jenis.trim()}`
-        : dto.jenis ?? null,
+        : (dto.jenis ?? null),
     pd_bank: dto.pd_bank ?? dto.no_giro ?? null,
     terbilang:
-      jumlahAsBigInt == null ? dto.terbilang ?? null : terbilangRupiah(jumlahAsBigInt),
+      jumlahAsBigInt == null
+        ? (dto.terbilang ?? null)
+        : terbilangRupiah(jumlahAsBigInt),
   } as KeuCgSlipCreationAttributes;
 };
 
@@ -182,7 +184,8 @@ const toUpdatePayload = (
 ): Partial<KeuCgSlipAttributes> => {
   const now = new Date();
   const todayDateOnly = now.toISOString().slice(0, 10);
-  const tglGiro = 'tgl_giro' in dto ? (dto.tgl_giro ?? todayDateOnly) : undefined;
+  const tglGiro =
+    'tgl_giro' in dto ? (dto.tgl_giro ?? todayDateOnly) : undefined;
   const jumlahValue = dto.jumlah ?? null;
   const jumlahAsBigInt =
     typeof jumlahValue === 'string' && /^-?\d+$/.test(jumlahValue)
@@ -209,14 +212,13 @@ const toUpdatePayload = (
         ? typeof dto.jenis === 'string' && dto.jenis.trim()
           ? dto.jenis.trim().startsWith('VA/')
             ? dto.jenis.trim()
-            : `VA/${(typeof tglGiro === 'string' ? tglGiro : todayDateOnly)} ${dto.jenis.trim()}`
-          : dto.jenis ?? null
+            : `VA/${typeof tglGiro === 'string' ? tglGiro : todayDateOnly} ${dto.jenis.trim()}`
+          : (dto.jenis ?? null)
         : undefined,
-    pd_bank: 'pd_bank' in dto ? (dto.pd_bank ?? dto.no_giro ?? null) : undefined,
+    pd_bank:
+      'pd_bank' in dto ? (dto.pd_bank ?? dto.no_giro ?? null) : undefined,
     terbilang:
-      jumlahAsBigInt == null
-        ? undefined
-        : terbilangRupiah(jumlahAsBigInt),
+      jumlahAsBigInt == null ? undefined : terbilangRupiah(jumlahAsBigInt),
   } as Partial<KeuCgSlipAttributes>;
 };
 

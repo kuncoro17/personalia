@@ -99,4 +99,3 @@ export const terbilangRupiah = (value: string | bigint | number): string => {
   const amount = BigInt(normalized);
   return `${terbilang(amount)} rupiah`;
 };
-

@@ -45,7 +45,9 @@ export class AbsensiController {
   static async getPivot(c: Context) {
     try {
       // ✅ validasi query pakai Zod
-      const { start, end, unitType, unitKode } = pivotSchema.parse(c.req.query());
+      const { start, end, unitType, unitKode } = pivotSchema.parse(
+        c.req.query()
+      );
 
       const now = new Date();
       const defaultEnd = toDateOnlyLocal(now);
