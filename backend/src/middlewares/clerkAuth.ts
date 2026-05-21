@@ -52,7 +52,7 @@ const getAuthorizedParties = (): string[] => {
   );
 };
 
-const buildClerkVerifyOptions = (): VerifyTokenOptions => {
+export const buildClerkVerifyOptions = (): VerifyTokenOptions => {
   const secretKey = stripOptionalQuotes(process.env.CLERK_SECRET_KEY);
   const jwtKey = normalizeMultilineEnv(process.env.CLERK_JWT_KEY);
   const authorizedParties = getAuthorizedParties();
@@ -67,11 +67,39 @@ const buildClerkVerifyOptions = (): VerifyTokenOptions => {
   return verifyOptions;
 };
 
-const extractBearerToken = (authHeader?: string): string | null => {
+export const extractBearerToken = (authHeader?: string): string | null => {
   if (!authHeader) return null;
   const [scheme, token] = authHeader.trim().split(/\s+/);
   if (scheme?.toLowerCase() !== 'bearer' || !token) return null;
   return token;
+};
+
+export const extractEmailFromClerkPayload = (
+  payload: ClerkAuthPayload
+): string | null => {
+  const direct = typeof payload.email === 'string' ? payload.email.trim() : '';
+  if (direct) return direct;
+
+  const anyPayload = payload as unknown as Record<string, unknown>;
+  const arraysToCheck = [
+    anyPayload.email_address,
+    anyPayload.email_addresses,
+    anyPayload.emailAddresses,
+  ];
+
+  for (const value of arraysToCheck) {
+    if (!Array.isArray(value) || value.length === 0) continue;
+    const first = value[0] as unknown as Record<string, unknown>;
+
+    const emailCandidate =
+      (typeof first.email_address === 'string' && first.email_address.trim()) ||
+      (typeof first.emailAddress === 'string' && first.emailAddress.trim()) ||
+      '';
+
+    if (emailCandidate) return emailCandidate;
+  }
+
+  return null;
 };
 
 export const clerkAuthMiddleware: MiddlewareHandler<{
@@ -131,11 +159,12 @@ export const getCurrentUser: MiddlewareHandler<{
   try {
     const verifyOptions = buildClerkVerifyOptions();
     const payload = await verifyToken(token, verifyOptions);
-    if (!payload.email) {
+    const email = extractEmailFromClerkPayload(payload as ClerkAuthPayload);
+    if (!email) {
       throw new HTTPException(401, { message: 'Email not found in token' });
     }
 
-    const user = await User.findOne({ where: { email: payload.email } });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       throw new HTTPException(401, { message: 'User not registered' });
     }

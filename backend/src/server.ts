@@ -45,6 +45,7 @@ import { keuCgSlipRoutes } from './routes/keuCgSlipRoutes';
 import { masterGroupBankRoutes } from './routes/masterGroupBankRoutes';
 import { masterBankGiroRoutes } from './routes/masterBankGiroRoutes';
 import { userRoutes } from './routes/userRoutes';
+import { clerkAuthRoutes } from './routes/clerkAuthRoutes';
 // import { sdmCheckInOutRoutes } from './routes/sdmcheckinoutRoutes';
 
 const app = new OpenAPIHono({
@@ -192,4 +193,5 @@ keuCgSlipRoutes(app);
 masterGroupBankRoutes(app);
 masterBankGiroRoutes(app);
 userRoutes(app);
+clerkAuthRoutes(app);
 export default app;
