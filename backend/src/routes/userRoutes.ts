@@ -26,6 +26,52 @@ export const userRoutes = (app: OpenAPIHono) => {
 
   app.openapi(
     createRoute({
+      method: 'get',
+      path: '/personalia/users',
+      summary: 'List users',
+      description: 'Mengambil daftar users',
+      tags: ['Users'],
+      security: [{ bearerAuth: [] }],
+      request: {
+        query: z.object({
+          q: z.string().optional().openapi({
+            example: 'test',
+            description: 'Search by email/name (contains)',
+          }),
+          limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+            example: 50,
+          }),
+          offset: z.coerce.number().int().min(0).optional().openapi({
+            example: 0,
+          }),
+        }),
+      },
+      responses: {
+        200: {
+          description: 'List users',
+          content: {
+            'application/json': {
+              schema: z.object({
+                success: z.boolean(),
+                message: z.string(),
+                data: z.object({
+                  items: z.array(userResponseSchema),
+                  total: z.number(),
+                  limit: z.number(),
+                  offset: z.number(),
+                }),
+              }),
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+      },
+    }),
+    controller.listUsers
+  );
+
+  app.openapi(
+    createRoute({
       method: 'post',
       path: '/personalia/users',
       summary: 'Create user',

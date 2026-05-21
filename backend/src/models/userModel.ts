@@ -1,13 +1,28 @@
-// userModel.ts
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 
-class User extends Model {
-  public id!: string;
-  public email!: string;
-  public name!: string | null; // ubah jadi bisa null
-  public created_at!: Date;
-  public updated_at!: Date;
+export interface UserAttributes {
+  id: string;
+  email: string;
+  name: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export type UserCreationAttributes = Optional<
+  UserAttributes,
+  'id' | 'name' | 'created_at' | 'updated_at'
+>;
+
+class User
+  extends Model<UserAttributes, UserCreationAttributes>
+  implements UserAttributes
+{
+  declare id: string;
+  declare email: string;
+  declare name: string | null;
+  declare created_at: Date;
+  declare updated_at: Date;
 }
 
 User.init(
@@ -25,7 +40,7 @@ User.init(
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: true, // ubah dari false ke true
+      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,

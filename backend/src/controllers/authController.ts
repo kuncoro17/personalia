@@ -35,9 +35,8 @@ export const login = async (c: Context): Promise<Response> => {
     const body = await c.req.json();
     const { email } = emailSchema.parse(body);
 
-    // const { token, user } = await authService.login(email);
-
-    return ok(c, { email }, 'Login berhasil');
+    const { token, user } = await authService.login(email);
+    return ok(c, { token, user }, 'Login berhasil');
   } catch (err: unknown) {
     if (err instanceof ZodError) {
       return badRequest(c, 'Validasi email gagal', err.issues);

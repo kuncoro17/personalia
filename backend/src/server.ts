@@ -46,6 +46,7 @@ import { masterGroupBankRoutes } from './routes/masterGroupBankRoutes';
 import { masterBankGiroRoutes } from './routes/masterBankGiroRoutes';
 import { userRoutes } from './routes/userRoutes';
 import { clerkAuthRoutes } from './routes/clerkAuthRoutes';
+import { jwtAuthRoutes } from './routes/jwtAuthRoutes';
 // import { sdmCheckInOutRoutes } from './routes/sdmcheckinoutRoutes';
 
 const app = new OpenAPIHono({
@@ -194,4 +195,5 @@ masterGroupBankRoutes(app);
 masterBankGiroRoutes(app);
 userRoutes(app);
 clerkAuthRoutes(app);
+jwtAuthRoutes(app);
 export default app;

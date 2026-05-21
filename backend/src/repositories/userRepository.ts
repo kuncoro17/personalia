@@ -55,7 +55,10 @@ const getErrorMessage = (err: unknown): string => {
 export class UserRepository {
   async findByEmail(email: string): Promise<User | null> {
     try {
-      return await User.findOne({ where: { email } });
+      return await User.findOne({
+        where: { email },
+        attributes: ['id', 'email', 'name'],
+      });
     } catch (err) {
       logError(`Error findByEmail: ${String(err)}`);
       throw new Error(`Gagal mencari user: ${getErrorMessage(err)}`);

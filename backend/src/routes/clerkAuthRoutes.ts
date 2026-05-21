@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { verifyToken } from '@clerk/backend';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import {
   buildClerkVerifyOptions,
   extractBearerToken,
@@ -27,9 +28,9 @@ export const clerkAuthRoutes = (app: OpenAPIHono) => {
     createRoute({
       method: 'get',
       path: '/auth/login',
-      summary: 'Get user profile from Clerk token',
+      summary: 'Get user profile from auth token',
       description:
-        'Mengambil profile user dari token Clerk, lalu validasi ke tabel users.',
+        'Mengambil profile user dari token (Clerk atau internal JWT), lalu validasi ke tabel users.',
       tags: ['Auth'],
       security: [{ bearerAuth: [] }],
       responses: {
@@ -50,36 +51,54 @@ export const clerkAuthRoutes = (app: OpenAPIHono) => {
         return unauthorized(c, 'No token provided');
       }
 
+      let email: string | null = null;
+
       try {
-        const payload = (await verifyToken(
-          token,
-          buildClerkVerifyOptions()
-        )) as ClerkAuthPayload;
+        // 1) Prefer Clerk token verification (RS256, issuer/audience checks, etc.)
+        const payload = (await verifyToken(token, buildClerkVerifyOptions())) as
+          ClerkAuthPayload;
 
-        const email = extractEmailFromClerkPayload(payload);
-        if (!email) {
-          return unauthorized(c, 'Email not found in token');
+        email = extractEmailFromClerkPayload(payload);
+      } catch (_clerkErr: unknown) {
+        // 2) Fallback to internal JWT (HS256) for /auth/login-jwt flow
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+          return unauthorized(c, 'Token tidak valid', {
+            message: 'JWT_SECRET is not configured',
+          });
         }
 
-        const user = await User.findOne({ where: { email } });
-        if (!user) {
-          return unauthorized(c, 'User tidak terdaftar di sistem');
+        try {
+          const decoded = jwt.verify(token, secret) as JwtPayload & {
+            email?: unknown;
+          };
+          email = typeof decoded.email === 'string' ? decoded.email.trim() : '';
+          if (!email) email = null;
+        } catch (err: unknown) {
+          return unauthorized(c, 'Token tidak valid', {
+            message: err instanceof Error ? err.message : 'Unknown error',
+          });
         }
-
-        return ok(
-          c,
-          {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          },
-          'Clerk Auth Login berhasil'
-        );
-      } catch (err: unknown) {
-        return unauthorized(c, 'Token tidak valid', {
-          message: err instanceof Error ? err.message : 'Unknown error',
-        });
       }
+
+      if (!email) {
+        return unauthorized(c, 'Email not found in token');
+      }
+
+      const user = await User.findOne({ where: { email } });
+      if (!user) {
+        return unauthorized(c, 'User tidak terdaftar di sistem');
+      }
+
+      return ok(
+        c,
+        {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        'Login berhasil'
+      );
     }
   );
 };

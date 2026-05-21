@@ -20,13 +20,21 @@ export class AuthService {
     const user = await userRepository.findByEmail(email);
     if (!user) throw new Error('Email tidak ditemukan');
 
+    const userId = user.get('id');
+    const userEmail = user.get('email');
+    if (typeof userId !== 'string' || typeof userEmail !== 'string') {
+      throw new Error(
+        'Data user tidak lengkap (id/email kosong). Cek kolom tabel users dan mapping model User.'
+      );
+    }
+
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: userId, email: userEmail },
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' }
     );
 
-    return { token, user: { id: user.id, email: user.email } };
+    return { token, user: { id: userId, email: userEmail } };
   }
 }
 
