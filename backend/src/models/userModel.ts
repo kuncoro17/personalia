@@ -3,7 +3,7 @@ import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
 
 class User extends Model {
-  public id!: number;
+  public id!: string;
   public email!: string;
   public name!: string | null; // ubah jadi bisa null
   public created_at!: Date;
@@ -13,9 +13,10 @@ class User extends Model {
 User.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
+      allowNull: false,
     },
     email: {
       type: DataTypes.STRING,

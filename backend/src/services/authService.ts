@@ -5,7 +5,7 @@ import User from '../models/userModel';
 
 export interface LoginResponse {
   token: string;
-  user: { id: number; email: string };
+  user: { id: string; email: string };
 }
 
 export class AuthService {

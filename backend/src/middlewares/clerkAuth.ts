@@ -111,7 +111,7 @@ export const clerkAuthMiddleware: MiddlewareHandler<{
 };
 
 export interface AuthUser {
-  id: number;
+  id: string;
   email: string;
 }
 

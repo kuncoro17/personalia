@@ -44,6 +44,7 @@ import { presensiRoutes } from './routes/routesphp';
 import { keuCgSlipRoutes } from './routes/keuCgSlipRoutes';
 import { masterGroupBankRoutes } from './routes/masterGroupBankRoutes';
 import { masterBankGiroRoutes } from './routes/masterBankGiroRoutes';
+import { userRoutes } from './routes/userRoutes';
 // import { sdmCheckInOutRoutes } from './routes/sdmcheckinoutRoutes';
 
 const app = new OpenAPIHono({
@@ -190,4 +191,5 @@ presensiRoutes(app);
 keuCgSlipRoutes(app);
 masterGroupBankRoutes(app);
 masterBankGiroRoutes(app);
+userRoutes(app);
 export default app;

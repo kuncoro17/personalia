@@ -41,6 +41,7 @@ services:
     container_name: personalia_jkt_backend
     environment:
       NODE_ENV: production
+      AUTO_SYNC_MODELS: ${AUTO_SYNC_MODELS:-true}
       PORT: 3001
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
