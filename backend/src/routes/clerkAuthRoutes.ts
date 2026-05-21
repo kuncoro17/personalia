@@ -55,8 +55,10 @@ export const clerkAuthRoutes = (app: OpenAPIHono) => {
 
       try {
         // 1) Prefer Clerk token verification (RS256, issuer/audience checks, etc.)
-        const payload = (await verifyToken(token, buildClerkVerifyOptions())) as
-          ClerkAuthPayload;
+        const payload = (await verifyToken(
+          token,
+          buildClerkVerifyOptions()
+        )) as ClerkAuthPayload;
 
         email = extractEmailFromClerkPayload(payload);
       } catch (_clerkErr: unknown) {
