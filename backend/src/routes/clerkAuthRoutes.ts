@@ -61,7 +61,7 @@ export const clerkAuthRoutes = (app: OpenAPIHono) => {
         )) as ClerkAuthPayload;
 
         email = extractEmailFromClerkPayload(payload);
-      } catch (_clerkErr: unknown) {
+      } catch {
         // 2) Fallback to internal JWT (HS256) for /auth/login-jwt flow
         const secret = process.env.JWT_SECRET;
         if (!secret) {
