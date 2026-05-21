@@ -47,7 +47,11 @@ export function Provider({ children }) {
   const navigate = useNavigate();
   const allowedRedirectOrigins =
     typeof window !== "undefined"
-      ? [window.location.origin, "http://localhost:5173", "http://127.0.0.1:5173"]
+      ? [
+          window.location.origin,
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+        ]
       : undefined;
 
   return (
@@ -66,7 +70,9 @@ export function Provider({ children }) {
           signInUrl={CLERK_SIGN_IN_URL}
           domain={CLERK_DOMAIN}
           isSatellite={CLERK_IS_SATELLITE}
-          allowedRedirectOrigins={CLERK_IS_SATELLITE ? allowedRedirectOrigins : undefined}
+          allowedRedirectOrigins={
+            CLERK_IS_SATELLITE ? allowedRedirectOrigins : undefined
+          }
         >
           {children}
         </ClerkProvider>
