@@ -34,6 +34,7 @@ const DEFAULT_AUTHORIZED_PARTIES = [
   'http://127.0.0.1:5173',
   'http://localhost:3002',
   'http://127.0.0.1:3002',
+  'http://192.168.103.33:5173/',
 ];
 
 const getAuthorizedParties = (): string[] => {

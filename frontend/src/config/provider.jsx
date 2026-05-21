@@ -18,9 +18,26 @@ const IS_LOCAL_HOST =
   typeof window !== "undefined" &&
   ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
-const CLERK_DOMAIN = IS_LOCAL_HOST ? undefined : RAW_CLERK_DOMAIN;
+const normalizeClerkDomain = (value) => {
+  if (!value) return value;
+  const raw = String(value).trim();
+  if (!raw) return undefined;
+
+  // Clerk expects a "domain" (host[:port]) for satellite apps. Accept URLs too.
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      return new URL(raw).host;
+    } catch {
+      return raw;
+    }
+  }
+
+  return raw;
+};
+
+const CLERK_DOMAIN = normalizeClerkDomain(RAW_CLERK_DOMAIN);
 const CLERK_SIGN_IN_URL = RAW_CLERK_SIGN_IN_URL;
-const CLERK_IS_SATELLITE = IS_LOCAL_HOST ? false : RAW_CLERK_IS_SATELLITE;
+const CLERK_IS_SATELLITE = RAW_CLERK_IS_SATELLITE;
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Add your Clerk Publishable Key to the .env file");
@@ -28,6 +45,10 @@ if (!PUBLISHABLE_KEY) {
 
 export function Provider({ children }) {
   const navigate = useNavigate();
+  const allowedRedirectOrigins =
+    typeof window !== "undefined"
+      ? [window.location.origin, "http://localhost:5173", "http://127.0.0.1:5173"]
+      : undefined;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -45,6 +66,7 @@ export function Provider({ children }) {
           signInUrl={CLERK_SIGN_IN_URL}
           domain={CLERK_DOMAIN}
           isSatellite={CLERK_IS_SATELLITE}
+          allowedRedirectOrigins={CLERK_IS_SATELLITE ? allowedRedirectOrigins : undefined}
         >
           {children}
         </ClerkProvider>
