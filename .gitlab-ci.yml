@@ -23,9 +23,13 @@ variables:
   APP_NAME: "personalia-jkt"
   CONTAINER_IMAGE: "$CONTAINER_IMAGE"
   NPM_CONFIG_CACHE: "/tmp/.npm"
+  # Optional: set this to your GitLab Dependency Proxy prefix (must end with `/`)
+  # Example: `$CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX/` or `$CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/`
+  # When empty/unset, pipelines pull images directly from Docker Hub.
+  DOCKERHUB_PREFIX: ""
 
 default:
-  image: node:20-alpine
+  image: ${DOCKERHUB_PREFIX}node:20-alpine
 ##
 
 workflow:
@@ -39,7 +43,7 @@ workflow:
     - when: never
 
 .deploy-template: &deploy-template
-  image: alpine:3.20
+  image: ${DOCKERHUB_PREFIX}alpine:3.20
   before_script:
     - apk add --no-cache openssh-client rsync docker-cli
     - mkdir -p ~/.ssh
@@ -49,9 +53,9 @@ workflow:
 
 .docker-build-template: &docker-build-template
   stage: build
-  image: docker:24.0.7
+  image: ${DOCKERHUB_PREFIX}docker:24.0.7
   services:
-    - name: docker:24.0.7-dind
+    - name: ${DOCKERHUB_PREFIX}docker:24.0.7-dind
       alias: docker
   variables:
     DOCKER_TLS_CERTDIR: ""
@@ -69,6 +73,12 @@ workflow:
         exit 1
       fi
     - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
+    - |
+      if [ -n "$CI_DEPENDENCY_PROXY_SERVER" ] && [ -n "$CI_DEPENDENCY_PROXY_USER" ] && [ -n "$CI_DEPENDENCY_PROXY_PASSWORD" ]; then
+        echo "$CI_DEPENDENCY_PROXY_PASSWORD" | docker login "$CI_DEPENDENCY_PROXY_SERVER" -u "$CI_DEPENDENCY_PROXY_USER" --password-stdin
+      else
+        echo "Dependency Proxy variables are not set; skipping dependency proxy login."
+      fi
     - 'echo "Using registry image: $CONTAINER_IMAGE"'
     - echo "=== Runner filesystem (build job container) ==="
     - df -h || true
@@ -142,13 +152,13 @@ test-backend:
     REDIS_PASSWORD: ""
     AUTO_SYNC_MODELS: "true"
   services:
-    - name: postgres:15
+    - name: ${DOCKERHUB_PREFIX}postgres:15
       alias: postgres
       variables:
         POSTGRES_DB: personalia_test
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
-    - name: redis:7-alpine
+    - name: ${DOCKERHUB_PREFIX}redis:7-alpine
       alias: redis
   before_script:
     - cd backend
@@ -204,7 +214,7 @@ test-frontend:
 build-backend-staging:
   <<: *docker-build-template
   script:
-    - docker build -t "$CONTAINER_IMAGE:backend-staging" -f backend/Dockerfile.prod backend
+    - docker build --build-arg NODE_IMAGE="${DOCKERHUB_PREFIX}node:20-alpine" -t "$CONTAINER_IMAGE:backend-staging" -f backend/Dockerfile.prod backend
     - docker push "$CONTAINER_IMAGE:backend-staging"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
@@ -231,6 +241,7 @@ build-frontend-staging:
       fi
       echo "Using staging frontend API URL: $STAGING_VITE_API_URL"
       docker build \
+        --build-arg NODE_IMAGE="${DOCKERHUB_PREFIX}node:20-alpine" \
         --build-arg VITE_API_URL="$STAGING_VITE_API_URL" \
         --build-arg VITE_CLERK_PUBLISHABLE_KEY="$STAGING_FE_CLERK_PUBLISHABLE_KEY" \
         --build-arg VITE_CLERK_SIGN_IN_URL="$STAGING_FE_CLERK_SIGN_IN_URL" \
@@ -248,7 +259,7 @@ build-frontend-staging:
 build-backend-production:
   <<: *docker-build-template
   script:
-    - docker build -t "$CONTAINER_IMAGE:backend-production" -f backend/Dockerfile.prod backend
+    - docker build --build-arg NODE_IMAGE="${DOCKERHUB_PREFIX}node:20-alpine" -t "$CONTAINER_IMAGE:backend-production" -f backend/Dockerfile.prod backend
     - docker push "$CONTAINER_IMAGE:backend-production"
     - docker tag "$CONTAINER_IMAGE:backend-production" "$CONTAINER_IMAGE:backend-latest"
     - docker push "$CONTAINER_IMAGE:backend-latest"
@@ -260,7 +271,7 @@ build-backend-production:
 build-frontend-production:
   <<: *docker-build-template
   script:
-    - docker build -t "$CONTAINER_IMAGE:frontend-production" -f frontend/Dockerfile.prod frontend
+    - docker build --build-arg NODE_IMAGE="${DOCKERHUB_PREFIX}node:20-alpine" -t "$CONTAINER_IMAGE:frontend-production" -f frontend/Dockerfile.prod frontend
     - docker push "$CONTAINER_IMAGE:frontend-production"
     - docker tag "$CONTAINER_IMAGE:frontend-production" "$CONTAINER_IMAGE:frontend-latest"
     - docker push "$CONTAINER_IMAGE:frontend-latest"
