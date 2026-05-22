@@ -23,9 +23,14 @@ variables:
   APP_NAME: "personalia-jkt"
   CONTAINER_IMAGE: "$CONTAINER_IMAGE"
   NPM_CONFIG_CACHE: "/tmp/.npm"
+  # Prefix for pulling base images (node/postgres/redis/docker) from a reachable registry.
+  # Leave empty to use Docker Hub directly. If Docker Hub is blocked/slow on the runner,
+  # set this in GitLab CI/CD Variables to your Dependency Proxy prefix (must end with `/`).
+  # Example: `CI_IMAGE_PREFIX=$CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX/`
+  CI_IMAGE_PREFIX: ""
 
 default:
-  image: node:20-alpine
+  image: "${CI_IMAGE_PREFIX}node:20-alpine"
 ##
 
 workflow:
@@ -39,7 +44,7 @@ workflow:
     - when: never
 
 .deploy-template: &deploy-template
-  image: alpine:3.20
+  image: "${CI_IMAGE_PREFIX}alpine:3.20"
   before_script:
     - apk add --no-cache openssh-client rsync docker-cli
     - mkdir -p ~/.ssh
@@ -49,9 +54,9 @@ workflow:
 
 .docker-build-template: &docker-build-template
   stage: build
-  image: docker:24.0.7
+  image: "${CI_IMAGE_PREFIX}docker:24.0.7"
   services:
-    - name: docker:24.0.7-dind
+    - name: "${CI_IMAGE_PREFIX}docker:24.0.7-dind"
       alias: docker
   variables:
     DOCKER_TLS_CERTDIR: ""
@@ -142,13 +147,13 @@ test-backend:
     REDIS_PASSWORD: ""
     AUTO_SYNC_MODELS: "true"
   services:
-    - name: postgres:15
+    - name: "${CI_IMAGE_PREFIX}postgres:15"
       alias: postgres
       variables:
         POSTGRES_DB: personalia_test
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
-    - name: redis:7-alpine
+    - name: "${CI_IMAGE_PREFIX}redis:7-alpine"
       alias: redis
   before_script:
     - cd backend
