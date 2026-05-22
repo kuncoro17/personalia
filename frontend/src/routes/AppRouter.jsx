@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { RedirectToSignIn, useAuth, useUser } from "@clerk/clerk-react";
 import { Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Spinner } from "@heroui/react";
@@ -17,9 +17,16 @@ function AppRouter() {
   if (!isLoaded) return <LoadingFallback />;
 
   if (!isSignedIn) {
-    if (signInUrl && window.location.href !== signInUrl) {
-      window.location.href = signInUrl;
+    // Prefer Clerk's redirect helper so it can attach the correct return URL.
+    if (signInUrl) {
+      return (
+        <>
+          <RedirectToSignIn redirectUrl={window.location.href} />
+          <SignedOutFallback signInUrl={signInUrl} />
+        </>
+      );
     }
+
     return <SignedOutFallback signInUrl={signInUrl} />;
   }
 

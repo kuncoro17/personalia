@@ -14,9 +14,6 @@ const RAW_CLERK_SIGN_IN_URL =
   import.meta.env.VITE_CLERK_SIGN_IN_URL || undefined;
 const RAW_CLERK_IS_SATELLITE =
   String(import.meta.env.VITE_CLERK_IS_SATELLITE).toLowerCase() === "true";
-const IS_LOCAL_HOST =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 const normalizeClerkDomain = (value) => {
   if (!value) return value;
@@ -51,6 +48,7 @@ export function Provider({ children }) {
           window.location.origin,
           "http://localhost:5173",
           "http://127.0.0.1:5173",
+          "https://staging-new-sas.bpkpenaburjakarta.or.id"
         ]
       : undefined;
 
