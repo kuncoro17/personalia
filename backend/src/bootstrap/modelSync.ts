@@ -20,6 +20,7 @@ import PrsMasterKot from '../models/PrsMasterKot';
 import PrsMasterMapel from '../models/PrsMasterMapel';
 import PrsMasterProv from '../models/PrsMasterProv';
 import PrsMasterRiwPendidikan from '../models/PrsMasterRiwPendidikan';
+import PrsMasterSetempat from '../models/PrsMasterSetempat';
 import PrsPengalamanKerja from '../models/PrsPengalamanKerja';
 import PrsRiwPendidikanKar from '../models/PrsRiwPendidikanKar';
 import PrsSeksi from '../models/PrsSeksi';
@@ -62,6 +63,7 @@ const SYNCABLE_MODELS: SyncableModel[] = [
   PrsMasterMapel,
   PrsMasterProv,
   PrsMasterRiwPendidikan,
+  PrsMasterSetempat,
   PrsPengalamanKerja,
   PrsRiwPendidikanKar,
   PrsSeksi,

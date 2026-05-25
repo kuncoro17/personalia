@@ -1,9 +1,17 @@
 import { z } from 'zod';
 
 export const prsKaryawanSchema = z.object({
-  nik: z.string().max(30),
-  no_ktp: z.string().max(40),
-  id_karyawan: z.uuid(),
+  nik: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{7,16}$/, {
+      message: 'NIK harus berupa angka minimal 7 digit',
+    }),
+  no_ktp: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{16}$/, { message: 'No KTP harus berupa angka 16 digit' }),
+  id_karyawan: z.uuid().optional(),
   status_aktif: z.string(),
   foto: z.string().optional(),
   nama_lengkap: z.string().max(255),
@@ -33,6 +41,7 @@ export const prsKaryawanSchema = z.object({
   gol_darah: z.string().max(3).optional(),
   tinggi_badan: z.union([z.string(), z.number()]).optional(),
   berat_badan: z.union([z.string(), z.number()]).optional(),
+  id_master_setempat: z.union([z.string(), z.number()]).optional(),
   kewarganegaraan: z.string().optional(),
   anggota_gereja: z.string().max(255).optional(),
   instagram: z.string().max(100).optional(),

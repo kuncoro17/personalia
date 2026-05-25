@@ -125,6 +125,7 @@ const allowedFields = [
   'nama_bpjs_danpes',
   'etnis',
   'no_pasport',
+  'id_master_setempat',
 ] as const;
 
 // Tipe DTO berdasarkan field yang diizinkan
@@ -171,6 +172,27 @@ export class PrsKaryawanService {
     };
   }
 
+  async getAllBySetempat(id_master_setempat: number, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const data = await this.repository.findAllWithPaginationBySetempat(
+      id_master_setempat,
+      limit,
+      offset
+    );
+    const total = await this.repository.countAllBySetempat(id_master_setempat);
+
+    return {
+      data: data ?? [],
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async getById(id: string) {
     const data = await repository.findById(id);
     if (!data) throw new NotFoundException('Karyawan tidak ditemukan');
@@ -199,7 +221,7 @@ export class PrsKaryawanService {
 
   async create(data: KaryawanDTO) {
     const sanitizedData = sanitizeObject(data);
-    if (!sanitizedData.nik || sanitizedData.nik.toString().length < 5) {
+    if (!sanitizedData.nik || sanitizedData.nik.toString().length < 7) {
       throw new BadRequestException('NIK tidak valid atau terlalu pendek');
     }
     return await repository.create(sanitizedData);

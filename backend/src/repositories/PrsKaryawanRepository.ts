@@ -14,6 +14,7 @@ import PrsMasterKel from '../models/PrsMasterKel';
 import PrsMasterKec from '../models/PrsMasterKec';
 import PrsMasterKot from '../models/PrsMasterKot';
 import PrsMasterProv from '../models/PrsMasterProv';
+import PrsMasterSetempat from '../models/PrsMasterSetempat';
 import PrsRiwPendidikanKar from '../models/PrsRiwPendidikanKar';
 import PrsMasterRiwPendidikan from '../models/PrsMasterRiwPendidikan';
 import PrsKontakDarurat from '../models/prsKontakDarurat';
@@ -88,6 +89,57 @@ export class PrsKaryawanRepository {
       ],
       include: [
         {
+          model: PrsMasterSetempat,
+          as: 'master_setempat',
+          attributes: ['id', 'kota_setempat'],
+          required: false,
+        },
+        {
+          model: PrsUnitKerjaKaryawan,
+          as: 'unit_kerja_karyawan',
+          attributes: ['jab_id'],
+          include: [
+            {
+              model: PrsJabatan,
+              as: 'jabatan',
+              attributes: ['jabatan'],
+            },
+          ],
+        },
+        {
+          model: PrsStatusKaryawan,
+          as: 'status_karyawan',
+          attributes: ['stat_karyawan_gp'],
+        },
+      ],
+    });
+  }
+
+  async findAllWithPaginationBySetempat(
+    id_master_setempat: number,
+    limit: number,
+    offset: number
+  ) {
+    return await PrsKaryawan.findAll({
+      where: { id_master_setempat },
+      limit,
+      offset,
+      order: [['nama_lengkap', 'ASC']],
+      attributes: [
+        'id_karyawan',
+        'foto',
+        'nik',
+        'nama_lengkap',
+        'email_penabur',
+      ],
+      include: [
+        {
+          model: PrsMasterSetempat,
+          as: 'master_setempat',
+          attributes: ['id', 'kota_setempat'],
+          required: false,
+        },
+        {
           model: PrsUnitKerjaKaryawan,
           as: 'unit_kerja_karyawan',
           attributes: ['jab_id'],
@@ -110,6 +162,10 @@ export class PrsKaryawanRepository {
 
   async countAll() {
     return await PrsKaryawan.count();
+  }
+
+  async countAllBySetempat(id_master_setempat: number) {
+    return await PrsKaryawan.count({ where: { id_master_setempat } });
   }
   async findById(id: string) {
     const data = await PrsKaryawan.findByPk(id, {

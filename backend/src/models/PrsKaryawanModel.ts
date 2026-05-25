@@ -52,6 +52,7 @@ export interface KaryawanAttributes {
   nama_bpjs_danpes?: string;
   etnis?: string;
   no_pasport?: string;
+  id_master_setempat?: number | null;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -114,6 +115,7 @@ class PrsKaryawan extends Model<
   declare nama_bpjs_danpes?: string;
   declare etnis?: string;
   declare no_pasport?: string;
+  declare id_master_setempat?: number | null;
   declare created_at?: Date;
   declare updated_at?: Date;
 
@@ -181,6 +183,10 @@ PrsKaryawan.init(
     nama_bpjs_danpes: DataTypes.STRING(255),
     etnis: DataTypes.STRING(150),
     no_pasport: DataTypes.STRING(150),
+    id_master_setempat: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

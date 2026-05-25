@@ -60,6 +60,7 @@ export const MASTERENDPOINT = {
   kota: (params) => `master-kota/prov/${params}`,
   allKota: `master-kota/GetAllKota`,
   provinsi: `master-provinsi`,
+  setempat: "master-setempat",
 
   lokasiKerja: "unit-kerja/getllUnitKerja",
 
@@ -78,6 +79,9 @@ export const MASTERENDPOINT = {
 export const EMPLOYEEENDPOINT = {
   getAll: (page, limit) =>
     `personalia/karyawan/employee?page=${page}&limit=${limit}`,
+  getAllBySetempat: (idMasterSetempat, page, limit) =>
+    `personalia/karyawan/employee/by-setempat/${idMasterSetempat}?page=${page}&limit=${limit}`,
+  create: () => "personalia/karyawan/created",
   search: (search, page) =>
     `personalia/karyawan/search?nama_lengkap=${search}${page ? `&${page}` : ""}`,
   joinToday: `personalia/karyawan/join-today`,

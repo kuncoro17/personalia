@@ -7,8 +7,10 @@ import {
   Button,
   Spinner,
   Input,
+  useDisclosure,
 } from "@heroui/react";
-import { useEffect, useMemo, useState } from "react";
+import { addToast } from "@heroui/toast";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -18,28 +20,74 @@ import Employees from "../../features/userManagement/employees";
 import EmployeeStatus from "../../features/userManagement/employeeStatus";
 import { capitalizeWords } from "../../utils/format";
 import { useMaster } from "../../hooks/useMaster";
-import { EMPLOYEEENDPOINT } from "../../constants/api";
+import { EMPLOYEEENDPOINT, MASTERENDPOINT } from "../../constants/api";
 import { LIMITPAGE, PROPFORM } from "../../constants/ui";
+import {
+  buildEmployeeImportTemplateXlsx,
+  parseEmployeeXlsxFile,
+} from "../../utils/xlsxEmployeeImport";
+import AddEmployeeModal from "./components/AddEmployeeModal";
 
 export default function AllKaryawan() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const api = apiClient(getToken);
   const queryClient = useQueryClient();
+  const importInputRef = useRef(null);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   const [limitPage, setLimitPage] = useState(new Set(["10"]));
+  const [selectedSetempat, setSelectedSetempat] = useState(new Set(["all"]));
   const [isTable, setIsTable] = useState(false);
   const [page, setPage] = useState({ initial: 1, total: 1 });
   const [search, setSearch] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
 
   const selectedLimit = useMemo(
     () => Array.from(limitPage).join(", ").replace(/_/g, ""),
     [limitPage],
   );
 
+  const selectedSetempatId = useMemo(() => {
+    const raw = Array.from(selectedSetempat)[0] ?? "all";
+    if (raw === "all") return null;
+    const asNumber = Number(raw);
+    return Number.isInteger(asNumber) && asNumber > 0 ? asNumber : null;
+  }, [selectedSetempat]);
+
+  const { data: masterSetempatOptions } = useMaster(
+    api,
+    ["master-setempat-options"],
+    MASTERENDPOINT.setempat,
+    {
+      enabled: isLoaded && isSignedIn,
+      select: (resp) => {
+        const list = Array.isArray(resp?.data) ? resp.data : [];
+        return list
+          .map((item) => ({
+            id: item?.id ?? null,
+            kota_setempat: item?.kota_setempat ?? "",
+          }))
+          .filter((item) => item.id != null && item.kota_setempat);
+      },
+    },
+  );
+
+  const employeesUrl = useMemo(() => {
+    if (selectedSetempatId) {
+      return EMPLOYEEENDPOINT.getAllBySetempat(
+        selectedSetempatId,
+        page.initial,
+        selectedLimit,
+      );
+    }
+
+    return EMPLOYEEENDPOINT.getAll(page.initial, selectedLimit);
+  }, [page.initial, selectedLimit, selectedSetempatId]);
+
   const { data, isFetching, refetch, error } = useMaster(
     api,
-    ["allKaryawan", page, limitPage],
-    EMPLOYEEENDPOINT.getAll(page.initial, selectedLimit),
+    ["allKaryawan", page, limitPage, selectedSetempatId],
+    employeesUrl,
     {
       enabled: isLoaded && isSignedIn,
       returnEmptyOnError: false,
@@ -105,6 +153,10 @@ export default function AllKaryawan() {
   }, [search]);
 
   useEffect(() => {
+    setPage((prev) => ({ ...prev, initial: 1 }));
+  }, [selectedSetempatId, selectedLimit]);
+
+  useEffect(() => {
     if (searchData || data) {
       let dataPagination = searchData ?? data;
       setPage({
@@ -113,6 +165,200 @@ export default function AllKaryawan() {
       });
     }
   }, [data, searchData]);
+
+  const selectedSetempatLabel = useMemo(() => {
+    if (!selectedSetempatId) return "Semua Kota";
+    const options = Array.isArray(masterSetempatOptions)
+      ? masterSetempatOptions
+      : [];
+    const found = options.find((item) => Number(item.id) === selectedSetempatId);
+    return found?.kota_setempat || String(selectedSetempatId);
+  }, [masterSetempatOptions, selectedSetempatId]);
+
+  const downloadTemplate = async () => {
+    try {
+      const templatePath = "/assets/FORMAT IMPORT.xlsx";
+      const res = await fetch(encodeURI(templatePath));
+      const blob = res.ok ? await res.blob() : null;
+
+      // Fallback: generate template dynamically when the static file isn't available.
+      const resolvedBlob =
+        blob ??
+        (await buildEmployeeImportTemplateXlsx().catch(() => {
+          throw new Error(
+            `Template tidak ditemukan di "${templatePath}". Tambahkan file "FORMAT IMPORT.xlsx" ke frontend/public/assets.`
+          );
+        }));
+
+      const url = URL.createObjectURL(resolvedBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "FORMAT IMPORT.xlsx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      addToast({
+        title: "Gagal",
+        description: err?.message || "Gagal membuat template Excel",
+        color: "danger",
+      });
+    }
+  };
+
+  const normalizeImportPayload = (raw) => {
+    const payload = { ...raw };
+
+    const numericKeys = [
+      "agama",
+      "tinggi_badan",
+      "berat_badan",
+      "id_master_setempat",
+    ];
+    for (const key of numericKeys) {
+      if (payload[key] == null) continue;
+      const value = String(payload[key]).trim();
+      if (!value) {
+        delete payload[key];
+        continue;
+      }
+      const n = Number(value);
+      if (!Number.isNaN(n)) payload[key] = n;
+    }
+
+    return payload;
+  };
+
+  const toFormData = (payload) => {
+    const formData = new FormData();
+    Object.entries(payload || {}).forEach(([key, value]) => {
+      if (value == null) return;
+      formData.append(key, String(value));
+    });
+    return formData;
+  };
+
+  const handleImportSelectedFile = async (e) => {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!file) return;
+
+    const isXlsx = /\.xlsx$/i.test(file.name);
+    if (!isXlsx) {
+      addToast({
+        title: "File tidak valid",
+        description: "Harus file .xlsx",
+        color: "warning",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const records = await parseEmployeeXlsxFile(file);
+      if (!Array.isArray(records) || records.length === 0) {
+        addToast({
+          title: "Tidak ada data",
+          description: "File Excel tidak memiliki baris data.",
+          color: "warning",
+        });
+        return;
+      }
+
+      let success = 0;
+      const errors = [];
+      const isValidEmail = (value) =>
+        /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(value ?? "").trim());
+
+      for (let i = 0; i < records.length; i += 1) {
+        const row = records[i];
+        const payload = normalizeImportPayload(row);
+        const nik = String(payload?.nik ?? "").trim();
+        const noKtp = String(payload?.no_ktp ?? "").trim();
+        const emailPribadi = String(payload?.email_pribadi ?? "").trim();
+        const emailPenabur = String(payload?.email_penabur ?? "").trim();
+
+        if (!nik) {
+          errors.push({ row: i + 2, message: "NIK wajib diisi" });
+          continue;
+        }
+
+        if (!/^[0-9]{7,16}$/.test(nik)) {
+          errors.push({ row: i + 2, message: "NIK harus berupa angka minimal 7 digit" });
+          continue;
+        }
+
+        if (!noKtp) {
+          errors.push({ row: i + 2, message: "No KTP wajib diisi" });
+          continue;
+        }
+
+        if (!/^[0-9]{16}$/.test(noKtp)) {
+          errors.push({ row: i + 2, message: "No KTP harus berupa angka 16 digit" });
+          continue;
+        }
+
+        if (!emailPribadi) {
+          errors.push({ row: i + 2, message: "Email pribadi wajib diisi" });
+          continue;
+        }
+
+        if (!isValidEmail(emailPribadi)) {
+          errors.push({ row: i + 2, message: "Format email pribadi tidak valid" });
+          continue;
+        }
+
+        if (!emailPenabur) {
+          errors.push({ row: i + 2, message: "Email PENABUR wajib diisi" });
+          continue;
+        }
+
+        if (!isValidEmail(emailPenabur)) {
+          errors.push({ row: i + 2, message: "Format email PENABUR tidak valid" });
+          continue;
+        }
+
+        try {
+          await api.post(EMPLOYEEENDPOINT.create(), toFormData(payload));
+          success += 1;
+        } catch (err) {
+          const message =
+            err?.payload?.message ||
+            err?.message ||
+            err?.response?.data?.message ||
+            "Gagal insert";
+          errors.push({ row: i + 2, message });
+        }
+      }
+
+      if (success > 0) {
+        addToast({
+          title: "Import selesai",
+          description: `Berhasil: ${success}. Gagal: ${errors.length}.`,
+          color: errors.length > 0 ? "warning" : "success",
+        });
+        await queryClient.invalidateQueries({ queryKey: ["allKaryawan"] });
+        await queryClient.invalidateQueries({ queryKey: ["search"] });
+      } else {
+        addToast({
+          title: "Import gagal",
+          description: `Tidak ada data yang berhasil diinsert. Gagal: ${errors.length}.`,
+          color: "danger",
+        });
+      }
+
+      if (errors.length > 0) {
+        console.error("Import errors:", errors);
+      }
+    } catch (err) {
+      addToast({
+        title: "Gagal import",
+        description: err?.message || "Gagal memproses file Excel",
+        color: "danger",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   return (
     <Layout>
@@ -131,12 +377,12 @@ export default function AllKaryawan() {
 
               <Dropdown>
                 <DropdownTrigger>
-                  <Button
-                    className="font-Poppins border-primary border-1 rounded-md"
-                    variant="bordered"
-                  >
-                    {selectedLimit}
-                  </Button>
+	                  <Button
+	                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[72px] justify-center"
+	                    variant="bordered"
+	                  >
+	                    {selectedLimit}
+	                  </Button>
                 </DropdownTrigger>
                 <DropdownMenu
                   disallowEmptySelection
@@ -149,6 +395,41 @@ export default function AllKaryawan() {
                   {LIMITPAGE.map((item) => (
                     <DropdownItem key={item} className="font-Poppins">
                       {item}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+
+              <Dropdown>
+                <DropdownTrigger>
+	                  <Button
+	                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[140px] justify-center"
+	                    variant="bordered"
+	                    isDisabled={!isLoaded || !isSignedIn}
+	                  >
+	                    {selectedSetempatLabel}
+	                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  disallowEmptySelection
+                  aria-label="Filter master setempat"
+                  selectedKeys={selectedSetempat}
+                  selectionMode="single"
+                  variant="flat"
+                  onSelectionChange={setSelectedSetempat}
+                >
+                  <DropdownItem key="all" className="font-Poppins">
+                    Semua Kota
+                  </DropdownItem>
+                  {(Array.isArray(masterSetempatOptions)
+                    ? masterSetempatOptions
+                    : []
+                  ).map((item) => (
+                    <DropdownItem
+                      key={String(item.id)}
+                      className="font-Poppins"
+                    >
+                      {item.kota_setempat}
                     </DropdownItem>
                   ))}
                 </DropdownMenu>
@@ -187,6 +468,42 @@ export default function AllKaryawan() {
             </div>
 
             <div className="flex gap-5 items-center">
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".xlsx"
+                className="hidden"
+                onChange={handleImportSelectedFile}
+              />
+
+              <Button
+                className="font-Poppins whitespace-nowrap"
+                color="primary"
+                isDisabled={!isLoaded || !isSignedIn || isImporting}
+                onPress={onOpen}
+              >
+                Tambah Karyawan
+              </Button>
+
+              <Button
+                className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap"
+                variant="bordered"
+                isDisabled={!isLoaded || !isSignedIn || isImporting}
+                onPress={downloadTemplate}
+              >
+                Download Template Excel
+              </Button>
+
+              <Button
+                className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap"
+                variant="bordered"
+                isDisabled={!isLoaded || !isSignedIn || isImporting}
+                isLoading={isImporting}
+                onPress={() => importInputRef.current?.click?.()}
+              >
+                Import File Excel
+              </Button>
+
               <button
                 className={`h-10 shadow-md aspect-square flex items-center justify-center rounded-md ${!isTable && "bg-primary"}`}
                 onClick={() => setIsTable(false)}
@@ -248,6 +565,8 @@ export default function AllKaryawan() {
           />
         </div>
       </section>
+
+      <AddEmployeeModal api={api} isOpen={isOpen} onOpenChange={onOpenChange} />
     </Layout>
   );
 }

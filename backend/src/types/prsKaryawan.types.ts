@@ -51,6 +51,7 @@ export interface PrsKaryawanAttributes {
   nama_bpjs_danpes?: string;
   etnis?: string;
   no_pasport?: string;
+  id_master_setempat?: number | null;
   created_at?: Date;
   updated_at?: Date;
   deleted_at?: Date | null;

@@ -22,6 +22,7 @@ import PrsMasterKel from './PrsMasterKel';
 import PrsMasterKec from './PrsMasterKec';
 import PrsMasterKot from './PrsMasterKot';
 import PrsMasterProv from './PrsMasterProv';
+import PrsMasterSetempat from './PrsMasterSetempat';
 import History from './HistoryModels';
 import MasterGroupBank from './MasterGroupBank';
 import MasterBankGiro from './MasterBankGiro';
@@ -116,6 +117,19 @@ PrsKaryawan.belongsTo(PrsStatusKaryawan, {
   foreignKey: 'kode_status_karyawan', // field di tabel prs_karyawan
   targetKey: 'kode', // field di tabel prs_master_alamat
   as: 'status_karyawan', // alias
+});
+
+// Karyawan - Master Setempat
+PrsMasterSetempat.hasMany(PrsKaryawan, {
+  foreignKey: 'id_master_setempat',
+  sourceKey: 'id',
+  as: 'karyawans_setempat',
+});
+
+PrsKaryawan.belongsTo(PrsMasterSetempat, {
+  foreignKey: 'id_master_setempat',
+  targetKey: 'id',
+  as: 'master_setempat',
 });
 
 PrsKaryawan.hasMany(PrsUnitKerjaKaryawan, {
@@ -341,5 +355,6 @@ export {
   PrsMasterKec,
   PrsMasterKot,
   PrsMasterProv,
+  PrsMasterSetempat,
   History,
 };

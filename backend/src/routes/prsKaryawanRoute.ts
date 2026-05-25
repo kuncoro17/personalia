@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import {
   getAllKaryawan,
+  getAllKaryawanBySetempat,
   getKaryawanById,
   createKaryawan,
   updateStatusTidakAktif,
@@ -291,6 +292,40 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
       },
     }),
     getAllKaryawan
+  );
+
+  // GET ALL KARYAWAN BY MASTER SETEMPAT
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: `${basePath}/employee/by-setempat/{id_master_setempat}`,
+      tags: ['Karyawan'],
+      summary: 'Get all Karyawan by master setempat',
+      request: {
+        params: z.object({
+          id_master_setempat: z.string().regex(/^[0-9]+$/).openapi({
+            example: '1',
+          }),
+        }),
+      },
+      responses: {
+        200: {
+          description: 'Berhasil mengambil semua karyawan berdasarkan setempat',
+          content: {
+            'application/json': {
+              schema: z.object({
+                success: z.boolean(),
+                message: z.string(),
+                data: z.array(KaryawanSchema),
+              }),
+            },
+          },
+        },
+        400: { description: 'Parameter tidak valid' },
+        401: { description: 'Unauthorized' },
+      },
+    }),
+    getAllKaryawanBySetempat
   );
 
   // GET KARYAWAN BY ID

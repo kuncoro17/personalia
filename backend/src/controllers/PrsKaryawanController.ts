@@ -52,6 +52,46 @@ export const getAllKaryawan = async (c: Context): Promise<Response> => {
   }
 };
 
+export const getAllKaryawanBySetempat = async (
+  c: Context
+): Promise<Response> => {
+  const service = new PrsKaryawanService();
+  const id_master_setempat = Number(c.req.param('id_master_setempat'));
+
+  if (!Number.isInteger(id_master_setempat) || id_master_setempat <= 0) {
+    await logWarn('Parameter id_master_setempat tidak valid');
+    return badRequest(c, 'Parameter id_master_setempat tidak valid');
+  }
+
+  try {
+    const page = Number(c.req.query('page')) || 1;
+    const limit = Number(c.req.query('limit')) || 10;
+
+    await logInfo(
+      `Memulai ambil data karyawan (setempat: ${id_master_setempat}, page: ${page}, limit: ${limit})`
+    );
+
+    const result = await service.getAllBySetempat(
+      id_master_setempat,
+      page,
+      limit
+    );
+
+    await logInfo(
+      `Berhasil ambil ${result.data.length} data dari total ${result.pagination.total}`
+    );
+
+    return ok(
+      c,
+      result,
+      'Berhasil ambil data karyawan berdasarkan master setempat'
+    );
+  } catch (err) {
+    await logError('Gagal ambil data karyawan berdasarkan master setempat', err);
+    throw err;
+  }
+};
+
 export const getKaryawanByemail = async (c: Context): Promise<Response> => {
   const service = new PrsKaryawanService();
   // waktu mulai
@@ -314,12 +354,18 @@ export const createKaryawan = async (c: Context): Promise<Response> => {
       }
     });
 
+    if (!parsedBody.id_karyawan) {
+      parsedBody.id_karyawan = uuidv4();
+    }
+
     // konversi numeric fields
     if (parsedBody.agama) parsedBody.agama = String(Number(parsedBody.agama));
     if (parsedBody.tinggi_badan)
       parsedBody.tinggi_badan = String(Number(parsedBody.tinggi_badan));
     if (parsedBody.berat_badan)
       parsedBody.berat_badan = String(Number(parsedBody.berat_badan));
+    if (parsedBody.id_master_setempat)
+      parsedBody.id_master_setempat = String(Number(parsedBody.id_master_setempat));
 
     // handle file upload
     if (file && file.name) {

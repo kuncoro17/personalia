@@ -24,6 +24,7 @@ import { prsMasterKelRoutes } from './routes/prsMasterKelRoutes';
 import { prsRiwPendidikanKarRoutes } from './routes/prsRiwPendidikanKar';
 // import sdmcheckinoutRoutes from './routes/sdm_checkinoutRoutes';
 import { LetterRoutes } from './routes/LetterRoutes';
+import { prsMasterSetempatRoutes } from './routes/prsMasterSetempatRoutes';
 
 import { PrsMasterDirekturRoute } from './routes/prsMasterDirekturRoute';
 import { PrsMasterDeputiRoute } from './routes/prsMasterDeputiRoute';
@@ -177,6 +178,7 @@ PrsMasterDeputiRoute(app);
 PrsMasterDirekturRoute(app);
 prsMasterKecRoutes(app);
 prsMasterKelRoutes(app);
+prsMasterSetempatRoutes(app);
 prsMasterKotaRoutes(app);
 PrsMasterMapelRoutes(app);
 prsMasterProvRoutes(app);

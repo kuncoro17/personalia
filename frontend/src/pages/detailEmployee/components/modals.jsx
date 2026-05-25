@@ -61,6 +61,12 @@ export default function Modals({
     let inputValue = { [key]: fieldValue };
 
     switch (key) {
+      case "nik":
+        inputValue["nik"] = String(fieldValue ?? "")
+          .replace(/\D+/g, "")
+          .slice(0, 16);
+        break;
+
       case "flag_inactive":
         inputValue["tanggal_inactive"] = fieldValue
           ? moment().format("YYYY-MM-DD")
@@ -272,6 +278,8 @@ export default function Modals({
 
     const getMaxLength = (fieldKey) => {
       const maxLengths = {
+        nik: 16,
+        no_ktp: 16,
         npwp: 20,
         nomor_bpjs_kesehatan: 13,
         nomor_bpjs_ketenagakerjaan: 11,
@@ -293,26 +301,43 @@ export default function Modals({
       return placeholders[fieldKey];
     };
 
-    return (
-      <Input
-        {...PROPFORM}
-        id={fieldId}
-        name={key}
-        aria-labelledby={labelId}
+	    return (
+	      <Input
+	        {...PROPFORM}
+	        id={fieldId}
+	        name={key}
+	        aria-labelledby={labelId}
         value={
           currentValue === undefined || currentValue === null
             ? ""
             : String(currentValue)
         }
-        onValueChange={(val) => setFieldValue(key, val)}
-        placeholder={getPlaceholder(key)}
-        maxLength={getMaxLength(key)}
-        classNames={{
-          inputWrapper: "h-10 border-black border-1",
-          input: "font-Poppins text-sm",
+	        onValueChange={(val) => {
+	          if (key === "nik" || key === "no_ktp") {
+	            const digitsOnly = String(val ?? "").replace(/\\D+/g, "").slice(0, 16);
+	            setFieldValue(key, digitsOnly);
+	            return;
+	          }
+	          setFieldValue(key, val);
+	        }}
+	        inputMode={key === "nik" || key === "no_ktp" ? "numeric" : undefined}
+	        pattern={key === "nik" || key === "no_ktp" ? "[0-9]*" : undefined}
+	        placeholder={getPlaceholder(key)}
+	        maxLength={getMaxLength(key)}
+	        classNames={{
+	          inputWrapper: "h-10 border-black border-1",
+	          input: "font-Poppins text-sm",
         }}
         validate={(value) => {
           if (value.trim() !== "") {
+            if (key === "nik" && !/^[0-9]{7,16}$/.test(value.trim())) {
+              return "NIK harus berupa angka minimal 7 digit!";
+            }
+
+            if (key === "no_ktp" && !/^[0-9]{16}$/.test(value.trim())) {
+              return "No KTP harus berupa angka 16 digit!";
+            }
+
             if (!/^\d+$/.test(value.trim()) && item.form === "number") {
               return "Harus berupa angka!";
             }
