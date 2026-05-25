@@ -13,12 +13,19 @@ const migration: Migration = {
     if (!exists) return;
 
     const columns = await queryInterface.describeTable(TABLE_NAME);
-    const idColumn = columns.id as { type?: unknown; defaultValue?: unknown } | undefined;
+    const idColumn = columns.id as
+      | { type?: unknown; defaultValue?: unknown }
+      | undefined;
     if (!idColumn) return;
 
-    const idTypeText = (idColumn.type == null ? '' : String(idColumn.type)).toLowerCase();
+    const idTypeText = (
+      idColumn.type == null ? '' : String(idColumn.type)
+    ).toLowerCase();
     const isIntLike =
-      idTypeText.includes('int') || idTypeText.includes('integer') || idTypeText.includes('bigint') || idTypeText.includes('smallint');
+      idTypeText.includes('int') ||
+      idTypeText.includes('integer') ||
+      idTypeText.includes('bigint') ||
+      idTypeText.includes('smallint');
 
     // If the id column isn't an integer type, we can't safely convert it to an identity column.
     // Usually this means the table was created earlier with UUID id. In that case:

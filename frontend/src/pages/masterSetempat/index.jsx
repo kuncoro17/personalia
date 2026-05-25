@@ -145,9 +145,14 @@ export default function MasterSetempatPage() {
     },
   });
 
-  const canSubmit = useMemo(() => kotaSetempat.trim().length > 0, [kotaSetempat]);
+  const canSubmit = useMemo(
+    () => kotaSetempat.trim().length > 0,
+    [kotaSetempat],
+  );
   const isMutating =
-    createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending;
 
   return (
     <Layout>
@@ -185,7 +190,10 @@ export default function MasterSetempatPage() {
               <Spinner size="md" color="primary" />
             </div>
           ) : (
-            <Table aria-label="Master setempat table" className="w-full min-w-0">
+            <Table
+              aria-label="Master setempat table"
+              className="w-full min-w-0"
+            >
               <TableHeader>
                 <TableColumn key="id" align="start">
                   ID
@@ -252,7 +260,11 @@ export default function MasterSetempatPage() {
                 />
               </ModalBody>
               <ModalFooter>
-                <Button variant="light" onPress={closeHandler} isDisabled={isMutating}>
+                <Button
+                  variant="light"
+                  onPress={closeHandler}
+                  isDisabled={isMutating}
+                >
                   Batal
                 </Button>
                 <Button
@@ -270,4 +282,3 @@ export default function MasterSetempatPage() {
     </Layout>
   );
 }
-

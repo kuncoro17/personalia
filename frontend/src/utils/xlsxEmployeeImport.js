@@ -31,7 +31,7 @@ const extractCellValue = (cell, sharedStrings) => {
   if (t === "s") {
     const index = Number(v);
     return Number.isInteger(index) && index >= 0
-      ? sharedStrings[index] ?? ""
+      ? (sharedStrings[index] ?? "")
       : "";
   }
 
@@ -44,7 +44,9 @@ const parseSharedStrings = (xml) => {
   const doc = parser.parseFromString(xml, "application/xml");
   const items = Array.from(doc.querySelectorAll("sst si"));
   return items.map((si) => {
-    const parts = Array.from(si.querySelectorAll("t")).map((t) => t.textContent || "");
+    const parts = Array.from(si.querySelectorAll("t")).map(
+      (t) => t.textContent || "",
+    );
     return parts.join("");
   });
 };
@@ -131,7 +133,10 @@ export const buildEmployeeImportTemplateXlsx = async (
   const cells = headers
     .map((h, i) => {
       const col = String.fromCharCode(65 + i); // supports up to Z columns for our template
-      const safe = String(h).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const safe = String(h)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
       return `<c r="${col}1" t="inlineStr"><is><t>${safe}</t></is></c>`;
     })
     .join("");
@@ -188,7 +193,8 @@ export const parseEmployeeXlsxFile = async (file) => {
       const colIndex = Number(colIndexRaw);
       const key = headers[colIndex];
       if (!key) continue;
-      const value = typeof cellValue === "string" ? cellValue.trim() : cellValue;
+      const value =
+        typeof cellValue === "string" ? cellValue.trim() : cellValue;
       if (value === "") continue;
       obj[key] = value;
     }
@@ -197,4 +203,3 @@ export const parseEmployeeXlsxFile = async (file) => {
 
   return records;
 };
-

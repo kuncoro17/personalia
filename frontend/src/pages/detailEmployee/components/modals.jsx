@@ -301,32 +301,34 @@ export default function Modals({
       return placeholders[fieldKey];
     };
 
-	    return (
-	      <Input
-	        {...PROPFORM}
-	        id={fieldId}
-	        name={key}
-	        aria-labelledby={labelId}
+    return (
+      <Input
+        {...PROPFORM}
+        id={fieldId}
+        name={key}
+        aria-labelledby={labelId}
         value={
           currentValue === undefined || currentValue === null
             ? ""
             : String(currentValue)
         }
-	        onValueChange={(val) => {
-	          if (key === "nik" || key === "no_ktp") {
-	            const digitsOnly = String(val ?? "").replace(/\\D+/g, "").slice(0, 16);
-	            setFieldValue(key, digitsOnly);
-	            return;
-	          }
-	          setFieldValue(key, val);
-	        }}
-	        inputMode={key === "nik" || key === "no_ktp" ? "numeric" : undefined}
-	        pattern={key === "nik" || key === "no_ktp" ? "[0-9]*" : undefined}
-	        placeholder={getPlaceholder(key)}
-	        maxLength={getMaxLength(key)}
-	        classNames={{
-	          inputWrapper: "h-10 border-black border-1",
-	          input: "font-Poppins text-sm",
+        onValueChange={(val) => {
+          if (key === "nik" || key === "no_ktp") {
+            const digitsOnly = String(val ?? "")
+              .replace(/\\D+/g, "")
+              .slice(0, 16);
+            setFieldValue(key, digitsOnly);
+            return;
+          }
+          setFieldValue(key, val);
+        }}
+        inputMode={key === "nik" || key === "no_ktp" ? "numeric" : undefined}
+        pattern={key === "nik" || key === "no_ktp" ? "[0-9]*" : undefined}
+        placeholder={getPlaceholder(key)}
+        maxLength={getMaxLength(key)}
+        classNames={{
+          inputWrapper: "h-10 border-black border-1",
+          input: "font-Poppins text-sm",
         }}
         validate={(value) => {
           if (value.trim() !== "") {

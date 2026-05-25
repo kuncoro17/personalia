@@ -87,7 +87,10 @@ export const getAllKaryawanBySetempat = async (
       'Berhasil ambil data karyawan berdasarkan master setempat'
     );
   } catch (err) {
-    await logError('Gagal ambil data karyawan berdasarkan master setempat', err);
+    await logError(
+      'Gagal ambil data karyawan berdasarkan master setempat',
+      err
+    );
     throw err;
   }
 };
@@ -365,7 +368,9 @@ export const createKaryawan = async (c: Context): Promise<Response> => {
     if (parsedBody.berat_badan)
       parsedBody.berat_badan = String(Number(parsedBody.berat_badan));
     if (parsedBody.id_master_setempat)
-      parsedBody.id_master_setempat = String(Number(parsedBody.id_master_setempat));
+      parsedBody.id_master_setempat = String(
+        Number(parsedBody.id_master_setempat)
+      );
 
     // handle file upload
     if (file && file.name) {

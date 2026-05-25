@@ -38,6 +38,10 @@ export const SIDEBARMENU = [
   { name: "Karyawan Baru", icon: "/icon/dashboard.svg", path: "/" },
   { name: "Offboarding", icon: "/icon/offBoarding.svg", path: "/offboarding" },
   { name: "Daftar Karyawan", icon: "/icon/karyawan.svg", path: "/employees" },
-  { name: "Master Setempat", icon: "/icon/setting.svg", path: "/master-setempat" },
+  {
+    name: "Master Setempat",
+    icon: "/icon/setting.svg",
+    path: "/master-setempat",
+  },
   { name: "Cetak Surat", icon: "/icon/cetakSurat.svg", path: "/printLetter" },
 ];

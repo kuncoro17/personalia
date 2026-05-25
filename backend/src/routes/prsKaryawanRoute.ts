@@ -303,9 +303,12 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
       summary: 'Get all Karyawan by master setempat',
       request: {
         params: z.object({
-          id_master_setempat: z.string().regex(/^[0-9]+$/).openapi({
-            example: '1',
-          }),
+          id_master_setempat: z
+            .string()
+            .regex(/^[0-9]+$/)
+            .openapi({
+              example: '1',
+            }),
         }),
       },
       responses: {

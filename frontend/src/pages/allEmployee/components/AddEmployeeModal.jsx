@@ -18,7 +18,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPLOYEEENDPOINT, MASTERENDPOINT } from "../../../constants/api";
 import { useMaster } from "../../../hooks/useMaster";
 
-const isValidNikMin7 = (value) => /^[0-9]{7,16}$/.test(String(value ?? "").trim());
+const isValidNikMin7 = (value) =>
+  /^[0-9]{7,16}$/.test(String(value ?? "").trim());
 const isValidKtp16 = (value) => /^[0-9]{16}$/.test(String(value ?? "").trim());
 const isValidEmail = (value) =>
   /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(value ?? "").trim());
@@ -33,7 +34,12 @@ const cleanPayload = (values) => {
     payload[key] = value;
   }
 
-  const numericKeys = ["agama", "tinggi_badan", "berat_badan", "id_master_setempat"];
+  const numericKeys = [
+    "agama",
+    "tinggi_badan",
+    "berat_badan",
+    "id_master_setempat",
+  ];
   for (const key of numericKeys) {
     if (payload[key] == null) continue;
     const n = Number(payload[key]);
@@ -99,7 +105,10 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
           .map((item) => ({
             id: item?.kode ?? item?.id ?? null,
             label: String(
-              item?.stat_karyawan_gp ?? item?.stat_karyawan ?? item?.nama_status ?? "",
+              item?.stat_karyawan_gp ??
+                item?.stat_karyawan ??
+                item?.nama_status ??
+                "",
             ).trim(),
           }))
           .filter((item) => item.id != null && item.label);
@@ -139,8 +148,14 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
         color: "success",
       });
 
-      await queryClient.invalidateQueries({ queryKey: ["allKaryawan"], exact: false });
-      await queryClient.invalidateQueries({ queryKey: ["search"], exact: false });
+      await queryClient.invalidateQueries({
+        queryKey: ["allKaryawan"],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["search"],
+        exact: false,
+      });
     },
     onError: (err) => {
       const message =
@@ -167,7 +182,13 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
       isValidEmail(emailPenabur) &&
       !isSubmitting
     );
-  }, [form.email_penabur, form.email_pribadi, form.nik, form.no_ktp, isSubmitting]);
+  }, [
+    form.email_penabur,
+    form.email_pribadi,
+    form.nik,
+    form.no_ktp,
+    isSubmitting,
+  ]);
 
   const updateField = (key) => (value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -223,7 +244,9 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                     label="NIK *"
                     value={form.nik}
                     onValueChange={(value) => {
-                      const digitsOnly = String(value ?? "").replace(/\\D+/g, "").slice(0, 16);
+                      const digitsOnly = String(value ?? "")
+                        .replace(/\\D+/g, "")
+                        .slice(0, 16);
                       updateField("nik")(digitsOnly);
                     }}
                     maxLength={16}
@@ -242,7 +265,9 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                     label="No KTP *"
                     value={form.no_ktp}
                     onValueChange={(value) => {
-                      const digitsOnly = String(value ?? "").replace(/\\D+/g, "").slice(0, 16);
+                      const digitsOnly = String(value ?? "")
+                        .replace(/\\D+/g, "")
+                        .slice(0, 16);
                       updateField("no_ktp")(digitsOnly);
                     }}
                     maxLength={16}
@@ -252,7 +277,8 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                     validate={(value) => {
                       const v = String(value ?? "").trim();
                       if (v === "") return "No KTP wajib diisi";
-                      if (!/^[0-9]+$/.test(v)) return "No KTP tidak boleh huruf";
+                      if (!/^[0-9]+$/.test(v))
+                        return "No KTP tidak boleh huruf";
                       if (v.length !== 16) return "No KTP harus 16 digit";
                     }}
                   />
@@ -269,19 +295,22 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                   </Select>
                   <Select
                     label="Master Setempat"
-                    selectedKeys={new Set([String(form.id_master_setempat || "")])}
+                    selectedKeys={
+                      new Set([String(form.id_master_setempat || "")])
+                    }
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys)[0] || "";
                       updateField("id_master_setempat")(String(selected));
                     }}
                   >
-                    {(Array.isArray(setempatOptions) ? setempatOptions : []).map(
-                      (item) => (
-                        <SelectItem key={String(item.id)}>
-                          {item.label}
-                        </SelectItem>
-                      ),
-                    )}
+                    {(Array.isArray(setempatOptions)
+                      ? setempatOptions
+                      : []
+                    ).map((item) => (
+                      <SelectItem key={String(item.id)}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
                   </Select>
 
                   <Input
@@ -341,13 +370,19 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                       updateField("agama")(String(selected));
                     }}
                   >
-                    {(Array.isArray(agamaOptions) ? agamaOptions : []).map((item) => (
-                      <SelectItem key={String(item.id)}>{item.label}</SelectItem>
-                    ))}
+                    {(Array.isArray(agamaOptions) ? agamaOptions : []).map(
+                      (item) => (
+                        <SelectItem key={String(item.id)}>
+                          {item.label}
+                        </SelectItem>
+                      ),
+                    )}
                   </Select>
                   <Select
                     label="Status Karyawan"
-                    selectedKeys={new Set([String(form.kode_status_karyawan || "")])}
+                    selectedKeys={
+                      new Set([String(form.kode_status_karyawan || "")])
+                    }
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys)[0] || "";
                       updateField("kode_status_karyawan")(String(selected));
@@ -374,7 +409,12 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
               >
                 Batal
               </Button>
-              <Button color="primary" type="submit" isDisabled={!canSubmit} isLoading={isSubmitting}>
+              <Button
+                color="primary"
+                type="submit"
+                isDisabled={!canSubmit}
+                isLoading={isSubmitting}
+              >
                 Simpan
               </Button>
             </ModalFooter>

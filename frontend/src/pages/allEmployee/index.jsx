@@ -171,7 +171,9 @@ export default function AllKaryawan() {
     const options = Array.isArray(masterSetempatOptions)
       ? masterSetempatOptions
       : [];
-    const found = options.find((item) => Number(item.id) === selectedSetempatId);
+    const found = options.find(
+      (item) => Number(item.id) === selectedSetempatId,
+    );
     return found?.kota_setempat || String(selectedSetempatId);
   }, [masterSetempatOptions, selectedSetempatId]);
 
@@ -186,7 +188,7 @@ export default function AllKaryawan() {
         blob ??
         (await buildEmployeeImportTemplateXlsx().catch(() => {
           throw new Error(
-            `Template tidak ditemukan di "${templatePath}". Tambahkan file "FORMAT IMPORT.xlsx" ke frontend/public/assets.`
+            `Template tidak ditemukan di "${templatePath}". Tambahkan file "FORMAT IMPORT.xlsx" ke frontend/public/assets.`,
           );
         }));
 
@@ -283,7 +285,10 @@ export default function AllKaryawan() {
         }
 
         if (!/^[0-9]{7,16}$/.test(nik)) {
-          errors.push({ row: i + 2, message: "NIK harus berupa angka minimal 7 digit" });
+          errors.push({
+            row: i + 2,
+            message: "NIK harus berupa angka minimal 7 digit",
+          });
           continue;
         }
 
@@ -293,7 +298,10 @@ export default function AllKaryawan() {
         }
 
         if (!/^[0-9]{16}$/.test(noKtp)) {
-          errors.push({ row: i + 2, message: "No KTP harus berupa angka 16 digit" });
+          errors.push({
+            row: i + 2,
+            message: "No KTP harus berupa angka 16 digit",
+          });
           continue;
         }
 
@@ -303,7 +311,10 @@ export default function AllKaryawan() {
         }
 
         if (!isValidEmail(emailPribadi)) {
-          errors.push({ row: i + 2, message: "Format email pribadi tidak valid" });
+          errors.push({
+            row: i + 2,
+            message: "Format email pribadi tidak valid",
+          });
           continue;
         }
 
@@ -313,7 +324,10 @@ export default function AllKaryawan() {
         }
 
         if (!isValidEmail(emailPenabur)) {
-          errors.push({ row: i + 2, message: "Format email PENABUR tidak valid" });
+          errors.push({
+            row: i + 2,
+            message: "Format email PENABUR tidak valid",
+          });
           continue;
         }
 
@@ -377,12 +391,12 @@ export default function AllKaryawan() {
 
               <Dropdown>
                 <DropdownTrigger>
-	                  <Button
-	                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[72px] justify-center"
-	                    variant="bordered"
-	                  >
-	                    {selectedLimit}
-	                  </Button>
+                  <Button
+                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[72px] justify-center"
+                    variant="bordered"
+                  >
+                    {selectedLimit}
+                  </Button>
                 </DropdownTrigger>
                 <DropdownMenu
                   disallowEmptySelection
@@ -402,13 +416,13 @@ export default function AllKaryawan() {
 
               <Dropdown>
                 <DropdownTrigger>
-	                  <Button
-	                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[140px] justify-center"
-	                    variant="bordered"
-	                    isDisabled={!isLoaded || !isSignedIn}
-	                  >
-	                    {selectedSetempatLabel}
-	                  </Button>
+                  <Button
+                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[140px] justify-center"
+                    variant="bordered"
+                    isDisabled={!isLoaded || !isSignedIn}
+                  >
+                    {selectedSetempatLabel}
+                  </Button>
                 </DropdownTrigger>
                 <DropdownMenu
                   disallowEmptySelection
