@@ -60,8 +60,12 @@ export default function MasterWilayahPendidikanPage() {
             {activeLabel}
           </p>
 
-          {active === "provinsi" && <MasterProvinsiSection api={api} isReady={isReady} />}
-          {active === "kota" && <MasterKotaSection api={api} isReady={isReady} />}
+          {active === "provinsi" && (
+            <MasterProvinsiSection api={api} isReady={isReady} />
+          )}
+          {active === "kota" && (
+            <MasterKotaSection api={api} isReady={isReady} />
+          )}
           {active === "kecamatan" && (
             <MasterKecamatanSection api={api} isReady={isReady} />
           )}
@@ -73,4 +77,3 @@ export default function MasterWilayahPendidikanPage() {
     </Layout>
   );
 }
-

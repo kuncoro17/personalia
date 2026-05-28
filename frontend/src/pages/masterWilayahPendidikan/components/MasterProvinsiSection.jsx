@@ -53,7 +53,9 @@ export default function MasterProvinsiSection({ api, isReady }) {
   useEffect(() => {
     if (!error) return;
     const message =
-      error?.payload?.message || error?.message || "Gagal memuat master provinsi";
+      error?.payload?.message ||
+      error?.message ||
+      "Gagal memuat master provinsi";
     addToast({ title: "Error", description: message, color: "danger" });
   }, [error]);
 

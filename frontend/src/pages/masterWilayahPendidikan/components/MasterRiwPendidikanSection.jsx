@@ -35,17 +35,24 @@ export default function MasterRiwPendidikanSection({ api, isReady }) {
     data: rowsRaw,
     isFetching,
     error,
-  } = useMaster(api, ["master-riwayat-pendidikan"], MASTERENDPOINT.universitas, {
-    enabled: isReady,
-    returnEmptyOnError: false,
-  });
+  } = useMaster(
+    api,
+    ["master-riwayat-pendidikan"],
+    MASTERENDPOINT.universitas,
+    {
+      enabled: isReady,
+      returnEmptyOnError: false,
+    },
+  );
 
   const rows = useMemo(() => {
     const list = normalizeApiList(rowsRaw);
     return list
       .map((item) => ({
         id: item?.id ?? item?.riw_pendidikan_id ?? null,
-        univ: String(item?.univ ?? item?.nama_sekolah ?? item?.nama ?? "").trim(),
+        univ: String(
+          item?.univ ?? item?.nama_sekolah ?? item?.nama ?? "",
+        ).trim(),
       }))
       .filter((item) => item.id && item.univ);
   }, [rowsRaw]);
@@ -181,7 +188,10 @@ export default function MasterRiwPendidikanSection({ api, isReady }) {
             <Spinner size="md" color="primary" />
           </div>
         ) : (
-          <Table aria-label="Master riwayat pendidikan table" className="w-full min-w-0">
+          <Table
+            aria-label="Master riwayat pendidikan table"
+            className="w-full min-w-0"
+          >
             <TableHeader>
               <TableColumn key="id" align="start">
                 ID

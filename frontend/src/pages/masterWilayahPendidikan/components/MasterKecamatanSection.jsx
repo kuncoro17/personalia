@@ -38,10 +38,15 @@ export default function MasterKecamatanSection({ api, isReady }) {
   const [editingKotaId, setEditingKotaId] = useState("");
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
-  const { data: provRaw } = useMaster(api, ["master-provinsi"], MASTERENDPOINT.provinsi, {
-    enabled: isReady,
-    returnEmptyOnError: true,
-  });
+  const { data: provRaw } = useMaster(
+    api,
+    ["master-provinsi"],
+    MASTERENDPOINT.provinsi,
+    {
+      enabled: isReady,
+      returnEmptyOnError: true,
+    },
+  );
 
   const provinsiOptions = useMemo(() => {
     const list = normalizeApiList(provRaw);
@@ -57,10 +62,15 @@ export default function MasterKecamatanSection({ api, isReady }) {
     data: kotaRaw,
     isFetching: kotaFetching,
     error: kotaError,
-  } = useMaster(api, ["master-kota-by-prov", provId], MASTERENDPOINT.kota(provId), {
-    enabled: isReady && Boolean(provId),
-    returnEmptyOnError: true,
-  });
+  } = useMaster(
+    api,
+    ["master-kota-by-prov", provId],
+    MASTERENDPOINT.kota(provId),
+    {
+      enabled: isReady && Boolean(provId),
+      returnEmptyOnError: true,
+    },
+  );
 
   const kotaOptions = useMemo(() => {
     const list = normalizeApiList(kotaRaw);
@@ -103,7 +113,9 @@ export default function MasterKecamatanSection({ api, isReady }) {
   useEffect(() => {
     if (!kotaError) return;
     const message =
-      kotaError?.payload?.message || kotaError?.message || "Gagal memuat master kota";
+      kotaError?.payload?.message ||
+      kotaError?.message ||
+      "Gagal memuat master kota";
     addToast({ title: "Error", description: message, color: "danger" });
   }, [kotaError]);
 
@@ -184,7 +196,11 @@ export default function MasterKecamatanSection({ api, isReady }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      const resp = await apiService("delete", api, `${KECAMATAN_ENDPOINT}/${id}`);
+      const resp = await apiService(
+        "delete",
+        api,
+        `${KECAMATAN_ENDPOINT}/${id}`,
+      );
       return resp;
     },
     onSuccess: async () => {
@@ -295,7 +311,9 @@ export default function MasterKecamatanSection({ api, isReady }) {
                 <TableRow key={String(item.id)}>
                   <TableCell>{item.id}</TableCell>
                   <TableCell className="font-Poppins text-primary">
-                    {kotaNameById.get(String(item.kot_id)) || item.kot_id || "-"}
+                    {kotaNameById.get(String(item.kot_id)) ||
+                      item.kot_id ||
+                      "-"}
                   </TableCell>
                   <TableCell className="font-Poppins text-primary">
                     {item.nama}
@@ -372,7 +390,9 @@ export default function MasterKecamatanSection({ api, isReady }) {
                 <Button
                   color="primary"
                   isDisabled={
-                    !editingKotaId || editingNama.trim().length === 0 || isMutating
+                    !editingKotaId ||
+                    editingNama.trim().length === 0 ||
+                    isMutating
                   }
                   onPress={() => updateMutation.mutate()}
                 >

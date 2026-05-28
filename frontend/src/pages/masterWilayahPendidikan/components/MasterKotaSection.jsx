@@ -37,10 +37,15 @@ export default function MasterKotaSection({ api, isReady }) {
   const [editingProvId, setEditingProvId] = useState("");
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
-  const { data: provRaw } = useMaster(api, ["master-provinsi"], MASTERENDPOINT.provinsi, {
-    enabled: isReady,
-    returnEmptyOnError: true,
-  });
+  const { data: provRaw } = useMaster(
+    api,
+    ["master-provinsi"],
+    MASTERENDPOINT.provinsi,
+    {
+      enabled: isReady,
+      returnEmptyOnError: true,
+    },
+  );
 
   const provinsiOptions = useMemo(() => {
     const list = normalizeApiList(provRaw);
@@ -100,7 +105,10 @@ export default function MasterKotaSection({ api, isReady }) {
         description: "Kota/Kabupaten berhasil ditambahkan",
         color: "success",
       });
-      await queryClient.invalidateQueries({ queryKey: ["master-kota"], exact: false });
+      await queryClient.invalidateQueries({
+        queryKey: ["master-kota"],
+        exact: false,
+      });
       await queryClient.invalidateQueries({
         queryKey: ["master-kota-by-prov"],
         exact: false,
@@ -132,7 +140,10 @@ export default function MasterKotaSection({ api, isReady }) {
         description: "Kota/Kabupaten berhasil diperbarui",
         color: "success",
       });
-      await queryClient.invalidateQueries({ queryKey: ["master-kota"], exact: false });
+      await queryClient.invalidateQueries({
+        queryKey: ["master-kota"],
+        exact: false,
+      });
       await queryClient.invalidateQueries({
         queryKey: ["master-kota-by-prov"],
         exact: false,
@@ -163,7 +174,10 @@ export default function MasterKotaSection({ api, isReady }) {
         description: "Kota/Kabupaten berhasil dihapus",
         color: "success",
       });
-      await queryClient.invalidateQueries({ queryKey: ["master-kota"], exact: false });
+      await queryClient.invalidateQueries({
+        queryKey: ["master-kota"],
+        exact: false,
+      });
       await queryClient.invalidateQueries({
         queryKey: ["master-kota-by-prov"],
         exact: false,
@@ -171,7 +185,9 @@ export default function MasterKotaSection({ api, isReady }) {
     },
     onError: (err) => {
       const message =
-        err?.payload?.message || err?.message || "Gagal menghapus kota/kabupaten";
+        err?.payload?.message ||
+        err?.message ||
+        "Gagal menghapus kota/kabupaten";
       addToast({ title: "Gagal", description: message, color: "danger" });
     },
   });
@@ -243,7 +259,9 @@ export default function MasterKotaSection({ api, isReady }) {
                 <TableRow key={String(item.id)}>
                   <TableCell>{item.id}</TableCell>
                   <TableCell className="font-Poppins text-primary">
-                    {provNameById.get(String(item.prov_id)) || item.prov_id || "-"}
+                    {provNameById.get(String(item.prov_id)) ||
+                      item.prov_id ||
+                      "-"}
                   </TableCell>
                   <TableCell className="font-Poppins text-primary">
                     {item.nama}
@@ -318,7 +336,9 @@ export default function MasterKotaSection({ api, isReady }) {
                 <Button
                   color="primary"
                   isDisabled={
-                    !editingProvId || editingNama.trim().length === 0 || isMutating
+                    !editingProvId ||
+                    editingNama.trim().length === 0 ||
+                    isMutating
                   }
                   onPress={() => updateMutation.mutate()}
                 >
