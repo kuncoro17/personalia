@@ -27,17 +27,45 @@ const isCloudflareChallengePayload = (payload) => {
   );
 };
 
+const toDisplayString = (value) => {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  if (value instanceof Error) return value.message || value.name || "Error";
+
+  if (typeof value === "object") {
+    const maybeMessage =
+      typeof value.message === "string"
+        ? value.message
+        : typeof value.error === "string"
+          ? value.error
+          : "";
+
+    if (maybeMessage) return maybeMessage;
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+};
+
 export const apiClient = (getToken) => {
   const showToastOnce = (toastMessage, toastConfig) => {
     const { message, setMessage, deleteMessage } = useToastSlice.getState();
 
-    if (message.includes(toastMessage)) return;
+    const normalizedToastMessage =
+      toDisplayString(toastMessage) || "Unknown error";
 
-    setMessage(toastMessage);
+    if (message.includes(normalizedToastMessage)) return;
+
+    setMessage(normalizedToastMessage);
     addToast({
       ...toastConfig,
       onClose: () => {
-        deleteMessage(toastMessage);
+        deleteMessage(normalizedToastMessage);
       },
     });
   };
@@ -70,6 +98,8 @@ export const apiClient = (getToken) => {
           data?.error ||
           `Server responded with status ${status}`;
 
+        const normalizedMessage = toDisplayString(message);
+
         if (isCloudflareChallenge) {
           showToastOnce("Cloudflare blocked request", {
             title: "Blocked by Cloudflare",
@@ -92,17 +122,32 @@ export const apiClient = (getToken) => {
           });
         }
 
+        const normalizedPayload = (() => {
+          if (isCloudflareChallenge) {
+            return {
+              provider: "cloudflare",
+              challenge: true,
+              raw: data,
+              message: normalizedMessage,
+            };
+          }
+
+          if (data && typeof data === "object") {
+            const rawMessage = data?.message;
+
+            if (typeof rawMessage !== "string") {
+              return { ...data, message: normalizedMessage };
+            }
+          }
+
+          return data;
+        })();
+
         return Promise.reject({
           type: "HTTP_ERROR",
           status,
-          payload: isCloudflareChallenge
-            ? {
-                provider: "cloudflare",
-                challenge: true,
-                raw: data,
-              }
-            : data,
-          message,
+          payload: normalizedPayload,
+          message: normalizedMessage,
         });
       }
 
@@ -143,15 +188,17 @@ export const apiClient = (getToken) => {
 
       const msg = error?.message || "Unknown error";
 
-      showToastOnce(msg, {
+      const normalizedMsg = toDisplayString(msg) || "Unknown error";
+
+      showToastOnce(normalizedMsg, {
         title: "Unknown Error",
-        description: msg,
+        description: normalizedMsg,
         color: "danger",
       });
 
       return Promise.reject({
         type: "UNKNOWN_ERROR",
-        message: msg,
+        message: normalizedMsg,
       });
     },
   );

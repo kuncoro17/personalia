@@ -6,7 +6,7 @@ import PrsMasterSetempat, {
 export class PrsMasterSetempatRepository {
   async findAll(): Promise<PrsMasterSetempat[]> {
     return await PrsMasterSetempat.findAll({
-      order: [['kota_setempat', 'ASC']],
+      order: [['id', 'ASC']],
     });
   }
 

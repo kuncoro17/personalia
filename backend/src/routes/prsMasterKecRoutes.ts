@@ -44,7 +44,7 @@ export const prsMasterKecRoutes = (app: OpenAPIHono) => {
   // ============================
   const KecamatanSchema = z.object({
     id: z.string().uuid(),
-    kecamatan: z.string(),
+    nama: z.string(),
     kot_id: z.string().uuid(),
   });
 

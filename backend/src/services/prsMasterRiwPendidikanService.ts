@@ -51,11 +51,14 @@ class PrsMasterRiwPendidikanService {
     data: Partial<RiwPendAttributes>
   ): Promise<{ message: string }> {
     if (!isValidUUID(id)) throw new BadRequestException('ID tidak valid');
-    const parsed = prsMasterRiwPendidikanSchema.safeParse(data);
+    const parsed = prsMasterRiwPendidikanSchema.partial().safeParse(data);
     if (!parsed.success) {
       throw new BadRequestException(
         parsed.error.issues.map(e => e.message).join(', ')
       );
+    }
+    if (!parsed.data.univ) {
+      throw new BadRequestException('Universitas wajib diisi');
     }
     const updated = await repo.update(id, sanitize(parsed.data));
     if (!updated) throw new NotFoundException('ID tidak ditemukan');

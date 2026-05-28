@@ -58,7 +58,7 @@ export const MASTERENDPOINT = {
   kelurahan: (params) => `master-kelurahan/ByKecamatan/${params}`,
   kecamatan: (params) => `master-kecamatan/kecamatan_kota/${params}`,
   kota: (params) => `master-kota/prov/${params}`,
-  allKota: `master-kota/GetAllKota`,
+  allKota: `master-kota`,
   provinsi: `master-provinsi`,
   setempat: "master-setempat",
 

@@ -6,6 +6,9 @@ const DataKaryawanPage = lazy(() => import("../pages/allEmployee"));
 const PrintLetterPage = lazy(() => import("../pages/printLetter"));
 const EmployeeDetailPage = lazy(() => import("../pages/detailEmployee"));
 const MasterSetempatPage = lazy(() => import("../pages/masterSetempat"));
+const MasterWilayahPendidikanPage = lazy(
+  () => import("../pages/masterWilayahPendidikan"),
+);
 
 export const ROUTE = [
   {
@@ -25,6 +28,10 @@ export const ROUTE = [
     element: createElement(MasterSetempatPage),
   },
   {
+    path: "/master-wilayah-pendidikan",
+    element: createElement(MasterWilayahPendidikanPage),
+  },
+  {
     path: "/printLetter",
     element: createElement(PrintLetterPage),
   },
@@ -42,6 +49,11 @@ export const SIDEBARMENU = [
     name: "Master Setempat",
     icon: "/icon/setting.svg",
     path: "/master-setempat",
+  },
+  {
+    name: "Master Wilayah & Pendidikan",
+    icon: "/icon/setting.svg",
+    path: "/master-wilayah-pendidikan",
   },
   { name: "Cetak Surat", icon: "/icon/cetakSurat.svg", path: "/printLetter" },
 ];

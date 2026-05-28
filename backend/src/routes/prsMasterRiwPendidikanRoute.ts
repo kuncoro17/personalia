@@ -26,28 +26,24 @@ export const prsMasterRiwPendidikanRoutes = (app: OpenAPIHono) => {
   // ============================
   // 🔹 SCHEMAS
   // ============================
-  const PendidikanSchema = z.object({
-    id: z.number(),
-    karyawan_id: z.string(),
-    jenjang: z.string(),
-    nama_sekolah: z.string(),
-    jurusan: z.string().optional(),
-    tahun_lulus: z.number().optional(),
+  const MasterRiwPendidikanSchema = z.object({
+    id: z.string().uuid(),
+    univ: z.string(),
   });
 
-  const CreateSchema = PendidikanSchema.omit({ id: true });
+  const CreateSchema = MasterRiwPendidikanSchema.omit({ id: true });
   const UpdateSchema = CreateSchema.partial();
 
   const ResponseListSchema = z.object({
     success: z.boolean(),
     message: z.string(),
-    data: z.array(PendidikanSchema),
+    data: z.array(MasterRiwPendidikanSchema),
   });
 
   const ResponseSingleSchema = z.object({
     success: z.boolean(),
     message: z.string(),
-    data: PendidikanSchema.nullable(),
+    data: MasterRiwPendidikanSchema.nullable(),
   });
 
   // ============================

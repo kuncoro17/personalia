@@ -122,7 +122,7 @@ export default function Address() {
       enabled:
         isOpen &&
         selectedEdit !== null &&
-        valueSelect[selectedEdit]?.provinsi !== null,
+        Boolean(valueSelect[selectedEdit]?.provinsi),
       select: (data) => {
         const unique = uniqById(data.data, "nama");
         return unique.map((i) => ({
@@ -141,7 +141,7 @@ export default function Address() {
       enabled:
         isOpen &&
         selectedEdit !== null &&
-        valueSelect[selectedEdit]?.kota !== null,
+        Boolean(valueSelect[selectedEdit]?.kota),
       select: (data) => {
         const unique = uniqById(data.data, "nama");
         return unique.map((i) => ({
@@ -160,7 +160,7 @@ export default function Address() {
       enabled:
         isOpen &&
         selectedEdit !== null &&
-        valueSelect[selectedEdit]?.kecamatan !== null,
+        Boolean(valueSelect[selectedEdit]?.kecamatan),
       select: (data) => {
         const unique = uniqById(data.data, "nama");
         return unique.map((i) => ({

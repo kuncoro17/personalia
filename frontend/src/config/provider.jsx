@@ -29,7 +29,7 @@ const normalizeClerkDomain = (value) => {
     }
   }
 
-  return raw;
+  return raw.split("/")[0];
 };
 
 const CLERK_DOMAIN = normalizeClerkDomain(RAW_CLERK_DOMAIN);

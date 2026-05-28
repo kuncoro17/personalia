@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { ok, created, badRequest, notFound } from '../utils/response.helper';
 import { logInfo, logWarn, logError } from '../utils/log.helper';
 import { PrsMasterKecService } from '../services/prsMasterKecService';
+import { NotFoundException } from '../utils/http-exception';
 
 const service = new PrsMasterKecService();
 
@@ -59,6 +60,13 @@ export const getKecamatanByKotId = async (c: Context) => {
     );
     return ok(c, data, 'Berhasil mengambil data kecamatan berdasarkan kota');
   } catch (err: unknown) {
+    if (err instanceof NotFoundException) {
+      await logWarn(
+        `Kecamatan untuk kot_id ${kot_id} tidak ditemukan`,
+        undefined
+      );
+      return notFound(c, err.message);
+    }
     await logError(`Gagal ambil kecamatan berdasarkan kot_id: ${kot_id}`, err);
     return badRequest(c, 'Gagal mengambil data kecamatan', {
       message: err instanceof Error ? err.message : 'Unknown error',
