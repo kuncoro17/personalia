@@ -213,14 +213,6 @@ export default function AllKaryawan() {
   }, [data, searchData]);
 
   const selectedSetempatLabel = useMemo(() => {
-    if (isSetempatRestricted) {
-      const options = Array.isArray(masterSetempatOptions)
-        ? masterSetempatOptions
-        : [];
-      const found = options.find((item) => Number(item.id) === 1);
-      return found?.kota_setempat || "1";
-    }
-
     if (!selectedSetempatId) return "Semua Kota";
     const options = Array.isArray(masterSetempatOptions)
       ? masterSetempatOptions
@@ -229,7 +221,7 @@ export default function AllKaryawan() {
       (item) => Number(item.id) === selectedSetempatId,
     );
     return found?.kota_setempat || String(selectedSetempatId);
-  }, [isSetempatRestricted, masterSetempatOptions, selectedSetempatId]);
+  }, [masterSetempatOptions, selectedSetempatId]);
 
   const downloadTemplate = async () => {
     try {

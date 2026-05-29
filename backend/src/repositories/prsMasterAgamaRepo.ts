@@ -1,4 +1,6 @@
 // src/repositories/prsMasterAgamaRepository.ts
+import PrsKaryawan from '../models/PrsKaryawanModel';
+import PrsKeluargaKaryawan from '../models/PrsKeluargaKaryawan';
 import PrsMasterAgama from '../models/PrsMasterAgama';
 
 class PrsMasterAgamaRepository {
@@ -36,13 +38,15 @@ class PrsMasterAgamaRepository {
   }
 
   async delete(kode_agama: number) {
-    // cek apakah masih dipakai di prs_karyawan
-    const related = await PrsMasterAgama.findOne({
-      where: { kode_agama },
-      raw: true,
+    const usedByKaryawan = await PrsKaryawan.count({
+      where: { agama: kode_agama },
     });
 
-    if (related) {
+    const usedByKeluarga = await PrsKeluargaKaryawan.count({
+      where: { agama: kode_agama },
+    });
+
+    if (usedByKaryawan > 0 || usedByKeluarga > 0) {
       throw new Error(
         'Data agama masih digunakan oleh karyawan, tidak bisa dihapus'
       );
