@@ -121,7 +121,13 @@ export class PrsKaryawanRepository {
     offset: number
   ) {
     return await PrsKaryawan.findAll({
-      where: { id_master_setempat },
+      where: {
+        [Op.or]: [
+          { id_master_setempat },
+          // Backward-compat: data lama belum punya setempat, treat as default (=1)
+          ...(id_master_setempat === 1 ? [{ id_master_setempat: null }] : []),
+        ],
+      },
       limit,
       offset,
       order: [['nama_lengkap', 'ASC']],
@@ -165,7 +171,14 @@ export class PrsKaryawanRepository {
   }
 
   async countAllBySetempat(id_master_setempat: number) {
-    return await PrsKaryawan.count({ where: { id_master_setempat } });
+    return await PrsKaryawan.count({
+      where: {
+        [Op.or]: [
+          { id_master_setempat },
+          ...(id_master_setempat === 1 ? [{ id_master_setempat: null }] : []),
+        ],
+      },
+    });
   }
   async findById(id: string) {
     const data = await PrsKaryawan.findByPk(id, {
