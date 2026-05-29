@@ -11,7 +11,7 @@ import {
 } from "@heroui/react";
 import { addToast } from "@heroui/toast";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import Layout from "../../components/layout";
@@ -28,8 +28,17 @@ import {
 } from "../../utils/xlsxEmployeeImport";
 import AddEmployeeModal from "./components/AddEmployeeModal";
 
+const ALL_SETEMPAT_ACCESS_EMAILS = new Set(
+  [
+    "kuncoro.kinasih@bpkpenaburjakarta.or.id",
+    "antoni.wijaya@bpkpenaburjakarta.or.id",
+    "eka.muliawan@bpkpenaburjakarta.or.id",
+  ].map((email) => email.toLowerCase()),
+);
+
 export default function AllKaryawan() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
   const api = apiClient(getToken);
   const queryClient = useQueryClient();
   const importInputRef = useRef(null);
@@ -47,12 +56,49 @@ export default function AllKaryawan() {
     [limitPage],
   );
 
+  const loggedInEmail = useMemo(() => {
+    const email = user?.primaryEmailAddress?.emailAddress;
+    return typeof email === "string" ? email.trim().toLowerCase() : "";
+  }, [user]);
+
+  const canViewAllSetempat = useMemo(() => {
+    if (ALL_SETEMPAT_ACCESS_EMAILS.has(loggedInEmail)) return true;
+
+    const metadata =
+      user?.publicMetadata ??
+      user?.unsafeMetadata ??
+      user?.privateMetadata ??
+      null;
+
+    const statusAktif =
+      metadata && typeof metadata.status_aktif === "string"
+        ? metadata.status_aktif.trim()
+        : "";
+
+    const idMasterSetempatRaw =
+      metadata && metadata.id_master_setempat != null
+        ? Number(metadata.id_master_setempat)
+        : NaN;
+
+    return statusAktif === "Aktif" && Number.isInteger(idMasterSetempatRaw);
+  }, [loggedInEmail, user]);
+
+  const isSetempatRestricted = useMemo(() => {
+    return isLoaded && isSignedIn && !canViewAllSetempat;
+  }, [canViewAllSetempat, isLoaded, isSignedIn]);
+
   const selectedSetempatId = useMemo(() => {
+    if (isSetempatRestricted) return 1;
     const raw = Array.from(selectedSetempat)[0] ?? "all";
     if (raw === "all") return null;
     const asNumber = Number(raw);
     return Number.isInteger(asNumber) && asNumber > 0 ? asNumber : null;
-  }, [selectedSetempat]);
+  }, [isSetempatRestricted, selectedSetempat]);
+
+  useEffect(() => {
+    if (!isSetempatRestricted) return;
+    setSelectedSetempat(new Set(["1"]));
+  }, [isSetempatRestricted]);
 
   const { data: masterSetempatOptions } = useMaster(
     api,
@@ -167,6 +213,14 @@ export default function AllKaryawan() {
   }, [data, searchData]);
 
   const selectedSetempatLabel = useMemo(() => {
+    if (isSetempatRestricted) {
+      const options = Array.isArray(masterSetempatOptions)
+        ? masterSetempatOptions
+        : [];
+      const found = options.find((item) => Number(item.id) === 1);
+      return found?.kota_setempat || "1";
+    }
+
     if (!selectedSetempatId) return "Semua Kota";
     const options = Array.isArray(masterSetempatOptions)
       ? masterSetempatOptions
@@ -175,7 +229,7 @@ export default function AllKaryawan() {
       (item) => Number(item.id) === selectedSetempatId,
     );
     return found?.kota_setempat || String(selectedSetempatId);
-  }, [masterSetempatOptions, selectedSetempatId]);
+  }, [isSetempatRestricted, masterSetempatOptions, selectedSetempatId]);
 
   const downloadTemplate = async () => {
     try {
@@ -419,7 +473,7 @@ export default function AllKaryawan() {
                   <Button
                     className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[140px] justify-center"
                     variant="bordered"
-                    isDisabled={!isLoaded || !isSignedIn}
+                    isDisabled={!isLoaded || !isSignedIn || isSetempatRestricted}
                   >
                     {selectedSetempatLabel}
                   </Button>
@@ -432,20 +486,38 @@ export default function AllKaryawan() {
                   variant="flat"
                   onSelectionChange={setSelectedSetempat}
                 >
-                  <DropdownItem key="all" className="font-Poppins">
-                    Semua Kota
-                  </DropdownItem>
-                  {(Array.isArray(masterSetempatOptions)
-                    ? masterSetempatOptions
-                    : []
-                  ).map((item) => (
-                    <DropdownItem
-                      key={String(item.id)}
-                      className="font-Poppins"
-                    >
-                      {item.kota_setempat}
-                    </DropdownItem>
-                  ))}
+                  {!isSetempatRestricted ? (
+                    <>
+                      <DropdownItem key="all" className="font-Poppins">
+                        Semua Kota
+                      </DropdownItem>
+                      {(Array.isArray(masterSetempatOptions)
+                        ? masterSetempatOptions
+                        : []
+                      ).map((item) => (
+                        <DropdownItem
+                          key={String(item.id)}
+                          className="font-Poppins"
+                        >
+                          {item.kota_setempat}
+                        </DropdownItem>
+                      ))}
+                    </>
+                  ) : (
+                    (Array.isArray(masterSetempatOptions)
+                      ? masterSetempatOptions
+                      : []
+                    )
+                      .filter((item) => Number(item.id) === 1)
+                      .map((item) => (
+                        <DropdownItem
+                          key={String(item.id)}
+                          className="font-Poppins"
+                        >
+                          {item.kota_setempat}
+                        </DropdownItem>
+                      ))
+                  )}
                 </DropdownMenu>
               </Dropdown>
 
