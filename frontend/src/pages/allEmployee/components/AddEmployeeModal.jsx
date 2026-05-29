@@ -22,7 +22,7 @@ const isValidNikMin7 = (value) =>
   /^[0-9]{7,16}$/.test(String(value ?? "").trim());
 const isValidKtp16 = (value) => /^[0-9]{16}$/.test(String(value ?? "").trim());
 const isValidEmail = (value) =>
-  /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(value ?? "").trim());
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? "").trim());
 
 const cleanPayload = (values) => {
   const payload = {};
@@ -245,7 +245,7 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                     value={form.nik}
                     onValueChange={(value) => {
                       const digitsOnly = String(value ?? "")
-                        .replace(/\\D+/g, "")
+                        .replace(/\D+/g, "")
                         .slice(0, 16);
                       updateField("nik")(digitsOnly);
                     }}
@@ -266,7 +266,7 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                     value={form.no_ktp}
                     onValueChange={(value) => {
                       const digitsOnly = String(value ?? "")
-                        .replace(/\\D+/g, "")
+                        .replace(/\D+/g, "")
                         .slice(0, 16);
                       updateField("no_ktp")(digitsOnly);
                     }}

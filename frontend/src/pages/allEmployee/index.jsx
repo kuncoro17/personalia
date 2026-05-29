@@ -315,7 +315,7 @@ export default function AllKaryawan() {
       let success = 0;
       const errors = [];
       const isValidEmail = (value) =>
-        /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(value ?? "").trim());
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? "").trim());
 
       for (let i = 0; i < records.length; i += 1) {
         const row = records[i];
