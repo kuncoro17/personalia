@@ -473,7 +473,9 @@ export default function AllKaryawan() {
                   <Button
                     className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[140px] justify-center"
                     variant="bordered"
-                    isDisabled={!isLoaded || !isSignedIn || isSetempatRestricted}
+                    isDisabled={
+                      !isLoaded || !isSignedIn || isSetempatRestricted
+                    }
                   >
                     {selectedSetempatLabel}
                   </Button>
