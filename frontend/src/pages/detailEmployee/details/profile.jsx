@@ -365,6 +365,15 @@ export default function Profile() {
           delete profilePayload.bagian;
           delete profilePayload.seksi;
         }
+      } else if (
+        Object.prototype.hasOwnProperty.call(unitKerjaPayload, "jab_id")
+      ) {
+        // Pastikan unit_kerja ikut terkirim saat update jabatan,
+        // supaya backend bisa membuat record unit kerja jika belum ada.
+        const resolvedUnitKerjaId = resolveUnitKerjaId(selectedHierarchy);
+        if (resolvedUnitKerjaId) {
+          unitKerjaPayload.unit_kerja = resolvedUnitKerjaId;
+        }
       }
 
       if (Object.keys(unitKerjaPayload).length > 0) {

@@ -118,11 +118,6 @@ export class PrsUnitKerjaKaryawanService {
       throw new BadRequestException('id_karyawan tidak valid');
     }
 
-    const existing = await repository.findByIdKaryawan(karyawan_id);
-    if (!existing) {
-      throw new NotFoundException('Data unit kerja tidak ditemukan');
-    }
-
     // parsing & sanitize
     const parsed = unitKerjaSchema.partial().parse(data);
     const sanitized = sanitizeInput(parsed);
@@ -135,6 +130,23 @@ export class PrsUnitKerjaKaryawanService {
     if (sanitized.jab_id !== undefined) updatePayload.jab_id = sanitized.jab_id;
     if (sanitized.lokasi_penggajian !== undefined)
       updatePayload.lokasi_penggajian = sanitized.lokasi_penggajian;
+
+    // Pastikan ada record unit kerja untuk karyawan tsb.
+    const existing = await repository.findByIdKaryawan(karyawan_id);
+    if (!existing) {
+      if (!updatePayload.unit_kerja || !updatePayload.jab_id) {
+        throw new NotFoundException(
+          'Data unit kerja tidak ditemukan (butuh unit_kerja dan jabatan untuk membuat baru)'
+        );
+      }
+
+      return await repository.create({
+        karyawan_id,
+        unit_kerja: updatePayload.unit_kerja,
+        jab_id: updatePayload.jab_id,
+        lokasi_penggajian: updatePayload.lokasi_penggajian ?? '',
+      } as unknown as PrsUnitKerjaKaryawanDTO);
+    }
 
     const updated = await repository.updateByKaryawanId(
       karyawan_id,
