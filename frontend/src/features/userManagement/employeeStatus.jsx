@@ -4,7 +4,7 @@ import { apiClient } from "../../service/api";
 import Loading from "../../components/common/Loading";
 import NoData from "../../components/common/NoData";
 import { useMaster } from "../../hooks/useMaster";
-import { MASTERENDPOINT } from "../../constants/api";
+import { EMPLOYEEENDPOINT } from "../../constants/api";
 
 export default function EmployeeStatus() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -14,18 +14,21 @@ export default function EmployeeStatus() {
     data: statusSummary = {},
     isFetching,
     error,
-  } = useMaster(api, ["statusKaryawan"], MASTERENDPOINT.statusKaryawan, {
+  } = useMaster(api, ["statusKaryawan"], EMPLOYEEENDPOINT.statusKaryawan, {
     enabled: isLoaded && isSignedIn,
     returnEmptyOnError: false,
     select: (response) => {
       const rows = response?.data ?? [];
-      if (!rows.length) return {};
+      if (!Array.isArray(rows) || !rows.length) return {};
 
       return rows.reduce((acc, item) => {
-        const code = (item.stat_karyawan_gp ?? "").trim().replace("-", " ");
+        const code = String(item?.stat_karyawan_gp ?? item?.status ?? "")
+          .trim()
+          .replace("-", " ");
+        const total = Number(item?.jumlah ?? item?.count ?? 0);
 
         if (!code) return acc;
-        acc[code] = (acc[code] ?? 0) + 1;
+        acc[code] = (acc[code] ?? 0) + (Number.isNaN(total) ? 0 : total);
         return acc;
       }, {});
     },
@@ -43,19 +46,19 @@ export default function EmployeeStatus() {
   if (!Object.keys(statusSummary).length) return <NoData />;
 
   return (
-    <div className="grid grid-cols-6 gap-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {Object.keys(statusSummary).map((key, index) => (
         <div
           key={key}
-          className={`h-16 rounded-lg flex items-center gap-3 ${
+          className={`flex h-16 min-w-0 items-center gap-3 rounded-xl px-2 ${
             index % 2 === 0 ? "bg-red" : "bg-primary"
           }`}
         >
-          <div className="bg-white h-4/6 aspect-square rounded-md ml-2 flex items-center justify-center">
-            <p className="font-Poppins font-[600] text-center">{key}</p>
+          <div className="flex h-11 min-w-11 items-center justify-center rounded-lg bg-white px-2">
+            <p className="text-center font-Poppins text-sm font-[600]">{key}</p>
           </div>
 
-          <p className="font-Poppins font-[600] text-white text-lg">
+          <p className="truncate font-Poppins text-lg font-[600] text-white">
             {statusSummary[key]}
           </p>
         </div>

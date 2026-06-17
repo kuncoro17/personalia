@@ -42,9 +42,18 @@ export default function Employees({
     [data, selected],
   );
 
+  const gridClassByCols = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+    5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+  };
+  const gridClass = gridClassByCols[gridCols] ?? gridClassByCols[5];
+
   if (isTable)
     return (
-      <div className="w-full min-w-0">
+      <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-[#00000010] bg-white p-2 shadow-sm">
         <TableViewer
           dataTable={dataTable}
           isSelect={isSelect}
@@ -56,7 +65,7 @@ export default function Employees({
     );
 
   return (
-    <div className={`grid grid-cols-${gridCols} gap-5`}>
+    <div className={`grid ${gridClass} gap-4`}>
       {data.map((item) => {
         const handleActivate = () =>
           isSelect
@@ -70,7 +79,7 @@ export default function Employees({
             key={item.id_karyawan}
             role="button"
             tabIndex={0}
-            className={`flex flex-col justify-between items-center p-5 shadow-md rounded-lg gap-3 ${
+            className={`group flex min-w-0 flex-col items-center justify-between gap-3 rounded-2xl bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md ${
               isSelect && selected.includes(String(item.id_karyawan))
                 ? "border-primary border-2"
                 : "border-[#00000010] border-1"
@@ -83,11 +92,11 @@ export default function Employees({
               }
             }}
           >
-            <div className="flex justify-center w-24 h-24">
+            <div className="flex h-24 w-24 justify-center rounded-2xl bg-[#F5F7FA] p-1">
               <img
                 src={getEmployeeImageSrc(item)}
                 alt={item.nama_lengkap || "Foto karyawan"}
-                className="w-full h-full rounded-md object-cover"
+                className="h-full w-full rounded-xl object-cover"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
                   event.currentTarget.src = "/image/1.svg";
@@ -101,26 +110,28 @@ export default function Employees({
               className="font-Poppins text-xs"
               isDismissable={true}
             >
-              <p className="font-Poppins font-[600] text-center text-primary truncate w-full">
+              <p className="w-full truncate text-center font-Poppins font-[600] text-primary">
                 {item.nama_lengkap}
               </p>
             </Tooltip>
 
-            <div className="w-2/3 bg-red rounded-full flex items-center justify-center h-8">
-              <p className="font-Poppins font-[600] text-white">
+            <div className="flex h-8 max-w-full items-center justify-center rounded-full bg-red px-4">
+              <p className="truncate font-Poppins text-sm font-[600] text-white">
                 {item.status_karyawan}
               </p>
             </div>
 
-            <p className="font-Poppins font-[500] truncate w-full text-center">
+            <p className="w-full truncate text-center font-Poppins text-sm font-[500] text-[#0B345E]/80">
               {item.jabatan}
             </p>
 
-            <p className="font-Poppins font-[500]">{item.nik}</p>
+            <p className="font-Poppins text-sm font-[500] text-[#0B345E]/60">
+              {item.nik}
+            </p>
 
             {!isSelect && (
               <button
-                className="flex items-center bg-primary px-5 rounded-full py-2 gap-2 z-10"
+                className="z-10 flex items-center gap-2 rounded-full bg-primary px-5 py-2 transition group-hover:bg-[#092c4f]"
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();

@@ -76,15 +76,32 @@ export const MASTERENDPOINT = {
   seksi: (params) => `seksi/bagian/${params}`,
 };
 
+const buildUnitKerjaFilterQuery = (unitFilters = {}) =>
+  Object.entries(unitFilters || {})
+    .filter(([, value]) => value != null && String(value).trim() !== "")
+    .map(
+      ([key, value]) =>
+        `&${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`,
+    )
+    .join("");
+
 export const EMPLOYEEENDPOINT = {
-  getAll: (page, limit) =>
-    `personalia/karyawan/employee?page=${page}&limit=${limit}`,
-  getAllBySetempat: (idMasterSetempat, page, limit) =>
-    `personalia/karyawan/employee/by-setempat/${idMasterSetempat}?page=${page}&limit=${limit}`,
+  getAll: (page, limit, statusAktif, unitFilters) =>
+    `personalia/karyawan/employee?page=${page}&limit=${limit}${
+      statusAktif ? `&status_aktif=${encodeURIComponent(statusAktif)}` : ""
+    }${buildUnitKerjaFilterQuery(unitFilters)}`,
+  getAllBySetempat: (idMasterSetempat, page, limit, statusAktif, unitFilters) =>
+    `personalia/karyawan/employee/by-setempat/${idMasterSetempat}?page=${page}&limit=${limit}${
+      statusAktif ? `&status_aktif=${encodeURIComponent(statusAktif)}` : ""
+    }${buildUnitKerjaFilterQuery(unitFilters)}`,
+  access: "personalia/karyawan/access",
   create: () => "personalia/karyawan/created",
-  search: (search, page) =>
-    `personalia/karyawan/search?nama_lengkap=${search}${page ? `&${page}` : ""}`,
+  search: (search, page, idMasterSetempat, statusAktif, unitFilters) =>
+    `personalia/karyawan/search?nama_lengkap=${encodeURIComponent(search)}${page ? `&${page}` : ""}${
+      idMasterSetempat ? `&id_master_setempat=${idMasterSetempat}` : ""
+    }${statusAktif ? `&status_aktif=${encodeURIComponent(statusAktif)}` : ""}${buildUnitKerjaFilterQuery(unitFilters)}`,
   joinToday: `personalia/karyawan/join-today`,
+  statusKaryawan: "personalia/karyawan/status-karyawan",
 };
 
 export const LETTERENDPOINT = {

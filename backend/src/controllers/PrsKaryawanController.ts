@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import { PrsKaryawanService } from '../services/PrsKaryawan.service';
+import { KaryawanUnitKerjaFilter } from '../repositories/PrsKaryawanRepository';
 import { PrsUnitKerjaKaryawanService } from '../services/prsUnitKerjaKaryawanService';
 import { ParsedBody } from '../types/ParsedBody';
 import PrsKontakDarurat from '../models/prsKontakDarurat';
@@ -7,7 +8,13 @@ import { KontakDaruratRecord } from '../types/prsKaryawan.types';
 import { normalizeRelationalField } from '../utils/normalizeRelationalField';
 import { AlamatDetail } from '../types/alamat.type';
 import { toPlainRecord, PlainRecord } from '../utils/toPlainRecord';
-import { ok, created, badRequest, notFound } from '../utils/response.helper';
+import {
+  ok,
+  created,
+  badRequest,
+  notFound,
+  error as responseError,
+} from '../utils/response.helper';
 import { logInfo, logWarn, logError } from '../utils/log.helper';
 import { prsKaryawanSchema } from '../validators/PrsKaryawan.schema';
 import { ZodError, z } from 'zod';
@@ -28,18 +35,168 @@ type PrsKaryawanAlamatDTO = z.infer<typeof PrsMasterAlamat>;
 const getErrorMessage = (err: unknown): string =>
   err instanceof Error ? err.message : 'Unknown error';
 
+const YAYASAN_SETEMPAT_ID = 13;
+
+const normalizeStatusAktifFilter = (
+  value: string | undefined
+): string | null | undefined => {
+  if (value == null || value.trim() === '') return undefined;
+
+  const normalized = value.trim().toLowerCase().replace(/[-_]+/g, ' ');
+  if (normalized === 'all' || normalized === 'semua') return undefined;
+  if (normalized === 'aktif') return 'Aktif';
+  if (normalized === 'tidak aktif' || normalized === 'non aktif') {
+    return 'Tidak Aktif';
+  }
+
+  return null;
+};
+
+const normalizeUnitKerjaQuery = (value: string | undefined) => {
+  if (value == null) return undefined;
+  const cleaned = value.trim();
+  if (!cleaned || cleaned === 'all' || cleaned === 'semua') return undefined;
+  return cleaned;
+};
+
+const getUnitKerjaFilterFromQuery = (c: Context): KaryawanUnitKerjaFilter => {
+  const pick = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = normalizeUnitKerjaQuery(c.req.query(key));
+      if (value) return value;
+    }
+    return undefined;
+  };
+
+  return {
+    kode_direktur: pick('kode_direktur', 'direktur'),
+    kode_deputi: pick('kode_deputi', 'deputi'),
+    kode_divisi: pick('kode_divisi', 'divisi'),
+    kode_bagian: pick('kode_bagian', 'bagian'),
+    kode_seksi: pick('kode_seksi', 'seksi'),
+  };
+};
+
+const toPositiveInteger = (value: unknown): number | null => {
+  const numberValue =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value)
+        : NaN;
+
+  return Number.isInteger(numberValue) && numberValue > 0 ? numberValue : null;
+};
+
+const getNestedRecord = (
+  source: Record<string, unknown>,
+  key: string
+): Record<string, unknown> | null => {
+  const value = source[key];
+  return value && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : null;
+};
+
+const getAuthenticatedEmail = (
+  auth: Record<string, unknown>
+): string | null => {
+  const directEmail =
+    typeof auth.email === 'string'
+      ? auth.email.trim()
+      : typeof auth.email_address === 'string'
+        ? auth.email_address.trim()
+        : '';
+  if (directEmail) return directEmail;
+
+  const emailArrays = [
+    auth.email_address,
+    auth.email_addresses,
+    auth.emailAddresses,
+  ];
+
+  for (const value of emailArrays) {
+    if (!Array.isArray(value) || value.length === 0) continue;
+    const first = value[0] as Record<string, unknown>;
+    const email =
+      (typeof first.email_address === 'string' && first.email_address.trim()) ||
+      (typeof first.emailAddress === 'string' && first.emailAddress.trim()) ||
+      '';
+    if (email) return email;
+  }
+
+  return null;
+};
+
+const getAuthenticatedSetempatId = async (
+  c: Context
+): Promise<number | null> => {
+  const auth = c.get('auth') as unknown as Record<string, unknown> | undefined;
+  if (!auth) return null;
+
+  const direct = toPositiveInteger(auth.id_master_setempat);
+  if (direct) return direct;
+
+  const metadataCandidates = [
+    getNestedRecord(auth, 'publicMetadata'),
+    getNestedRecord(auth, 'public_metadata'),
+    getNestedRecord(auth, 'unsafeMetadata'),
+    getNestedRecord(auth, 'unsafe_metadata'),
+    getNestedRecord(auth, 'privateMetadata'),
+    getNestedRecord(auth, 'private_metadata'),
+    getNestedRecord(auth, 'metadata'),
+  ];
+
+  for (const metadata of metadataCandidates) {
+    const id = metadata ? toPositiveInteger(metadata.id_master_setempat) : null;
+    if (id) return id;
+  }
+
+  const email = getAuthenticatedEmail(auth);
+  if (!email) return null;
+
+  return service.getSetempatIdByEmail(email);
+};
+
 export const getAllKaryawan = async (c: Context): Promise<Response> => {
   const service = new PrsKaryawanService();
+  const authenticatedSetempatId = await getAuthenticatedSetempatId(c);
 
   try {
     const page = Number(c.req.query('page')) || 1;
     const limit = Number(c.req.query('limit')) || 10;
+    const statusAktif = normalizeStatusAktifFilter(c.req.query('status_aktif'));
+    const unitKerjaFilter = getUnitKerjaFilterFromQuery(c);
+
+    if (statusAktif === null) {
+      return badRequest(
+        c,
+        'Query parameter status_aktif hanya boleh Aktif atau Tidak Aktif'
+      );
+    }
+
+    if (!authenticatedSetempatId) {
+      return responseError(
+        c,
+        'Akses ditolak: id_master_setempat user tidak ditemukan',
+        403
+      );
+    }
 
     await logInfo(
       `Memulai ambil data karyawan (page: ${page}, limit: ${limit})`
     );
 
-    const result = await service.getAll(page, limit);
+    const result =
+      authenticatedSetempatId === YAYASAN_SETEMPAT_ID
+        ? await service.getAll(page, limit, statusAktif, unitKerjaFilter)
+        : await service.getAllBySetempat(
+            authenticatedSetempatId,
+            page,
+            limit,
+            statusAktif,
+            unitKerjaFilter
+          );
 
     await logInfo(
       `Berhasil ambil ${result.data.length} data dari total ${result.pagination.total}`
@@ -52,10 +209,34 @@ export const getAllKaryawan = async (c: Context): Promise<Response> => {
   }
 };
 
+export const getCurrentKaryawanAccess = async (
+  c: Context
+): Promise<Response> => {
+  const authenticatedSetempatId = await getAuthenticatedSetempatId(c);
+
+  if (!authenticatedSetempatId) {
+    return responseError(
+      c,
+      'Akses ditolak: id_master_setempat user tidak ditemukan',
+      403
+    );
+  }
+
+  return ok(
+    c,
+    {
+      id_master_setempat: authenticatedSetempatId,
+      can_view_all_setempat: authenticatedSetempatId === YAYASAN_SETEMPAT_ID,
+    },
+    'Berhasil mengambil akses setempat'
+  );
+};
+
 export const getAllKaryawanBySetempat = async (
   c: Context
 ): Promise<Response> => {
   const service = new PrsKaryawanService();
+  const authenticatedSetempatId = await getAuthenticatedSetempatId(c);
   const id_master_setempat = Number(c.req.param('id_master_setempat'));
 
   if (!Number.isInteger(id_master_setempat) || id_master_setempat <= 0) {
@@ -63,9 +244,37 @@ export const getAllKaryawanBySetempat = async (
     return badRequest(c, 'Parameter id_master_setempat tidak valid');
   }
 
+  if (!authenticatedSetempatId) {
+    return responseError(
+      c,
+      'Akses ditolak: id_master_setempat user tidak ditemukan',
+      403
+    );
+  }
+
+  if (
+    authenticatedSetempatId !== YAYASAN_SETEMPAT_ID &&
+    authenticatedSetempatId !== id_master_setempat
+  ) {
+    return responseError(
+      c,
+      'Akses ditolak: hanya bisa melihat karyawan dengan id_master_setempat yang sama',
+      403
+    );
+  }
+
   try {
     const page = Number(c.req.query('page')) || 1;
     const limit = Number(c.req.query('limit')) || 10;
+    const statusAktif = normalizeStatusAktifFilter(c.req.query('status_aktif'));
+    const unitKerjaFilter = getUnitKerjaFilterFromQuery(c);
+
+    if (statusAktif === null) {
+      return badRequest(
+        c,
+        'Query parameter status_aktif hanya boleh Aktif atau Tidak Aktif'
+      );
+    }
 
     await logInfo(
       `Memulai ambil data karyawan (setempat: ${id_master_setempat}, page: ${page}, limit: ${limit})`
@@ -74,7 +283,9 @@ export const getAllKaryawanBySetempat = async (
     const result = await service.getAllBySetempat(
       id_master_setempat,
       page,
-      limit
+      limit,
+      statusAktif,
+      unitKerjaFilter
     );
 
     await logInfo(
@@ -135,14 +346,60 @@ interface KaryawanFormatted {
 }
 export const searchByNamaLengkap = async (c: Context): Promise<Response> => {
   const service = new PrsKaryawanService();
+  const authenticatedSetempatId = await getAuthenticatedSetempatId(c);
   const nama_lengkap = c.req.query('nama_lengkap');
   const page = Number(c.req.query('page')) || 1;
   const limit = Number(c.req.query('limit')) || 10;
+  const statusAktif = normalizeStatusAktifFilter(c.req.query('status_aktif'));
+  const unitKerjaFilter = getUnitKerjaFilterFromQuery(c);
+  const idMasterSetempatRaw = c.req.query('id_master_setempat');
+  const idMasterSetempat =
+    idMasterSetempatRaw != null ? Number(idMasterSetempatRaw) : undefined;
 
   if (!nama_lengkap) {
     await logWarn('Parameter query nama_lengkap tidak diberikan');
     return badRequest(c, 'Query parameter nama_lengkap diperlukan');
   }
+
+  if (!authenticatedSetempatId) {
+    return responseError(
+      c,
+      'Akses ditolak: id_master_setempat user tidak ditemukan',
+      403
+    );
+  }
+
+  if (statusAktif === null) {
+    return badRequest(
+      c,
+      'Query parameter status_aktif hanya boleh Aktif atau Tidak Aktif'
+    );
+  }
+
+  if (
+    idMasterSetempatRaw != null &&
+    (!Number.isInteger(idMasterSetempat) || Number(idMasterSetempat) <= 0)
+  ) {
+    await logWarn('Parameter query id_master_setempat tidak valid');
+    return badRequest(c, 'Query parameter id_master_setempat tidak valid');
+  }
+
+  if (
+    authenticatedSetempatId !== YAYASAN_SETEMPAT_ID &&
+    idMasterSetempat != null &&
+    idMasterSetempat !== authenticatedSetempatId
+  ) {
+    return responseError(
+      c,
+      'Akses ditolak: hanya bisa mencari karyawan dengan id_master_setempat yang sama',
+      403
+    );
+  }
+
+  const effectiveSetempatId =
+    authenticatedSetempatId === YAYASAN_SETEMPAT_ID
+      ? idMasterSetempat
+      : authenticatedSetempatId;
 
   try {
     await logInfo(
@@ -152,7 +409,10 @@ export const searchByNamaLengkap = async (c: Context): Promise<Response> => {
     const result = await service.findByNameAscPaginated(
       nama_lengkap,
       page,
-      limit
+      limit,
+      effectiveSetempatId,
+      statusAktif,
+      unitKerjaFilter
     );
 
     if (!result.data || result.data.length === 0) {

@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import {
   getAllKaryawan,
+  getCurrentKaryawanAccess,
   getAllKaryawanBySetempat,
   getKaryawanById,
   createKaryawan,
@@ -268,6 +269,35 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
   // ROUTES
   // ---------------------------
 
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: `${basePath}/access`,
+      tags: ['Karyawan'],
+      summary: 'Get akses setempat user login',
+      responses: {
+        200: {
+          description: 'Akses setempat ditemukan',
+          content: {
+            'application/json': {
+              schema: z.object({
+                success: z.boolean(),
+                message: z.string(),
+                data: z.object({
+                  id_master_setempat: z.number(),
+                  can_view_all_setempat: z.boolean(),
+                }),
+              }),
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+      },
+    }),
+    getCurrentKaryawanAccess
+  );
+
   // GET ALL KARYAWAN
   app.openapi(
     createRoute({
@@ -275,6 +305,21 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
       path: `${basePath}/employee`,
       tags: ['Karyawan'],
       summary: 'Get all Karyawan',
+      request: {
+        query: z.object({
+          page: z.string().optional().openapi({ example: '1' }),
+          limit: z.string().optional().openapi({ example: '10' }),
+          status_aktif: z
+            .enum(['Aktif', 'Tidak Aktif'])
+            .optional()
+            .openapi({ example: 'Aktif' }),
+          kode_direktur: z.string().optional().openapi({ example: 'DIR' }),
+          kode_deputi: z.string().optional().openapi({ example: 'DEP' }),
+          kode_divisi: z.string().optional().openapi({ example: 'DIV' }),
+          kode_bagian: z.string().optional().openapi({ example: 'BAG' }),
+          kode_seksi: z.string().optional().openapi({ example: 'SEK' }),
+        }),
+      },
       responses: {
         200: {
           description: 'Berhasil mengambil semua karyawan',
@@ -309,6 +354,19 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
             .openapi({
               example: '1',
             }),
+        }),
+        query: z.object({
+          page: z.string().optional().openapi({ example: '1' }),
+          limit: z.string().optional().openapi({ example: '10' }),
+          status_aktif: z
+            .enum(['Aktif', 'Tidak Aktif'])
+            .optional()
+            .openapi({ example: 'Aktif' }),
+          kode_direktur: z.string().optional().openapi({ example: 'DIR' }),
+          kode_deputi: z.string().optional().openapi({ example: 'DEP' }),
+          kode_divisi: z.string().optional().openapi({ example: 'DIV' }),
+          kode_bagian: z.string().optional().openapi({ example: 'BAG' }),
+          kode_seksi: z.string().optional().openapi({ example: 'SEK' }),
         }),
       },
       responses: {
@@ -614,6 +672,22 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
       request: {
         query: z.object({
           nama_lengkap: z.string().openapi({ example: 'deri' }),
+          page: z.string().optional().openapi({ example: '1' }),
+          limit: z.string().optional().openapi({ example: '10' }),
+          status_aktif: z
+            .enum(['Aktif', 'Tidak Aktif'])
+            .optional()
+            .openapi({ example: 'Aktif' }),
+          kode_direktur: z.string().optional().openapi({ example: 'DIR' }),
+          kode_deputi: z.string().optional().openapi({ example: 'DEP' }),
+          kode_divisi: z.string().optional().openapi({ example: 'DIV' }),
+          kode_bagian: z.string().optional().openapi({ example: 'BAG' }),
+          kode_seksi: z.string().optional().openapi({ example: 'SEK' }),
+          id_master_setempat: z
+            .string()
+            .regex(/^[0-9]+$/)
+            .optional()
+            .openapi({ example: '13' }),
         }),
       },
       responses: {

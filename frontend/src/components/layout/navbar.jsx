@@ -18,15 +18,16 @@ export const Navbar = ({ children }) => {
 
   return (
     <div
-      className={`flex flex-1 flex-col ${pathname !== "/detailEmployee" && "pl-52"}`}
+      className={`flex min-w-0 flex-1 flex-col ${pathname !== "/detailEmployee" ? "lg:pl-52" : ""}`}
     >
       <HeroUINavbar
         maxWidth="full"
         position="static"
         height={"4rem"}
         isBlurred={false}
+        className="px-2 sm:px-6"
       >
-        <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full">
+        <NavbarContent className="basis-1/2 sm:flex sm:basis-full">
           <NavbarItem className="hidden sm:flex flex-col">
             <p className="font-Poppins font-[700] text-xl text-primary">
               {title}
@@ -35,20 +36,25 @@ export const Navbar = ({ children }) => {
               {moment().format("dddd, MMMM DD YYYY")}
             </p>
           </NavbarItem>
+          <NavbarItem className="flex flex-col sm:hidden">
+            <p className="max-w-[150px] truncate font-Poppins text-base font-[700] text-primary">
+              {title}
+            </p>
+          </NavbarItem>
         </NavbarContent>
 
-        <NavbarContent justify="end">
+        <NavbarContent justify="end" className="min-w-0">
           <User
             avatarProps={{
               src: "/assets/images/profile.jpg",
             }}
             name={capitalizeWords(user.fullName)}
-            className="font-Poppins font-[600]"
+            className="max-w-[170px] font-Poppins font-[600] sm:max-w-none"
           />
         </NavbarContent>
       </HeroUINavbar>
 
-      <div className="flex flex-1 mt-5">{children}</div>
+      <div className="mt-4 flex min-w-0 flex-1 sm:mt-5">{children}</div>
     </div>
   );
 };

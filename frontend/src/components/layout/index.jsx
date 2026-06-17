@@ -8,13 +8,19 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex flex-col flex-1 min-h-screen overflow-x-hidden">
-      <div className="flex flex-1">
+      <div
+        className={`flex flex-1 ${pathname !== "/detailEmployee" ? "pb-20 lg:pb-0" : ""}`}
+      >
         {pathname !== "/detailEmployee" && <SideBar />}
 
         <Navbar>{children}</Navbar>
       </div>
 
-      <footer className="w-full flex items-center justify-between px-4 bg-primary">
+      <footer
+        className={`flex w-full flex-col items-center justify-between gap-1 bg-primary px-4 py-2 sm:flex-row ${
+          pathname !== "/detailEmployee" ? "lg:pl-56" : ""
+        }`}
+      >
         <p className="font-Poppins text-white text-xs">
           © 2024 BPK PENABUR Jakarta
         </p>

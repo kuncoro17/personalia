@@ -4,6 +4,9 @@ import {
   DropdownMenu,
   DropdownTrigger,
   Pagination,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Button,
   Spinner,
   Input,
@@ -11,7 +14,7 @@ import {
 } from "@heroui/react";
 import { addToast } from "@heroui/toast";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import Layout from "../../components/layout";
@@ -28,17 +31,56 @@ import {
 } from "../../utils/xlsxEmployeeImport";
 import AddEmployeeModal from "./components/AddEmployeeModal";
 
-const ALL_SETEMPAT_ACCESS_EMAILS = new Set(
-  [
-    "kuncoro.kinasih@bpkpenaburjakarta.or.id",
-    "antoni.wijaya@bpkpenaburjakarta.or.id",
-    "eka.muliawan@bpkpenaburjakarta.or.id",
-  ].map((email) => email.toLowerCase()),
-);
+const STATUS_AKTIF_OPTIONS = [
+  { key: "Aktif", label: "Aktif" },
+  { key: "Tidak Aktif", label: "Tidak Aktif" },
+];
+
+const UNIT_FILTER_FIELDS = [
+  { key: "kode_direktur", relation: "direktur", label: "Direktur" },
+  { key: "kode_deputi", relation: "deputi", label: "Deputi" },
+  { key: "kode_divisi", relation: "divisi", label: "Divisi" },
+  { key: "kode_bagian", relation: "bagian", label: "Bagian" },
+  { key: "kode_seksi", relation: "seksi", label: "Seksi" },
+];
+
+const getUnitRelationValue = (unit, field) => {
+  const relation = unit?.[field.relation] ?? {};
+  return relation?.id ?? unit?.[field.key] ?? null;
+};
+
+const getUnitRelationLabel = (unit, field) => {
+  const relation = unit?.[field.relation] ?? {};
+  return relation?.nama ?? relation?.name ?? getUnitRelationValue(unit, field);
+};
+
+const isValidUnitValue = (value) => {
+  const clean = String(value ?? "").trim();
+  return clean && clean !== "None" && clean !== "nnn";
+};
+
+const uniqueUnitOptions = (units, field) => {
+  const optionMap = new Map();
+
+  units.forEach((unit) => {
+    const value = getUnitRelationValue(unit, field);
+    if (!isValidUnitValue(value) || optionMap.has(String(value))) return;
+    optionMap.set(String(value), {
+      key: String(value),
+      label: getUnitRelationLabel(unit, field) || String(value),
+    });
+  });
+
+  return Array.from(optionMap.values()).sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
+};
+
+const getEmptyUnitFilters = () =>
+  Object.fromEntries(UNIT_FILTER_FIELDS.map((field) => [field.key, "all"]));
 
 export default function AllKaryawan() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
-  const { user } = useUser();
   const api = apiClient(getToken);
   const queryClient = useQueryClient();
   const importInputRef = useRef(null);
@@ -46,6 +88,12 @@ export default function AllKaryawan() {
 
   const [limitPage, setLimitPage] = useState(new Set(["10"]));
   const [selectedSetempat, setSelectedSetempat] = useState(new Set(["all"]));
+  const [selectedStatusAktif, setSelectedStatusAktif] = useState(
+    new Set(["Aktif"]),
+  );
+  const [unitFilters, setUnitFilters] = useState(getEmptyUnitFilters);
+  const [unitFilterSearch, setUnitFilterSearch] = useState("");
+  const [isUnitFilterOpen, setIsUnitFilterOpen] = useState(false);
   const [isTable, setIsTable] = useState(false);
   const [page, setPage] = useState({ initial: 1, total: 1 });
   const [search, setSearch] = useState("");
@@ -56,56 +104,63 @@ export default function AllKaryawan() {
     [limitPage],
   );
 
-  const loggedInEmail = useMemo(() => {
-    const email = user?.primaryEmailAddress?.emailAddress;
-    return typeof email === "string" ? email.trim().toLowerCase() : "";
-  }, [user]);
+  const selectedStatusAktifValue = useMemo(
+    () => Array.from(selectedStatusAktif)[0] ?? "Aktif",
+    [selectedStatusAktif],
+  );
+
+  const selectedUnitFilterValues = useMemo(() => {
+    return Object.fromEntries(
+      Object.entries(unitFilters).filter(([, value]) => value !== "all"),
+    );
+  }, [unitFilters]);
+
+  const { data: setempatAccess, error: setempatAccessError } = useMaster(
+    api,
+    ["karyawan-setempat-access"],
+    EMPLOYEEENDPOINT.access,
+    {
+      enabled: isLoaded && isSignedIn,
+      returnEmptyOnError: false,
+      select: (response) => response?.data ?? null,
+    },
+  );
+
+  const userSetempatId = useMemo(() => {
+    const id = Number(setempatAccess?.id_master_setempat);
+    return Number.isInteger(id) && id > 0 ? id : null;
+  }, [setempatAccess]);
 
   const canViewAllSetempat = useMemo(() => {
-    if (ALL_SETEMPAT_ACCESS_EMAILS.has(loggedInEmail)) return true;
+    return Boolean(setempatAccess?.can_view_all_setempat);
+  }, [setempatAccess]);
 
-    const metadata =
-      user?.publicMetadata ??
-      user?.unsafeMetadata ??
-      user?.privateMetadata ??
-      null;
-
-    const statusAktif =
-      metadata && typeof metadata.status_aktif === "string"
-        ? metadata.status_aktif.trim()
-        : "";
-
-    const idMasterSetempatRaw =
-      metadata && metadata.id_master_setempat != null
-        ? Number(metadata.id_master_setempat)
-        : NaN;
-
-    return statusAktif === "Aktif" && Number.isInteger(idMasterSetempatRaw);
-  }, [loggedInEmail, user]);
+  const hasSetempatAccess = Boolean(setempatAccess) && !setempatAccessError;
 
   const isSetempatRestricted = useMemo(() => {
-    return isLoaded && isSignedIn && !canViewAllSetempat;
-  }, [canViewAllSetempat, isLoaded, isSignedIn]);
+    return hasSetempatAccess && !canViewAllSetempat;
+  }, [canViewAllSetempat, hasSetempatAccess]);
 
   const selectedSetempatId = useMemo(() => {
-    if (isSetempatRestricted) return 1;
+    if (isSetempatRestricted) return userSetempatId;
     const raw = Array.from(selectedSetempat)[0] ?? "all";
     if (raw === "all") return null;
     const asNumber = Number(raw);
     return Number.isInteger(asNumber) && asNumber > 0 ? asNumber : null;
-  }, [isSetempatRestricted, selectedSetempat]);
+  }, [isSetempatRestricted, selectedSetempat, userSetempatId]);
 
   useEffect(() => {
     if (!isSetempatRestricted) return;
-    setSelectedSetempat(new Set(["1"]));
-  }, [isSetempatRestricted]);
+    if (!userSetempatId) return;
+    setSelectedSetempat(new Set([String(userSetempatId)]));
+  }, [isSetempatRestricted, userSetempatId]);
 
   const { data: masterSetempatOptions } = useMaster(
     api,
     ["master-setempat-options"],
     MASTERENDPOINT.setempat,
     {
-      enabled: isLoaded && isSignedIn,
+      enabled: isLoaded && isSignedIn && hasSetempatAccess,
       select: (resp) => {
         const list = Array.isArray(resp?.data) ? resp.data : [];
         return list
@@ -118,24 +173,134 @@ export default function AllKaryawan() {
     },
   );
 
+  const { data: masterUnitKerjaOptions = [] } = useMaster(
+    api,
+    ["master-unit-kerja-options"],
+    MASTERENDPOINT.lokasiKerja,
+    {
+      enabled: isLoaded && isSignedIn && hasSetempatAccess,
+      select: (resp) => (Array.isArray(resp?.data) ? resp.data : []),
+    },
+  );
+
+  const unitFilterOptions = useMemo(() => {
+    const rows = Array.isArray(masterUnitKerjaOptions)
+      ? masterUnitKerjaOptions
+      : [];
+
+    return UNIT_FILTER_FIELDS.reduce((acc, field) => {
+      acc[field.key] = uniqueUnitOptions(rows, field);
+      return acc;
+    }, {});
+  }, [masterUnitKerjaOptions]);
+
+  const combinedUnitFilterOptions = useMemo(() => {
+    return UNIT_FILTER_FIELDS.flatMap((field) =>
+      (unitFilterOptions[field.key] ?? []).map((item) => ({
+        key: `${field.key}:${item.key}`,
+        fieldKey: field.key,
+        value: item.key,
+        label: item.label,
+      })),
+    );
+  }, [unitFilterOptions]);
+
+  const selectedCombinedUnitFilter = useMemo(() => {
+    const selectedEntry = Object.entries(unitFilters).find(
+      ([, value]) => value !== "all",
+    );
+    if (!selectedEntry) return "all";
+
+    const [fieldKey, value] = selectedEntry;
+    return `${fieldKey}:${value}`;
+  }, [unitFilters]);
+
+  const selectedCombinedUnitFilterLabel = useMemo(() => {
+    if (selectedCombinedUnitFilter === "all") return "Unit Kerja";
+    return (
+      combinedUnitFilterOptions.find(
+        (item) => item.key === selectedCombinedUnitFilter,
+      )?.label || "Unit Kerja"
+    );
+  }, [combinedUnitFilterOptions, selectedCombinedUnitFilter]);
+
+  const filteredUnitFilterOptions = useMemo(() => {
+    const keyword = unitFilterSearch.trim().toLowerCase();
+    if (!keyword) return combinedUnitFilterOptions;
+
+    return combinedUnitFilterOptions.filter((item) =>
+      item.label.toLowerCase().includes(keyword),
+    );
+  }, [combinedUnitFilterOptions, unitFilterSearch]);
+
+  const handleUnitFilterChange = (keys) => {
+    const selectedValue =
+      keys == null
+        ? "all"
+        : typeof keys === "string" || typeof keys === "number"
+          ? String(keys)
+          : (Array.from(keys)[0] ?? "all");
+
+    if (selectedValue === "all") {
+      setUnitFilters(getEmptyUnitFilters());
+      setUnitFilterSearch("");
+      setIsUnitFilterOpen(false);
+      return;
+    }
+
+    const selectedOption = combinedUnitFilterOptions.find(
+      (item) => item.key === selectedValue,
+    );
+    if (!selectedOption) return;
+
+    setUnitFilters({
+      ...getEmptyUnitFilters(),
+      [selectedOption.fieldKey]: selectedOption.value,
+    });
+    setUnitFilterSearch("");
+    setIsUnitFilterOpen(false);
+  };
+
   const employeesUrl = useMemo(() => {
     if (selectedSetempatId) {
       return EMPLOYEEENDPOINT.getAllBySetempat(
         selectedSetempatId,
         page.initial,
         selectedLimit,
+        selectedStatusAktifValue,
+        selectedUnitFilterValues,
       );
     }
 
-    return EMPLOYEEENDPOINT.getAll(page.initial, selectedLimit);
-  }, [page.initial, selectedLimit, selectedSetempatId]);
+    return EMPLOYEEENDPOINT.getAll(
+      page.initial,
+      selectedLimit,
+      selectedStatusAktifValue,
+      selectedUnitFilterValues,
+    );
+  }, [
+    page.initial,
+    selectedLimit,
+    selectedSetempatId,
+    selectedStatusAktifValue,
+    selectedUnitFilterValues,
+  ]);
 
   const { data, isFetching, refetch, error } = useMaster(
     api,
-    ["allKaryawan", page, limitPage, selectedSetempatId],
+    [
+      "allKaryawan",
+      page,
+      limitPage,
+      selectedSetempatId,
+      userSetempatId,
+      canViewAllSetempat,
+      selectedStatusAktifValue,
+      selectedUnitFilterValues,
+    ],
     employeesUrl,
     {
-      enabled: isLoaded && isSignedIn,
+      enabled: isLoaded && isSignedIn && hasSetempatAccess,
       returnEmptyOnError: false,
       select: (data) => {
         const rows = data?.data?.data ?? [];
@@ -167,40 +332,66 @@ export default function AllKaryawan() {
     isFetching: searchFetching,
     refetch: searchRefetch,
     error: searchError,
-  } = useMaster(api, ["search"], EMPLOYEEENDPOINT.search(search), {
-    enabled: false,
-    returnEmptyOnError: false,
-    select: (data) => {
-      const rows = data?.data?.data ?? [];
+  } = useMaster(
+    api,
+    [
+      "search",
+      search,
+      selectedSetempatId,
+      selectedStatusAktifValue,
+      selectedUnitFilterValues,
+    ],
+    EMPLOYEEENDPOINT.search(
+      search,
+      undefined,
+      selectedSetempatId,
+      selectedStatusAktifValue,
+      selectedUnitFilterValues,
+    ),
+    {
+      enabled: false,
+      returnEmptyOnError: false,
+      select: (data) => {
+        const rows = data?.data?.data ?? [];
 
-      const filteredItem = rows.map((item) => ({
-        id_karyawan: item?.id_karyawan || "",
-        nama_lengkap: capitalizeWords(item?.nama_lengkap || ""),
-        nik: item?.nik || "",
-        foto: item?.foto || "",
-        status_karyawan: item?.status_karyawan.trim() || "",
-        jabatan: item?.jabatan || "",
-        email_penabur: item?.email_penabur || "",
-      }));
+        const filteredItem = rows.map((item) => ({
+          id_karyawan: item?.id_karyawan || "",
+          nama_lengkap: capitalizeWords(item?.nama_lengkap || ""),
+          nik: item?.nik || "",
+          foto: item?.foto || "",
+          status_karyawan: item?.status_karyawan.trim() || "",
+          jabatan: item?.jabatan || "",
+          email_penabur: item?.email_penabur || "",
+        }));
 
-      return {
-        data: filteredItem,
-        pagination: {
-          page: data?.data?.page ?? 1,
-          totalPages: data?.data?.total_pages ?? 1,
-        },
-      };
+        return {
+          data: filteredItem,
+          pagination: {
+            page: data?.data?.page ?? 1,
+            totalPages: data?.data?.total_pages ?? 1,
+          },
+        };
+      },
     },
-  });
+  );
 
   useEffect(() => {
     if (search === "")
-      queryClient.removeQueries({ queryKey: ["search"], exact: true });
+      queryClient.removeQueries({ queryKey: ["search"], exact: false });
   }, [search]);
 
   useEffect(() => {
     setPage((prev) => ({ ...prev, initial: 1 }));
-  }, [selectedSetempatId, selectedLimit]);
+  }, [
+    selectedSetempatId,
+    selectedLimit,
+    selectedStatusAktifValue,
+    selectedUnitFilterValues,
+  ]);
+
+  useEffect(() => {
+    if (search.trim() !== "") searchRefetch();
+  }, [selectedSetempatId, selectedStatusAktifValue, selectedUnitFilterValues]);
 
   useEffect(() => {
     if (searchData || data) {
@@ -425,129 +616,239 @@ export default function AllKaryawan() {
       <head>
         <meta name="robots" content="noindex, nofollow" />
       </head>
-      <section className="flex flex-col gap-10 flex-1 px-6 pb-5">
+      <section className="flex min-w-0 flex-1 flex-col gap-4 px-3 pb-6 sm:gap-6 sm:px-6">
         <EmployeeStatus />
 
-        <div className="flex flex-col justify-between flex-1 gap-5">
-          <div className="flex justify-between">
-            <div className="flex gap-5 items-center">
-              <p className="font-Poppins text-xl font-semibold text-primary">
-                All Employee
-              </p>
+        <div className="flex min-w-0 flex-1 flex-col gap-5 rounded-2xl border border-[#00000010] bg-[#FBFCFE] p-3 shadow-sm sm:p-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <div>
+                <p className="font-Poppins text-xl font-semibold text-primary">
+                  All Employee
+                </p>
+                <p className="font-Poppins text-sm text-primary/60">
+                  Kelola data karyawan berdasarkan kota dan status aktif.
+                </p>
+              </div>
 
-              <Dropdown>
-                <DropdownTrigger>
-                  <Button
-                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[72px] justify-center"
-                    variant="bordered"
+              <div className="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:items-center">
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      className="w-full justify-center rounded-md border-1 border-primary font-Poppins md:w-auto md:min-w-[72px]"
+                      variant="bordered"
+                    >
+                      {selectedLimit}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    disallowEmptySelection
+                    aria-label="Single selection example"
+                    selectedKeys={limitPage}
+                    selectionMode="single"
+                    variant="flat"
+                    onSelectionChange={setLimitPage}
                   >
-                    {selectedLimit}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu
-                  disallowEmptySelection
-                  aria-label="Single selection example"
-                  selectedKeys={limitPage}
-                  selectionMode="single"
-                  variant="flat"
-                  onSelectionChange={setLimitPage}
-                >
-                  {LIMITPAGE.map((item) => (
-                    <DropdownItem key={item} className="font-Poppins">
-                      {item}
-                    </DropdownItem>
-                  ))}
-                </DropdownMenu>
-              </Dropdown>
-
-              <Dropdown>
-                <DropdownTrigger>
-                  <Button
-                    className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap min-w-[140px] justify-center"
-                    variant="bordered"
-                    isDisabled={
-                      !isLoaded || !isSignedIn || isSetempatRestricted
-                    }
-                  >
-                    {selectedSetempatLabel}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu
-                  disallowEmptySelection
-                  aria-label="Filter master setempat"
-                  selectedKeys={selectedSetempat}
-                  selectionMode="single"
-                  variant="flat"
-                  onSelectionChange={setSelectedSetempat}
-                >
-                  {!isSetempatRestricted ? (
-                    <>
-                      <DropdownItem key="all" className="font-Poppins">
-                        Semua Kota
+                    {LIMITPAGE.map((item) => (
+                      <DropdownItem key={item} className="font-Poppins">
+                        {item}
                       </DropdownItem>
-                      {(Array.isArray(masterSetempatOptions)
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      className="w-full justify-center rounded-md border-1 border-primary font-Poppins md:w-auto md:min-w-[140px]"
+                      variant="bordered"
+                      isDisabled={
+                        !isLoaded ||
+                        !isSignedIn ||
+                        !hasSetempatAccess ||
+                        isSetempatRestricted
+                      }
+                    >
+                      {selectedSetempatLabel}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    disallowEmptySelection
+                    aria-label="Filter master setempat"
+                    selectedKeys={selectedSetempat}
+                    selectionMode="single"
+                    variant="flat"
+                    onSelectionChange={setSelectedSetempat}
+                  >
+                    {!isSetempatRestricted ? (
+                      <>
+                        <DropdownItem key="all" className="font-Poppins">
+                          Semua Kota
+                        </DropdownItem>
+                        {(Array.isArray(masterSetempatOptions)
+                          ? masterSetempatOptions
+                          : []
+                        ).map((item) => (
+                          <DropdownItem
+                            key={String(item.id)}
+                            className="font-Poppins"
+                          >
+                            {item.kota_setempat}
+                          </DropdownItem>
+                        ))}
+                      </>
+                    ) : (
+                      (Array.isArray(masterSetempatOptions)
                         ? masterSetempatOptions
                         : []
-                      ).map((item) => (
-                        <DropdownItem
-                          key={String(item.id)}
-                          className="font-Poppins"
-                        >
-                          {item.kota_setempat}
-                        </DropdownItem>
-                      ))}
-                    </>
-                  ) : (
-                    (Array.isArray(masterSetempatOptions)
-                      ? masterSetempatOptions
-                      : []
-                    )
-                      .filter((item) => Number(item.id) === 1)
-                      .map((item) => (
-                        <DropdownItem
-                          key={String(item.id)}
-                          className="font-Poppins"
-                        >
-                          {item.kota_setempat}
-                        </DropdownItem>
-                      ))
-                  )}
-                </DropdownMenu>
-              </Dropdown>
+                      )
+                        .filter((item) => Number(item.id) === userSetempatId)
+                        .map((item) => (
+                          <DropdownItem
+                            key={String(item.id)}
+                            className="font-Poppins"
+                          >
+                            {item.kota_setempat}
+                          </DropdownItem>
+                        ))
+                    )}
+                  </DropdownMenu>
+                </Dropdown>
 
-              <Input
-                {...PROPFORM}
-                classNames={{
-                  input: "text-small",
-                  inputWrapper: "font-DMSans border-1 shadow-sm",
-                }}
-                placeholder="Cari"
-                type="search"
-                startContent={
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      className="w-full justify-center rounded-md border-1 border-primary font-Poppins md:w-auto md:min-w-[112px]"
+                      variant="bordered"
+                    >
+                      {selectedStatusAktifValue}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    disallowEmptySelection
+                    aria-label="Filter status aktif karyawan"
+                    selectedKeys={selectedStatusAktif}
+                    selectionMode="single"
+                    variant="flat"
+                    onSelectionChange={setSelectedStatusAktif}
                   >
-                    <path
-                      fill="#0B345E"
-                      d="m19.485 20.154l-6.262-6.262q-.75.639-1.725.989t-1.96.35q-2.402 0-4.066-1.663T3.808 9.503T5.47 5.436t4.064-1.667t4.068 1.664T15.268 9.5q0 1.042-.369 2.017t-.97 1.668l6.262 6.261zM9.539 14.23q1.99 0 3.36-1.37t1.37-3.361t-1.37-3.36t-3.36-1.37t-3.361 1.37t-1.37 3.36t1.37 3.36t3.36 1.37"
-                    />
-                  </svg>
-                }
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && search !== "") searchRefetch();
-                }}
-                onClear={() => {
-                  setSearch("", () => refetch());
-                }}
-              />
+                    {STATUS_AKTIF_OPTIONS.map((item) => (
+                      <DropdownItem key={item.key} className="font-Poppins">
+                        {item.label}
+                      </DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+
+                <Popover
+                  isOpen={isUnitFilterOpen}
+                  placement="bottom-start"
+                  onOpenChange={setIsUnitFilterOpen}
+                >
+                  <PopoverTrigger>
+                    <Button
+                      className="col-span-2 w-full justify-between rounded-md border-1 border-primary bg-white font-Poppins md:col-span-1 md:w-auto md:min-w-[220px]"
+                      endContent={
+                        <span className="text-xs text-default-500">▾</span>
+                      }
+                      isDisabled={combinedUnitFilterOptions.length === 0}
+                      variant="bordered"
+                    >
+                      <span className="truncate">
+                        {selectedCombinedUnitFilterLabel}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[280px] p-3">
+                    <div className="flex w-full flex-col gap-2">
+                      <Input
+                        aria-label="Cari unit kerja"
+                        classNames={{
+                          input: "font-Poppins text-small",
+                          inputWrapper:
+                            "rounded-md border-1 border-default-300 bg-white shadow-none",
+                        }}
+                        placeholder="Search for an item..."
+                        size="sm"
+                        value={unitFilterSearch}
+                        variant="bordered"
+                        onChange={(event) =>
+                          setUnitFilterSearch(event.target.value)
+                        }
+                      />
+                      <div className="max-h-72 overflow-y-auto pr-1">
+                        <button
+                          className={`w-full rounded-md px-3 py-2 text-left font-Poppins text-sm transition-colors hover:bg-default-100 ${
+                            selectedCombinedUnitFilter === "all"
+                              ? "bg-primary text-white hover:bg-primary"
+                              : ""
+                          }`}
+                          type="button"
+                          onClick={() => handleUnitFilterChange("all")}
+                        >
+                          Semua Unit Kerja
+                        </button>
+                        {filteredUnitFilterOptions.length === 0 ? (
+                          <p className="px-3 py-2 font-Poppins text-sm text-default-400">
+                            Tidak ada data
+                          </p>
+                        ) : (
+                          filteredUnitFilterOptions.map((item) => (
+                            <button
+                              key={item.key}
+                              className={`w-full rounded-md px-3 py-2 text-left font-Poppins text-sm transition-colors hover:bg-default-100 ${
+                                selectedCombinedUnitFilter === item.key
+                                  ? "bg-primary text-white hover:bg-primary"
+                                  : ""
+                              }`}
+                              type="button"
+                              onClick={() => handleUnitFilterChange(item.key)}
+                            >
+                              {item.label}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                <Input
+                  {...PROPFORM}
+                  className="col-span-2 min-w-0 md:max-w-xs md:flex-1"
+                  classNames={{
+                    input: "text-small",
+                    inputWrapper:
+                      "font-DMSans border-1 shadow-sm bg-white rounded-md",
+                  }}
+                  placeholder="Cari"
+                  type="search"
+                  startContent={
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        fill="#0B345E"
+                        d="m19.485 20.154l-6.262-6.262q-.75.639-1.725.989t-1.96.35q-2.402 0-4.066-1.663T3.808 9.503T5.47 5.436t4.064-1.667t4.068 1.664T15.268 9.5q0 1.042-.369 2.017t-.97 1.668l6.262 6.261zM9.539 14.23q1.99 0 3.36-1.37t1.37-3.361t-1.37-3.36t-3.36-1.37t-3.361 1.37t-1.37 3.36t1.37 3.36t3.36 1.37"
+                      />
+                    </svg>
+                  }
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && search !== "") searchRefetch();
+                  }}
+                  onClear={() => {
+                    setSearch("", () => refetch());
+                  }}
+                />
+              </div>
             </div>
 
-            <div className="flex gap-5 items-center">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center xl:justify-end">
               <input
                 ref={importInputRef}
                 type="file"
@@ -557,7 +858,7 @@ export default function AllKaryawan() {
               />
 
               <Button
-                className="font-Poppins whitespace-nowrap"
+                className="col-span-2 w-full whitespace-nowrap font-Poppins sm:col-span-1 sm:w-auto"
                 color="primary"
                 isDisabled={!isLoaded || !isSignedIn || isImporting}
                 onPress={onOpen}
@@ -566,7 +867,7 @@ export default function AllKaryawan() {
               </Button>
 
               <Button
-                className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap"
+                className="col-span-2 w-full whitespace-nowrap rounded-md border-1 border-primary font-Poppins sm:col-span-1 sm:w-auto"
                 variant="bordered"
                 isDisabled={!isLoaded || !isSignedIn || isImporting}
                 onPress={downloadTemplate}
@@ -575,7 +876,7 @@ export default function AllKaryawan() {
               </Button>
 
               <Button
-                className="font-Poppins border-primary border-1 rounded-md whitespace-nowrap"
+                className="col-span-2 w-full whitespace-nowrap rounded-md border-1 border-primary font-Poppins sm:col-span-1 sm:w-auto"
                 variant="bordered"
                 isDisabled={!isLoaded || !isSignedIn || isImporting}
                 isLoading={isImporting}
@@ -585,8 +886,9 @@ export default function AllKaryawan() {
               </Button>
 
               <button
-                className={`h-10 shadow-md aspect-square flex items-center justify-center rounded-md ${!isTable && "bg-primary"}`}
+                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${!isTable ? "bg-primary" : "bg-white"}`}
                 onClick={() => setIsTable(false)}
+                type="button"
               >
                 <i
                   className={`fi fi-rr-apps ${!isTable ? "text-white" : ""}`}
@@ -594,8 +896,9 @@ export default function AllKaryawan() {
               </button>
 
               <button
-                className={`h-10 shadow-md aspect-square flex items-center justify-center rounded-md ${isTable && "bg-primary"}`}
+                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${isTable ? "bg-primary" : "bg-white"}`}
                 onClick={() => setIsTable(true)}
+                type="button"
               >
                 <i
                   className={`fi fi-rr-list ${isTable ? "text-white" : "text-primary"}`}
@@ -605,13 +908,14 @@ export default function AllKaryawan() {
           </div>
 
           {isFetching || searchFetching ? (
-            <div className="w-full flex items-center justify-center min-h-20">
+            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white">
               <Spinner size="md" color="primary" />
             </div>
-          ) : error || searchError ? (
-            <div className="w-full flex items-center justify-center min-h-20">
+          ) : error || searchError || setempatAccessError ? (
+            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4">
               <p className="font-Poppins text-primary opacity-70 text-center">
-                {searchError?.message ||
+                {setempatAccessError?.message ||
+                  searchError?.message ||
                   error?.message ||
                   "Gagal memuat data karyawan"}
               </p>
@@ -620,7 +924,7 @@ export default function AllKaryawan() {
             ((searchData?.data?.length ?? 0) === 0 &&
               search !== "" &&
               searchData) ? (
-            <div className="w-full flex items-center justify-center min-h-20">
+            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4">
               <p className="font-Poppins text-primary opacity-70">
                 Tidak ada data karyawan
               </p>
@@ -641,7 +945,7 @@ export default function AllKaryawan() {
             initialPage={page.initial}
             onChange={(e) => setPage({ ...page, initial: e })}
             total={page.total}
-            className="font-Poppins"
+            className="self-center font-Poppins"
           />
         </div>
       </section>

@@ -1,4 +1,7 @@
-import { PrsKaryawanRepository } from '../repositories/PrsKaryawanRepository';
+import {
+  KaryawanUnitKerjaFilter,
+  PrsKaryawanRepository,
+} from '../repositories/PrsKaryawanRepository';
 import PrsKeluargaKaryawan, {
   PrsKeluargaKaryawanAttributes,
 } from '../models/PrsKeluargaKaryawan';
@@ -155,11 +158,21 @@ export type UpdateInformasiPenggajianPayload = Partial<
 export class PrsKaryawanService {
   private repository = new PrsKaryawanRepository();
 
-  async getAll(page = 1, limit = 10) {
+  async getAll(
+    page = 1,
+    limit = 10,
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
+  ) {
     const offset = (page - 1) * limit;
 
-    const data = await this.repository.findAllWithPagination(limit, offset);
-    const total = await this.repository.countAll();
+    const data = await this.repository.findAllWithPagination(
+      limit,
+      offset,
+      status_aktif,
+      unitKerjaFilter
+    );
+    const total = await this.repository.countAll(status_aktif, unitKerjaFilter);
 
     return {
       data: data ?? [],
@@ -172,15 +185,27 @@ export class PrsKaryawanService {
     };
   }
 
-  async getAllBySetempat(id_master_setempat: number, page = 1, limit = 10) {
+  async getAllBySetempat(
+    id_master_setempat: number,
+    page = 1,
+    limit = 10,
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
+  ) {
     const offset = (page - 1) * limit;
 
     const data = await this.repository.findAllWithPaginationBySetempat(
       id_master_setempat,
       limit,
-      offset
+      offset,
+      status_aktif,
+      unitKerjaFilter
     );
-    const total = await this.repository.countAllBySetempat(id_master_setempat);
+    const total = await this.repository.countAllBySetempat(
+      id_master_setempat,
+      status_aktif,
+      unitKerjaFilter
+    );
 
     return {
       data: data ?? [],
@@ -203,11 +228,22 @@ export class PrsKaryawanService {
     if (!data) throw new NotFoundException('Karyawan tidak ditemukan');
     return data;
   }
+
+  async getSetempatIdByEmail(email: string) {
+    const sanitized = xss(email || '').trim();
+    if (!sanitized) return null;
+
+    return repository.findSetempatIdByEmail(sanitized);
+  }
+
   // services/prsKaryawanService.ts
   async findByNameAscPaginated(
     nama_lengkap: string,
     page: number,
-    limit: number
+    limit: number,
+    id_master_setempat?: number,
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
   ) {
     const sanitized = xss(nama_lengkap || '');
     if (!sanitized) throw new BadRequestException('Parameter nama wajib diisi');
@@ -216,7 +252,14 @@ export class PrsKaryawanService {
     const validLimit = Number.isNaN(limit) || limit < 1 ? 10 : limit;
     const offset = (validPage - 1) * validLimit;
 
-    return repository.findByNameAscPaginated(sanitized, validLimit, offset);
+    return repository.findByNameAscPaginated(
+      sanitized,
+      validLimit,
+      offset,
+      id_master_setempat,
+      status_aktif,
+      unitKerjaFilter
+    );
   }
 
   async create(data: KaryawanDTO) {

@@ -5,6 +5,7 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
+import { useUser } from "@clerk/clerk-react";
 import { useMemo, useState } from "react";
 
 import Layout from "../../components/layout";
@@ -13,12 +14,21 @@ import NewEmployees from "./components/userManagement/newEmployees";
 import { LIMITPAGE } from "../../constants/ui";
 
 export default function NewEmployeePage() {
+  const { user } = useUser();
   const [limitPage, setLimitPage] = useState(new Set(["10"]));
 
   const selectedLimit = useMemo(
     () => Array.from(limitPage).join(", ").replace(/_/g, ""),
     [limitPage],
   );
+
+  const displayName = useMemo(() => {
+    const fullName = user?.fullName?.trim();
+    const firstName = user?.firstName?.trim();
+    const email = user?.primaryEmailAddress?.emailAddress?.trim();
+
+    return fullName || firstName || email || "User";
+  }, [user]);
 
   return (
     <Layout>
@@ -29,7 +39,7 @@ export default function NewEmployeePage() {
         <div className="flex items-center bg-primary min-h-52 w-full rounded-2xl px-7 relative">
           <div className="flex flex-col gap-3">
             <p className="font-Poppins text-white font-[600] text-2xl">
-              Hi, Han Soo Hee
+              Hi, {displayName}
             </p>
             <p className="font-Poppins text-white">
               Ready to start your date with some pitch desk?

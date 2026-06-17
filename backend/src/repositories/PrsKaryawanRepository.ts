@@ -74,9 +74,89 @@ interface UpdateAlamatKaryawanPayload {
 }
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize';
+
+export interface KaryawanUnitKerjaFilter {
+  kode_direktur?: string;
+  kode_deputi?: string;
+  kode_divisi?: string;
+  kode_bagian?: string;
+  kode_seksi?: string;
+}
+
+const buildUnitKerjaWhere = (filter?: KaryawanUnitKerjaFilter) => {
+  const where: Record<string, string> = {};
+
+  Object.entries(filter ?? {}).forEach(([key, value]) => {
+    const cleanValue = typeof value === 'string' ? value.trim() : '';
+    if (!cleanValue) return;
+    where[key] = cleanValue;
+  });
+
+  return Object.keys(where).length > 0 ? where : undefined;
+};
+
+const buildUnitKerjaExistsCondition = (filter?: KaryawanUnitKerjaFilter) => {
+  const unitKerjaWhere = buildUnitKerjaWhere(filter);
+  if (!unitKerjaWhere) return undefined;
+
+  const unitKerjaConditions = Object.entries(unitKerjaWhere)
+    .map(([key, value]) => `uk."${key}" = ${sequelize.escape(value)}`)
+    .join(' AND ');
+
+  return literal(`EXISTS (
+    SELECT 1
+    FROM prs_unit_kerja_karyawan AS ukk
+    INNER JOIN prs_unit_kerja AS uk ON uk.uk_id = ukk.unit_kerja
+    WHERE ukk.karyawan_id = "PrsKaryawan"."id_karyawan"
+      AND ${unitKerjaConditions}
+  )`);
+};
+
+const buildKaryawanWhere = (
+  baseWhere: Record<string | symbol, unknown>,
+  unitKerjaFilter?: KaryawanUnitKerjaFilter
+) => {
+  const unitKerjaCondition = buildUnitKerjaExistsCondition(unitKerjaFilter);
+  if (!unitKerjaCondition) return baseWhere;
+
+  const existingAnd = Array.isArray(baseWhere[Op.and])
+    ? (baseWhere[Op.and] as unknown[])
+    : [];
+
+  return {
+    ...baseWhere,
+    [Op.and]: [...existingAnd, unitKerjaCondition],
+  };
+};
+
+const buildUnitKerjaKaryawanInclude = () => {
+  return {
+    model: PrsUnitKerjaKaryawan,
+    as: 'unit_kerja_karyawan',
+    attributes: ['jab_id'],
+    required: false,
+    include: [
+      {
+        model: PrsJabatan,
+        as: 'jabatan',
+        attributes: ['jabatan'],
+      },
+    ],
+  };
+};
+
 export class PrsKaryawanRepository {
-  async findAllWithPagination(limit: number, offset: number) {
+  async findAllWithPagination(
+    limit: number,
+    offset: number,
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
+  ) {
     return await PrsKaryawan.findAll({
+      where: buildKaryawanWhere(
+        status_aktif ? { status_aktif } : {},
+        unitKerjaFilter
+      ),
       limit,
       offset,
       order: [['nama_lengkap', 'ASC']],
@@ -86,6 +166,7 @@ export class PrsKaryawanRepository {
         'nik',
         'nama_lengkap',
         'email_penabur',
+        'status_aktif',
       ],
       include: [
         {
@@ -94,18 +175,7 @@ export class PrsKaryawanRepository {
           attributes: ['id', 'kota_setempat'],
           required: false,
         },
-        {
-          model: PrsUnitKerjaKaryawan,
-          as: 'unit_kerja_karyawan',
-          attributes: ['jab_id'],
-          include: [
-            {
-              model: PrsJabatan,
-              as: 'jabatan',
-              attributes: ['jabatan'],
-            },
-          ],
-        },
+        buildUnitKerjaKaryawanInclude(),
         {
           model: PrsStatusKaryawan,
           as: 'status_karyawan',
@@ -118,16 +188,22 @@ export class PrsKaryawanRepository {
   async findAllWithPaginationBySetempat(
     id_master_setempat: number,
     limit: number,
-    offset: number
+    offset: number,
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
   ) {
     return await PrsKaryawan.findAll({
-      where: {
-        [Op.or]: [
-          { id_master_setempat },
-          // Backward-compat: data lama belum punya setempat, treat as default (=1)
-          ...(id_master_setempat === 1 ? [{ id_master_setempat: null }] : []),
-        ],
-      },
+      where: buildKaryawanWhere(
+        {
+          ...(status_aktif ? { status_aktif } : {}),
+          [Op.or]: [
+            { id_master_setempat },
+            // Backward-compat: data lama belum punya setempat, treat as default (=1)
+            ...(id_master_setempat === 1 ? [{ id_master_setempat: null }] : []),
+          ],
+        },
+        unitKerjaFilter
+      ),
       limit,
       offset,
       order: [['nama_lengkap', 'ASC']],
@@ -137,6 +213,7 @@ export class PrsKaryawanRepository {
         'nik',
         'nama_lengkap',
         'email_penabur',
+        'status_aktif',
       ],
       include: [
         {
@@ -145,18 +222,7 @@ export class PrsKaryawanRepository {
           attributes: ['id', 'kota_setempat'],
           required: false,
         },
-        {
-          model: PrsUnitKerjaKaryawan,
-          as: 'unit_kerja_karyawan',
-          attributes: ['jab_id'],
-          include: [
-            {
-              model: PrsJabatan,
-              as: 'jabatan',
-              attributes: ['jabatan'],
-            },
-          ],
-        },
+        buildUnitKerjaKaryawanInclude(),
         {
           model: PrsStatusKaryawan,
           as: 'status_karyawan',
@@ -166,20 +232,51 @@ export class PrsKaryawanRepository {
     });
   }
 
-  async countAll() {
-    return await PrsKaryawan.count();
-  }
-
-  async countAllBySetempat(id_master_setempat: number) {
+  async countAll(
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
+  ) {
     return await PrsKaryawan.count({
-      where: {
-        [Op.or]: [
-          { id_master_setempat },
-          ...(id_master_setempat === 1 ? [{ id_master_setempat: null }] : []),
-        ],
-      },
+      where: buildKaryawanWhere(
+        status_aktif ? { status_aktif } : {},
+        unitKerjaFilter
+      ),
     });
   }
+
+  async countAllBySetempat(
+    id_master_setempat: number,
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
+  ) {
+    return await PrsKaryawan.count({
+      where: buildKaryawanWhere(
+        {
+          ...(status_aktif ? { status_aktif } : {}),
+          [Op.or]: [
+            { id_master_setempat },
+            ...(id_master_setempat === 1 ? [{ id_master_setempat: null }] : []),
+          ],
+        },
+        unitKerjaFilter
+      ),
+    });
+  }
+
+  async findSetempatIdByEmail(email: string) {
+    const record = await PrsKaryawan.findOne({
+      where: {
+        [Op.or]: [
+          { email_penabur: { [Op.iLike]: email } },
+          { email_pribadi: { [Op.iLike]: email } },
+        ],
+      },
+      attributes: ['id_master_setempat'],
+    });
+
+    return record?.id_master_setempat ?? null;
+  }
+
   async findById(id: string) {
     const data = await PrsKaryawan.findByPk(id, {
       attributes: [
@@ -609,14 +706,32 @@ export class PrsKaryawanRepository {
   async findByNameAscPaginated(
     nama_lengkap: string,
     limit: number,
-    offset: number
+    offset: number,
+    id_master_setempat?: number,
+    status_aktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
   ) {
     try {
-      const { count, rows } = await PrsKaryawan.findAndCountAll({
-        where: {
+      const whereCondition = buildKaryawanWhere(
+        {
           nama_lengkap: { [Op.iLike]: `%${nama_lengkap}%` },
-          status_aktif: 'Aktif',
+          ...(status_aktif ? { status_aktif } : {}),
+          ...(id_master_setempat
+            ? {
+                [Op.or]: [
+                  { id_master_setempat },
+                  ...(id_master_setempat === 1
+                    ? [{ id_master_setempat: null }]
+                    : []),
+                ],
+              }
+            : {}),
         },
+        unitKerjaFilter
+      );
+
+      const { count, rows } = await PrsKaryawan.findAndCountAll({
+        where: whereCondition,
         order: [['nama_lengkap', 'ASC']],
         attributes: [
           'id_karyawan',
@@ -624,12 +739,14 @@ export class PrsKaryawanRepository {
           'nik',
           'nama_lengkap',
           'email_penabur',
+          'status_aktif',
         ],
         include: [
           {
             model: PrsUnitKerjaKaryawan,
             as: 'unit_kerja_karyawan',
             attributes: ['jab_id'],
+            required: false,
             include: [
               {
                 model: PrsJabatan,
@@ -647,6 +764,8 @@ export class PrsKaryawanRepository {
         ],
         limit,
         offset,
+        distinct: true,
+        col: 'id_karyawan',
         raw: true,
         nest: false,
       });
