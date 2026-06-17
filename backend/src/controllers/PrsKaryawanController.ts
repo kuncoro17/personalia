@@ -18,6 +18,7 @@ import {
 import { logInfo, logWarn, logError } from '../utils/log.helper';
 import { prsKaryawanSchema } from '../validators/PrsKaryawan.schema';
 import { ZodError, z } from 'zod';
+import { createClerkClient } from '@clerk/backend';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { promises as fs } from 'fs';
@@ -128,6 +129,43 @@ const getAuthenticatedEmail = (
   return null;
 };
 
+const normalizeEnvValue = (value?: string): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length < 2) return trimmed;
+
+  const isQuoted =
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"));
+
+  return isQuoted ? trimmed.slice(1, -1) : trimmed;
+};
+
+const getAuthenticatedEmailFromClerk = async (
+  auth: Record<string, unknown>
+): Promise<string | null> => {
+  const userId = typeof auth.sub === 'string' ? auth.sub.trim() : '';
+  const secretKey = normalizeEnvValue(process.env.CLERK_SECRET_KEY);
+  if (!userId || !secretKey) return null;
+
+  try {
+    const clerkClient = createClerkClient({ secretKey });
+    const user = await clerkClient.users.getUser(userId);
+
+    return (
+      user.primaryEmailAddress?.emailAddress ||
+      user.emailAddresses.find(emailAddress => emailAddress.emailAddress)
+        ?.emailAddress ||
+      null
+    );
+  } catch (err) {
+    await logWarn(
+      `Gagal mengambil email Clerk untuk user ${userId}: ${getErrorMessage(err)}`
+    );
+    return null;
+  }
+};
+
 const getAuthenticatedSetempatId = async (
   c: Context
 ): Promise<number | null> => {
@@ -152,7 +190,8 @@ const getAuthenticatedSetempatId = async (
     if (id) return id;
   }
 
-  const email = getAuthenticatedEmail(auth);
+  const email =
+    getAuthenticatedEmail(auth) ?? (await getAuthenticatedEmailFromClerk(auth));
   if (!email) return null;
 
   return service.getSetempatIdByEmail(email);
