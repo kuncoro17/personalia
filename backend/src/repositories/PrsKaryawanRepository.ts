@@ -264,17 +264,33 @@ export class PrsKaryawanRepository {
   }
 
   async findSetempatIdByEmail(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
     const record = await PrsKaryawan.findOne({
       where: {
         [Op.or]: [
-          { email_penabur: { [Op.iLike]: email } },
-          { email_pribadi: { [Op.iLike]: email } },
+          Sequelize.where(
+            Sequelize.fn(
+              'LOWER',
+              Sequelize.fn('TRIM', Sequelize.col('email_penabur'))
+            ),
+            normalizedEmail
+          ),
+          Sequelize.where(
+            Sequelize.fn(
+              'LOWER',
+              Sequelize.fn('TRIM', Sequelize.col('email_pribadi'))
+            ),
+            normalizedEmail
+          ),
         ],
       },
       attributes: ['id_master_setempat'],
     });
 
-    return record?.id_master_setempat ?? null;
+    if (!record) return null;
+
+    // Backward-compat: data lama belum punya setempat, treat as default (=1)
+    return record.id_master_setempat ?? 1;
   }
 
   async findById(id: string) {

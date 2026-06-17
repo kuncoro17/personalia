@@ -74,32 +74,45 @@ export const extractBearerToken = (authHeader?: string): string | null => {
   return token;
 };
 
-export const extractEmailFromClerkPayload = (
-  payload: ClerkAuthPayload
-): string | null => {
-  const direct = typeof payload.email === 'string' ? payload.email.trim() : '';
-  if (direct) return direct;
+const extractEmailFromUnknown = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    const email = value.trim();
+    return email.includes('@') ? email : null;
+  }
 
-  const anyPayload = payload as unknown as Record<string, unknown>;
-  const arraysToCheck = [
-    anyPayload.email_address,
-    anyPayload.email_addresses,
-    anyPayload.emailAddresses,
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const email = extractEmailFromUnknown(item);
+      if (email) return email;
+    }
+    return null;
+  }
+
+  if (!value || typeof value !== 'object') return null;
+
+  const record = value as Record<string, unknown>;
+  const preferredKeys = [
+    'email',
+    'email_address',
+    'emailAddress',
+    'email_addresses',
+    'emailAddresses',
+    'primary_email_address',
+    'primaryEmailAddress',
   ];
 
-  for (const value of arraysToCheck) {
-    if (!Array.isArray(value) || value.length === 0) continue;
-    const first = value[0] as unknown as Record<string, unknown>;
-
-    const emailCandidate =
-      (typeof first.email_address === 'string' && first.email_address.trim()) ||
-      (typeof first.emailAddress === 'string' && first.emailAddress.trim()) ||
-      '';
-
-    if (emailCandidate) return emailCandidate;
+  for (const key of preferredKeys) {
+    const email = extractEmailFromUnknown(record[key]);
+    if (email) return email;
   }
 
   return null;
+};
+
+export const extractEmailFromClerkPayload = (
+  payload: ClerkAuthPayload
+): string | null => {
+  return extractEmailFromUnknown(payload);
 };
 
 export const clerkAuthMiddleware: MiddlewareHandler<{

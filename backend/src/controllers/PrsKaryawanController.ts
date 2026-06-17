@@ -99,34 +99,45 @@ const getNestedRecord = (
     : null;
 };
 
-const getAuthenticatedEmail = (
-  auth: Record<string, unknown>
-): string | null => {
-  const directEmail =
-    typeof auth.email === 'string'
-      ? auth.email.trim()
-      : typeof auth.email_address === 'string'
-        ? auth.email_address.trim()
-        : '';
-  if (directEmail) return directEmail;
+const extractEmailFromUnknown = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    const email = value.trim();
+    return email.includes('@') ? email : null;
+  }
 
-  const emailArrays = [
-    auth.email_address,
-    auth.email_addresses,
-    auth.emailAddresses,
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const email = extractEmailFromUnknown(item);
+      if (email) return email;
+    }
+    return null;
+  }
+
+  if (!value || typeof value !== 'object') return null;
+
+  const record = value as Record<string, unknown>;
+  const preferredKeys = [
+    'email',
+    'email_address',
+    'emailAddress',
+    'email_addresses',
+    'emailAddresses',
+    'primary_email_address',
+    'primaryEmailAddress',
   ];
 
-  for (const value of emailArrays) {
-    if (!Array.isArray(value) || value.length === 0) continue;
-    const first = value[0] as Record<string, unknown>;
-    const email =
-      (typeof first.email_address === 'string' && first.email_address.trim()) ||
-      (typeof first.emailAddress === 'string' && first.emailAddress.trim()) ||
-      '';
+  for (const key of preferredKeys) {
+    const email = extractEmailFromUnknown(record[key]);
     if (email) return email;
   }
 
   return null;
+};
+
+const getAuthenticatedEmail = (
+  auth: Record<string, unknown>
+): string | null => {
+  return extractEmailFromUnknown(auth);
 };
 
 const normalizeEnvValue = (value?: string): string | undefined => {
