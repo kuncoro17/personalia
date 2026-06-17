@@ -163,7 +163,7 @@ export default function MasterSetempatPage() {
       <section className="flex flex-col gap-6 flex-1 px-6 pb-5">
         <div className="flex items-center justify-between">
           <p className="font-Poppins text-xl font-semibold text-primary">
-            Master Setempat
+          
           </p>
         </div>
 

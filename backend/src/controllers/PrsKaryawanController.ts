@@ -23,6 +23,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { promises as fs } from 'fs';
 import { PrsMasterAlamat } from '../models';
+import User from '../models/userModel';
 import HistoryService from '../services/HistoryServices';
 // import { PrsKeluargaKaryawanAttributes } from '../types/prsKeluargaKaryawan.types';
 
@@ -177,6 +178,34 @@ const getAuthenticatedEmailFromClerk = async (
   }
 };
 
+const getAuthenticatedEmailFromUsers = async (
+  auth: Record<string, unknown>
+): Promise<string | null> => {
+  const possibleIds = [auth.id, auth.user_id, auth.userId, auth.sub]
+    .filter((value): value is string => typeof value === 'string')
+    .map(value => value.trim())
+    .filter(Boolean);
+
+  if (possibleIds.length === 0) return null;
+
+  const user = await User.findOne({
+    where: { id: possibleIds },
+    attributes: ['email'],
+  });
+
+  return user?.email?.trim() || null;
+};
+
+const getAuthenticatedEmailForLookup = async (
+  auth: Record<string, unknown>
+): Promise<string | null> => {
+  return (
+    getAuthenticatedEmail(auth) ??
+    (await getAuthenticatedEmailFromUsers(auth)) ??
+    (await getAuthenticatedEmailFromClerk(auth))
+  );
+};
+
 const getAuthenticatedSetempatId = async (
   c: Context
 ): Promise<number | null> => {
@@ -201,8 +230,7 @@ const getAuthenticatedSetempatId = async (
     if (id) return id;
   }
 
-  const email =
-    getAuthenticatedEmail(auth) ?? (await getAuthenticatedEmailFromClerk(auth));
+  const email = await getAuthenticatedEmailForLookup(auth);
   if (!email) return null;
 
   return service.getSetempatIdByEmail(email);
@@ -262,7 +290,13 @@ export const getAllKaryawan = async (c: Context): Promise<Response> => {
 export const getCurrentKaryawanAccess = async (
   c: Context
 ): Promise<Response> => {
-  const authenticatedSetempatId = await getAuthenticatedSetempatId(c);
+  const auth = c.get('auth') as unknown as Record<string, unknown> | undefined;
+  const email = auth ? await getAuthenticatedEmailForLookup(auth) : null;
+  const accessProfile = email
+    ? await service.getAccessProfileByEmail(email)
+    : null;
+  const authenticatedSetempatId =
+    accessProfile?.id_master_setempat ?? (await getAuthenticatedSetempatId(c));
 
   if (!authenticatedSetempatId) {
     return responseError(
@@ -277,6 +311,7 @@ export const getCurrentKaryawanAccess = async (
     {
       id_master_setempat: authenticatedSetempatId,
       can_view_all_setempat: authenticatedSetempatId === YAYASAN_SETEMPAT_ID,
+      foto: accessProfile?.foto ?? null,
     },
     'Berhasil mengambil akses setempat'
   );

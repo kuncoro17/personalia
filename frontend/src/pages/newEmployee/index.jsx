@@ -35,13 +35,13 @@ export default function NewEmployeePage() {
       <head>
         <meta name="robots" content="noindex, nofollow" />
       </head>
-      <section className="container px-4 flex-grow flex-1 flex flex-col gap-4">
-        <div className="flex items-center bg-primary min-h-52 w-full rounded-2xl px-7 relative">
-          <div className="flex flex-col gap-3">
-            <p className="font-Poppins text-white font-[600] text-2xl">
+      <section className="container min-w-0 flex-1 flex-grow px-4 flex flex-col gap-4">
+        <div className="grid min-h-44 w-full min-w-0 grid-cols-1 overflow-hidden rounded-2xl bg-primary px-5 pt-6 sm:px-7 md:min-h-48 md:grid-cols-[minmax(0,1fr)_minmax(180px,28%)] md:items-center md:pt-0">
+          <div className="z-10 flex min-w-0 max-w-full flex-col gap-3">
+            <p className="break-words font-Poppins text-2xl font-[600] text-white sm:text-3xl lg:text-[32px]">
               Hi, {displayName}
             </p>
-            <p className="font-Poppins text-white">
+            <p className="break-words font-Poppins text-sm text-white sm:text-base">
               Ready to start your date with some pitch desk?
             </p>
           </div>
@@ -49,7 +49,7 @@ export default function NewEmployeePage() {
           <img
             src="/homeIllustrator.svg"
             alt="Home Illustrator"
-            className="absolute right-0 -bottom-28"
+            className="pointer-events-none mt-4 w-full max-w-[220px] justify-self-end self-end md:mt-0 md:max-w-[280px] lg:max-w-[320px]"
           />
         </div>
 

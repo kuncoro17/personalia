@@ -18,7 +18,7 @@ export default function Layout({ children }) {
 
       <footer
         className={`flex w-full flex-col items-center justify-between gap-1 bg-primary px-4 py-2 sm:flex-row ${
-          pathname !== "/detailEmployee" ? "lg:pl-56" : ""
+          pathname !== "/detailEmployee" ? "lg:pl-72" : ""
         }`}
       >
         <p className="font-Poppins text-white text-xs">

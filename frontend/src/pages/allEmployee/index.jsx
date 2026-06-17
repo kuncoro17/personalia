@@ -44,6 +44,8 @@ const UNIT_FILTER_FIELDS = [
   { key: "kode_seksi", relation: "seksi", label: "Seksi" },
 ];
 
+const UNIT_FILTER_PRIORITY = [...UNIT_FILTER_FIELDS].reverse();
+
 const getUnitRelationValue = (unit, field) => {
   const relation = unit?.[field.relation] ?? {};
   return relation?.id ?? unit?.[field.key] ?? null;
@@ -56,24 +58,29 @@ const getUnitRelationLabel = (unit, field) => {
 
 const isValidUnitValue = (value) => {
   const clean = String(value ?? "").trim();
-  return clean && clean !== "None" && clean !== "nnn";
+  const normalized = clean.toLowerCase();
+  return clean && normalized !== "none" && normalized !== "nnn";
 };
 
-const uniqueUnitOptions = (units, field) => {
-  const optionMap = new Map();
-
-  units.forEach((unit) => {
+const getDeepestUnitFilterOption = (unit) => {
+  for (const field of UNIT_FILTER_PRIORITY) {
     const value = getUnitRelationValue(unit, field);
-    if (!isValidUnitValue(value) || optionMap.has(String(value))) return;
-    optionMap.set(String(value), {
-      key: String(value),
-      label: getUnitRelationLabel(unit, field) || String(value),
-    });
-  });
+    if (!isValidUnitValue(value)) continue;
 
-  return Array.from(optionMap.values()).sort((a, b) =>
-    a.label.localeCompare(b.label),
-  );
+    const cleanValue = String(value).trim();
+    const label = String(
+      getUnitRelationLabel(unit, field) || cleanValue,
+    ).trim();
+
+    return {
+      key: `${field.key}:${cleanValue}`,
+      fieldKey: field.key,
+      value: cleanValue,
+      label: label || cleanValue,
+    };
+  }
+
+  return null;
 };
 
 const getEmptyUnitFilters = () =>
@@ -183,27 +190,22 @@ export default function AllKaryawan() {
     },
   );
 
-  const unitFilterOptions = useMemo(() => {
+  const combinedUnitFilterOptions = useMemo(() => {
     const rows = Array.isArray(masterUnitKerjaOptions)
       ? masterUnitKerjaOptions
       : [];
+    const optionMap = new Map();
 
-    return UNIT_FILTER_FIELDS.reduce((acc, field) => {
-      acc[field.key] = uniqueUnitOptions(rows, field);
-      return acc;
-    }, {});
-  }, [masterUnitKerjaOptions]);
+    rows.forEach((unit) => {
+      const option = getDeepestUnitFilterOption(unit);
+      if (!option || optionMap.has(option.key)) return;
+      optionMap.set(option.key, option);
+    });
 
-  const combinedUnitFilterOptions = useMemo(() => {
-    return UNIT_FILTER_FIELDS.flatMap((field) =>
-      (unitFilterOptions[field.key] ?? []).map((item) => ({
-        key: `${field.key}:${item.key}`,
-        fieldKey: field.key,
-        value: item.key,
-        label: item.label,
-      })),
+    return Array.from(optionMap.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
     );
-  }, [unitFilterOptions]);
+  }, [masterUnitKerjaOptions]);
 
   const selectedCombinedUnitFilter = useMemo(() => {
     const selectedEntry = Object.entries(unitFilters).find(
@@ -262,7 +264,7 @@ export default function AllKaryawan() {
   };
 
   const employeesUrl = useMemo(() => {
-    if (selectedSetempatId) {
+    if (selectedSetempatId && canViewAllSetempat) {
       return EMPLOYEEENDPOINT.getAllBySetempat(
         selectedSetempatId,
         page.initial,
@@ -279,6 +281,7 @@ export default function AllKaryawan() {
       selectedUnitFilterValues,
     );
   }, [
+    canViewAllSetempat,
     page.initial,
     selectedLimit,
     selectedSetempatId,

@@ -236,6 +236,13 @@ export class PrsKaryawanService {
     return repository.findSetempatIdByEmail(sanitized);
   }
 
+  async getAccessProfileByEmail(email: string) {
+    const sanitized = xss(email || '').trim();
+    if (!sanitized) return null;
+
+    return repository.findAccessProfileByEmail(sanitized);
+  }
+
   // services/prsKaryawanService.ts
   async findByNameAscPaginated(
     nama_lengkap: string,

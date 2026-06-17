@@ -177,7 +177,7 @@ export default function Additional() {
   );
   const imagePreview =
     (tambahan?.foto ? resolveApiAssetUrl(tambahan.foto) : "") ||
-    "/assets/images/profile.jpg";
+    "/assets/images/1.svgs";
 
   if (tambahanFetching) return <Loading />;
 

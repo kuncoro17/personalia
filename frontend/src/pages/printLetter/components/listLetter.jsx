@@ -13,7 +13,7 @@ export default function ListLetter({ data, isTable, setIsTable }) {
 
   return (
     <>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {data.map((item, index) => (
           <Card
             key={item.key || index}

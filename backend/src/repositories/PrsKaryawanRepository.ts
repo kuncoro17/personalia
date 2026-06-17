@@ -83,6 +83,17 @@ export interface KaryawanUnitKerjaFilter {
   kode_seksi?: string;
 }
 
+const UNIT_KERJA_LOWER_LEVELS: Record<
+  keyof KaryawanUnitKerjaFilter,
+  (keyof KaryawanUnitKerjaFilter)[]
+> = {
+  kode_direktur: ['kode_deputi', 'kode_divisi', 'kode_bagian', 'kode_seksi'],
+  kode_deputi: ['kode_divisi', 'kode_bagian', 'kode_seksi'],
+  kode_divisi: ['kode_bagian', 'kode_seksi'],
+  kode_bagian: ['kode_seksi'],
+  kode_seksi: [],
+};
+
 const buildUnitKerjaWhere = (filter?: KaryawanUnitKerjaFilter) => {
   const where: Record<string, string> = {};
 
@@ -90,6 +101,12 @@ const buildUnitKerjaWhere = (filter?: KaryawanUnitKerjaFilter) => {
     const cleanValue = typeof value === 'string' ? value.trim() : '';
     if (!cleanValue) return;
     where[key] = cleanValue;
+
+    const lowerLevels =
+      UNIT_KERJA_LOWER_LEVELS[key as keyof KaryawanUnitKerjaFilter] ?? [];
+    lowerLevels.forEach(lowerLevel => {
+      if (!where[lowerLevel]) where[lowerLevel] = 'nnn';
+    });
   });
 
   return Object.keys(where).length > 0 ? where : undefined;
@@ -291,6 +308,38 @@ export class PrsKaryawanRepository {
 
     // Backward-compat: data lama belum punya setempat, treat as default (=1)
     return record.id_master_setempat ?? 1;
+  }
+
+  async findAccessProfileByEmail(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const record = await PrsKaryawan.findOne({
+      where: {
+        [Op.or]: [
+          Sequelize.where(
+            Sequelize.fn(
+              'LOWER',
+              Sequelize.fn('TRIM', Sequelize.col('email_penabur'))
+            ),
+            normalizedEmail
+          ),
+          Sequelize.where(
+            Sequelize.fn(
+              'LOWER',
+              Sequelize.fn('TRIM', Sequelize.col('email_pribadi'))
+            ),
+            normalizedEmail
+          ),
+        ],
+      },
+      attributes: ['id_master_setempat', 'foto'],
+    });
+
+    if (!record) return null;
+
+    return {
+      id_master_setempat: record.id_master_setempat ?? 1,
+      foto: record.foto ?? null,
+    };
   }
 
   async findById(id: string) {

@@ -52,18 +52,21 @@ export default function PrintLetterPage() {
 
   return (
     <Layout>
-      <section className="container px-4 flex-grow flex-1 pr-16 flex flex-col gap-4 py-8 md:py-10">
-        <div className="flex justify-between bg-primary items-end relative h-36 rounded-lg mt-20">
-          <p className="text-white font-Poppins text-4xl font-[700] ml-5 mb-5">
+      <section className="container min-w-0 flex-1 flex-grow px-4 py-6 flex flex-col gap-4 md:py-10 lg:pr-16">
+        <div className="mt-4 grid min-h-28 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end overflow-hidden rounded-lg bg-primary px-5 py-4 md:mt-16 md:min-h-32">
+          <p className="z-10 max-w-full break-words font-Poppins text-xl font-[700] text-white sm:text-2xl lg:text-3xl">
             Pilih surat yang mau dicetak
           </p>
 
-          <img src="/cetakSurat.svg" className="absolute right-0 -bottom-10" />
+          <img
+            src="/cetakSurat.svg"
+            className="pointer-events-none -mb-5 w-24 sm:w-32 md:-mb-8 md:w-44"
+          />
         </div>
 
         <div className="mt-10 flex flex-col gap-5">
-          <div className="flex justify-between">
-            <div className="flex gap-5 items-center">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-5">
               <p className="font-Poppins text-xl font-[600] text-primary">
                 All Mail ({ALL_LETTERS.length} Surat)
               </p>
@@ -94,8 +97,9 @@ export default function PrintLetterPage() {
             <Input
               {...PROPFORM}
               isClearable
+              className="w-full md:max-w-sm"
               classNames={{
-                inputWrapper: "w-96 h-10",
+                inputWrapper: "w-full h-10",
               }}
               placeholder="Cari nama surat..."
               value={search}

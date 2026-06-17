@@ -286,6 +286,7 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
                 data: z.object({
                   id_master_setempat: z.number(),
                   can_view_all_setempat: z.boolean(),
+                  foto: z.string().nullable().optional(),
                 }),
               }),
             },
@@ -358,15 +359,6 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
         query: z.object({
           page: z.string().optional().openapi({ example: '1' }),
           limit: z.string().optional().openapi({ example: '10' }),
-          status_aktif: z
-            .enum(['Aktif', 'Tidak Aktif'])
-            .optional()
-            .openapi({ example: 'Aktif' }),
-          kode_direktur: z.string().optional().openapi({ example: 'DIR' }),
-          kode_deputi: z.string().optional().openapi({ example: 'DEP' }),
-          kode_divisi: z.string().optional().openapi({ example: 'DIV' }),
-          kode_bagian: z.string().optional().openapi({ example: 'BAG' }),
-          kode_seksi: z.string().optional().openapi({ example: 'SEK' }),
         }),
       },
       responses: {

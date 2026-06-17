@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import {
   Navbar as HeroUINavbar,
   NavbarContent,
@@ -8,17 +8,36 @@ import {
 import { useLocation } from "react-router-dom";
 import moment from "moment";
 
+import { EMPLOYEEENDPOINT } from "../../constants/api";
+import { useMaster } from "../../hooks/useMaster";
+import { apiClient, resolveApiAssetUrl } from "../../service/api";
 import { capitalizeWords } from "../../utils/format";
+
+const DEFAULT_AVATAR = "/image/1.svg";
 
 export const Navbar = ({ children }) => {
   const location = useLocation();
   const title = location.state?.title || "New Employee";
   let { pathname } = useLocation();
   const { user } = useUser();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const api = apiClient(getToken);
+  const { data: accessProfile } = useMaster(
+    api,
+    ["navbar-karyawan-access"],
+    EMPLOYEEENDPOINT.access,
+    {
+      enabled: isLoaded && isSignedIn,
+      select: (response) => response?.data ?? null,
+    },
+  );
+  const avatarSrc = accessProfile?.foto
+    ? resolveApiAssetUrl(accessProfile.foto)
+    : DEFAULT_AVATAR;
 
   return (
     <div
-      className={`flex min-w-0 flex-1 flex-col ${pathname !== "/detailEmployee" ? "lg:pl-52" : ""}`}
+      className={`flex min-w-0 flex-1 flex-col ${pathname !== "/detailEmployee" ? "lg:pl-72" : ""}`}
     >
       <HeroUINavbar
         maxWidth="full"
@@ -46,9 +65,15 @@ export const Navbar = ({ children }) => {
         <NavbarContent justify="end" className="min-w-0">
           <User
             avatarProps={{
-              src: "/assets/images/profile.jpg",
+              src: avatarSrc,
+              imgProps: {
+                onError: (event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = DEFAULT_AVATAR;
+                },
+              },
             }}
-            name={capitalizeWords(user.fullName)}
+            name={capitalizeWords(user?.fullName || "")}
             className="max-w-[170px] font-Poppins font-[600] sm:max-w-none"
           />
         </NavbarContent>
