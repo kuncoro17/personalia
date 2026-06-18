@@ -60,6 +60,7 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
     id: z.number().optional().openapi({ example: 10 }),
     nama_lengkap: z.string().optional().openapi({ example: 'Deri Pratama' }),
     nama_panggilan: z.string().optional().openapi({ example: 'deri' }),
+    id_master_setempat: z.int().optional().openapi({ example: '1' }),
     jabatan: z.string().optional(),
     direktur: z.string().optional(),
     divisi: z.string().optional(),
