@@ -245,6 +245,9 @@ export const getAllKaryawan = async (c: Context): Promise<Response> => {
     const limit = Number(c.req.query('limit')) || 10;
     const statusAktif = normalizeStatusAktifFilter(c.req.query('status_aktif'));
     const unitKerjaFilter = getUnitKerjaFilterFromQuery(c);
+    const requestedSetempatId = toPositiveInteger(
+      c.req.query('id_master_setempat')
+    );
 
     if (statusAktif === null) {
       return badRequest(
@@ -266,15 +269,23 @@ export const getAllKaryawan = async (c: Context): Promise<Response> => {
     );
 
     const result =
-      authenticatedSetempatId === YAYASAN_SETEMPAT_ID
-        ? await service.getAll(page, limit, statusAktif, unitKerjaFilter)
-        : await service.getAllBySetempat(
-            authenticatedSetempatId,
+      authenticatedSetempatId === YAYASAN_SETEMPAT_ID && requestedSetempatId
+        ? await service.getAllBySetempat(
+            requestedSetempatId,
             page,
             limit,
             statusAktif,
             unitKerjaFilter
-          );
+          )
+        : authenticatedSetempatId === YAYASAN_SETEMPAT_ID
+          ? await service.getAll(page, limit, statusAktif, unitKerjaFilter)
+          : await service.getAllBySetempat(
+              authenticatedSetempatId,
+              page,
+              limit,
+              statusAktif,
+              unitKerjaFilter
+            );
 
     await logInfo(
       `Berhasil ambil ${result.data.length} data dari total ${result.pagination.total}`
@@ -429,6 +440,104 @@ interface KaryawanFormatted {
   jabatan?: string;
   status_karyawan?: string;
 }
+
+type KaryawanDetailFlatValue = string | number | null;
+
+const formatKaryawanDetailData = (
+  data: unknown
+): Record<string, KaryawanDetailFlatValue | Record<string, unknown>> => {
+  const plainData: Record<string, string | number | null | undefined> =
+    data &&
+    typeof data === 'object' &&
+    'toJSON' in data &&
+    typeof (data as { toJSON?: unknown }).toJSON === 'function'
+      ? ((data as { toJSON: () => unknown }).toJSON() as Record<
+          string,
+          string | number | null | undefined
+        >)
+      : (data as Record<string, string | number | null | undefined>);
+
+  const filteredData: Record<
+    string,
+    KaryawanDetailFlatValue | Record<string, unknown>
+  > = {};
+
+  Object.entries(plainData).forEach(([key, value]) => {
+    const parts = key.split('.');
+    const secondLastKey = parts[parts.length - 2];
+    const lastKey = parts[parts.length - 1];
+
+    const relationalKeys = [
+      'direktur',
+      'deputi',
+      'divisi',
+      'bagian',
+      'seksi',
+      'unit_kerja',
+      'jabatan',
+      'mapel',
+    ];
+
+    const excludeKeys = [
+      'sek_id',
+      'bag_id',
+      'div_id',
+      'dep_id',
+      'dir_id',
+      'mapel_id',
+      'jab_id',
+    ];
+
+    if (secondLastKey === 'agama_detail') {
+      if (lastKey === 'id') {
+        filteredData['kode_agama'] = value as KaryawanDetailFlatValue;
+        return;
+      }
+
+      if (lastKey === 'agama') {
+        filteredData['agama'] = value as KaryawanDetailFlatValue;
+        return;
+      }
+    }
+
+    if (
+      key === 'agama' &&
+      Object.prototype.hasOwnProperty.call(filteredData, 'agama')
+    ) {
+      filteredData['kode_agama'] = value as KaryawanDetailFlatValue;
+      return;
+    }
+
+    if (key.endsWith('agama_detail.agama')) {
+      filteredData['agama'] = value as KaryawanDetailFlatValue;
+      return;
+    }
+
+    if (
+      secondLastKey &&
+      relationalKeys.includes(secondLastKey) &&
+      !excludeKeys.includes(lastKey)
+    ) {
+      const mappedKey = secondLastKey;
+      if (!filteredData[mappedKey]) filteredData[mappedKey] = {};
+      (filteredData[mappedKey] as Record<string, unknown>)[lastKey] = value;
+      return;
+    }
+
+    if (parts.length === 1) {
+      filteredData[key] = value as KaryawanDetailFlatValue;
+      return;
+    }
+
+    if (key.endsWith('stat_karyawan_gp')) {
+      filteredData['kode_status_karyawan'] =
+        value !== undefined ? String(value) : '';
+    }
+  });
+
+  return filteredData;
+};
+
 export const searchByNamaLengkap = async (c: Context): Promise<Response> => {
   const service = new PrsKaryawanService();
   const authenticatedSetempatId = await getAuthenticatedSetempatId(c);
@@ -600,90 +709,30 @@ export const getKaryawanById = async (c: Context): Promise<Response> => {
   // ✅ Ambil data karyawan
   const data = await service.getById(id);
 
-  if (!data) {
-    await logWarn(`Karyawan dengan ID ${id} tidak ditemukan`);
-    return notFound(c, 'Karyawan tidak ditemukan');
-  }
-
-  // Convert ke plain object
-  const plainData: Record<string, string | number | null | undefined> =
-    'toJSON' in data &&
-    typeof (data as { toJSON?: unknown }).toJSON === 'function'
-      ? ((data as { toJSON: () => unknown }).toJSON() as Record<
-          string,
-          string | number | null | undefined
-        >)
-      : (data as unknown as Record<string, string | number | null | undefined>);
-
-  type FlatValue = string | number | null;
-
-  const filteredData: Record<string, FlatValue | Record<string, unknown>> = {};
-
-  Object.entries(plainData).forEach(([key, value]) => {
-    const parts = key.split('.');
-    const secondLastKey = parts[parts.length - 2];
-    const lastKey = parts[parts.length - 1];
-
-    const relationalKeys = [
-      'direktur',
-      'deputi',
-      'divisi',
-      'bagian',
-      'seksi',
-      'unit_kerja',
-      'jabatan',
-      'mapel',
-      'agama_detail',
-    ];
-
-    const pemisah: Record<string, string> = {
-      agama_detail: 'agama',
-    };
-
-    const excludeKeys = [
-      'sek_id',
-      'bag_id',
-      'div_id',
-      'dep_id',
-      'dir_id',
-      'mapel_id',
-      'jab_id',
-    ];
-
-    // Khusus "agama"
-    if (secondLastKey === 'agama_detail' && lastKey === 'agama') {
-      filteredData['agama'] = value as FlatValue;
-      return;
-    }
-
-    // Relational fields
-    if (
-      secondLastKey &&
-      relationalKeys.includes(secondLastKey) &&
-      !excludeKeys.includes(lastKey)
-    ) {
-      const mappedKey = pemisah[secondLastKey] ?? secondLastKey;
-      if (!filteredData[mappedKey]) filteredData[mappedKey] = {};
-      (filteredData[mappedKey] as Record<string, unknown>)[lastKey] = value;
-      return;
-    }
-
-    // Field utama
-    if (parts.length === 1) {
-      filteredData[key] = value as FlatValue;
-      return;
-    }
-
-    // Khusus status_karyawan_gp
-    if (key.endsWith('stat_karyawan_gp')) {
-      filteredData['kode_status_karyawan'] =
-        value !== undefined ? String(value) : '';
-      return;
-    }
-  });
+  const filteredData = formatKaryawanDetailData(data);
 
   await logInfo(`✅ Berhasil ambil data karyawan: ${id}`);
   return ok(c, filteredData, `Berhasil ambil data karyawan: ${id}`);
+};
+
+export const getKaryawanByIdOrNik = async (c: Context): Promise<Response> => {
+  const service = new PrsKaryawanService();
+  const identifier = c.req.param('identifier');
+
+  if (!identifier) {
+    await logWarn('Parameter "identifier" wajib diisi');
+    return badRequest(c, 'Parameter id_karyawan atau nik wajib diisi');
+  }
+
+  await logInfo(
+    `Memulai ambil data karyawan berdasarkan id_karyawan/nik: ${identifier}`
+  );
+
+  const data = await service.getByIdOrNik(identifier);
+  const filteredData = formatKaryawanDetailData(data);
+
+  await logInfo(`✅ Berhasil ambil data karyawan: ${identifier}`);
+  return ok(c, filteredData, `Berhasil ambil data karyawan: ${identifier}`);
 };
 
 // ✅ Create karyawan

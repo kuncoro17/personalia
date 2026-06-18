@@ -219,10 +219,25 @@ export class PrsKaryawanService {
   }
 
   async getById(id: string) {
-    const data = await repository.findById(id);
+    const sanitized = xss(id || '').trim();
+    if (!sanitized) throw new BadRequestException('Parameter wajib diisi');
+
+    const data = isValidUUID(sanitized)
+      ? await repository.findById(sanitized)
+      : await repository.findByIdOrNik(sanitized);
     if (!data) throw new NotFoundException('Karyawan tidak ditemukan');
     return data;
   }
+
+  async getByIdOrNik(identifier: string) {
+    const sanitized = xss(identifier || '').trim();
+    if (!sanitized) throw new BadRequestException('Parameter wajib diisi');
+
+    const data = await repository.findByIdOrNik(sanitized);
+    if (!data) throw new NotFoundException('Karyawan tidak ditemukan');
+    return data;
+  }
+
   async getByemail(email: string): Promise<PrsKaryawan> {
     const data = await repository.getAlamatByIdKaryawan(email);
     if (!data) throw new NotFoundException('Karyawan tidak ditemukan');

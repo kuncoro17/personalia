@@ -5,6 +5,7 @@ import {
   getCurrentKaryawanAccess,
   getAllKaryawanBySetempat,
   getKaryawanById,
+  getKaryawanByIdOrNik,
   createKaryawan,
   updateStatusTidakAktif,
   getKaryawanBirthdayToday,
@@ -314,6 +315,7 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
             .enum(['Aktif', 'Tidak Aktif'])
             .optional()
             .openapi({ example: 'Aktif' }),
+          id_master_setempat: z.string().optional().openapi({ example: '1' }),
           kode_direktur: z.string().optional().openapi({ example: 'DIR' }),
           kode_deputi: z.string().optional().openapi({ example: 'DEP' }),
           kode_divisi: z.string().optional().openapi({ example: 'DIV' }),
@@ -414,6 +416,44 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
       },
     }),
     getKaryawanById
+  );
+
+  // GET KARYAWAN BY ID KARYAWAN OR NIK
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: `${basePath}/employee/by-id-or-nik/{identifier}`,
+      tags: ['Karyawan'],
+      summary: 'Get Karyawan by id_karyawan or NIK',
+      request: {
+        params: z.object({
+          identifier: z.string().openapi({
+            example: '0193041',
+            description: 'Isi dengan id_karyawan UUID atau NIK karyawan',
+          }),
+        }),
+      },
+      responses: {
+        200: {
+          description: 'Karyawan ditemukan',
+          content: {
+            'application/json': {
+              schema: z.object({
+                success: z.boolean(),
+                message: z.string(),
+                data: KaryawanSchema,
+              }),
+            },
+          },
+        },
+        404: {
+          description: 'Karyawan tidak ditemukan',
+          content: { 'application/json': { schema: SimpleMessageSchema } },
+        },
+        401: { description: 'Unauthorized' },
+      },
+    }),
+    getKaryawanByIdOrNik
   );
 
   // CREATE KARYAWAN

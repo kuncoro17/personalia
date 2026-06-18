@@ -86,9 +86,13 @@ const buildUnitKerjaFilterQuery = (unitFilters = {}) =>
     .join("");
 
 export const EMPLOYEEENDPOINT = {
-  getAll: (page, limit, statusAktif, unitFilters) =>
+  getAll: (page, limit, statusAktif, unitFilters, idMasterSetempat) =>
     `personalia/karyawan/employee?page=${page}&limit=${limit}${
       statusAktif ? `&status_aktif=${encodeURIComponent(statusAktif)}` : ""
+    }${
+      idMasterSetempat
+        ? `&id_master_setempat=${encodeURIComponent(idMasterSetempat)}`
+        : ""
     }${buildUnitKerjaFilterQuery(unitFilters)}`,
   getAllBySetempat: (idMasterSetempat, page, limit, statusAktif, unitFilters) =>
     `personalia/karyawan/employee/by-setempat/${idMasterSetempat}?page=${page}&limit=${limit}${

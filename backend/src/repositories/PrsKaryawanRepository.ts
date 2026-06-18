@@ -94,6 +94,11 @@ const UNIT_KERJA_LOWER_LEVELS: Record<
   kode_seksi: [],
 };
 
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+
 const buildUnitKerjaWhere = (filter?: KaryawanUnitKerjaFilter) => {
   const where: Record<string, string> = {};
 
@@ -468,6 +473,138 @@ export class PrsKaryawanRepository {
         },
       ],
 
+      raw: true,
+      nest: false,
+    });
+
+    return data;
+  }
+
+  async findByIdOrNik(identifier: string) {
+    const cleanIdentifier = identifier.trim();
+    const identifierWhere = isUuid(cleanIdentifier)
+      ? {
+          [Op.or]: [{ id_karyawan: cleanIdentifier }, { nik: cleanIdentifier }],
+        }
+      : { nik: cleanIdentifier };
+
+    const data = await PrsKaryawan.findOne({
+      where: identifierWhere,
+      attributes: [
+        'id_karyawan',
+        'foto',
+        'nik',
+        'birth_date',
+        'gol_darah',
+        'kode_golongan',
+        'gender',
+        'kewarganegaraan',
+        'nama_lengkap',
+        'email_penabur',
+        'nama_panggilan',
+        'kode_status_karyawan',
+        'email_pribadi',
+        'no_ktp',
+        'no_pasport',
+        'telp_pribadi',
+        'telp_kantor',
+        'tgl_join_penabur',
+        'tgl_join_penabur_jkt',
+        'status_nikah',
+        'alasan_berhenti_kerja',
+        'tgl_status_permanen',
+        'tgl_penuh_waktu',
+        'tanggal_inactive',
+        'id_master_setempat',
+      ],
+      include: [
+        {
+          model: PrsUnitKerjaKaryawan,
+          as: 'unit_kerja_karyawan',
+          attributes: ['ukk_id', 'karyawan_id', 'unit_kerja', 'jab_id'],
+          include: [
+            {
+              model: PrsJabatan,
+              as: 'jabatan',
+              attributes: [
+                ['jab_id', 'id'],
+                ['jabatan', 'nama'],
+              ],
+            },
+            {
+              model: PrsUnitKerja,
+              as: 'unit_kerja_detail',
+              attributes: {
+                exclude: [
+                  'uk_id',
+                  'kode_direktur',
+                  'kode_deputi',
+                  'kode_divisi',
+                  'kode_bagian',
+                  'kode_seksi',
+                ],
+              },
+              include: [
+                {
+                  model: PrsMasterDirektur,
+                  as: 'direktur',
+                  attributes: [['dir_id', 'id'], 'kode', ['nama_dir', 'nama']],
+                },
+                {
+                  model: PrsMasterDeputi,
+                  as: 'deputi',
+                  attributes: [['dep_id', 'id'], 'kode', ['nama_dep', 'nama']],
+                },
+                {
+                  model: PrsDivisi,
+                  as: 'divisi',
+                  attributes: [['div_id', 'id'], 'kode', ['nama_div', 'nama']],
+                },
+                {
+                  model: PrsBagian,
+                  as: 'bagian',
+                  attributes: [['bag_id', 'id'], 'kode', ['nama_bag', 'nama']],
+                },
+                {
+                  model: PrsSeksi,
+                  as: 'seksi',
+                  attributes: [
+                    ['sek_id', 'id'],
+                    'sek_id',
+                    'kode',
+                    ['nama_sek', 'nama'],
+                  ],
+                },
+              ],
+            },
+            {
+              model: PrsJamMengajarKaryawan,
+              as: 'jam_mengajar',
+              attributes: ['jam_mengajar', ['mengajar_mapel', 'id']],
+              include: [
+                {
+                  model: PrsMasterMapel,
+                  as: 'mapel',
+                  attributes: [
+                    ['mapel_id', 'id'],
+                    ['nama_mapel', 'nama'],
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: PrsStatusKaryawan,
+          as: 'status_karyawan',
+          attributes: ['stat_karyawan_gp'],
+        },
+        {
+          model: PrsMasterAgama,
+          as: 'agama_detail',
+          attributes: [['kode_agama', 'id'], 'agama'],
+        },
+      ],
       raw: true,
       nest: false,
     });

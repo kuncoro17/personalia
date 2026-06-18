@@ -264,21 +264,12 @@ export default function AllKaryawan() {
   };
 
   const employeesUrl = useMemo(() => {
-    if (selectedSetempatId && canViewAllSetempat) {
-      return EMPLOYEEENDPOINT.getAllBySetempat(
-        selectedSetempatId,
-        page.initial,
-        selectedLimit,
-        selectedStatusAktifValue,
-        selectedUnitFilterValues,
-      );
-    }
-
     return EMPLOYEEENDPOINT.getAll(
       page.initial,
       selectedLimit,
       selectedStatusAktifValue,
       selectedUnitFilterValues,
+      canViewAllSetempat ? selectedSetempatId : undefined,
     );
   }, [
     canViewAllSetempat,
