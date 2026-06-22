@@ -90,7 +90,7 @@ const UNIT_KERJA_LOWER_LEVELS: Record<
   kode_direktur: ['kode_deputi', 'kode_divisi', 'kode_bagian', 'kode_seksi'],
   kode_deputi: ['kode_divisi', 'kode_bagian', 'kode_seksi'],
   kode_divisi: ['kode_bagian', 'kode_seksi'],
-  kode_bagian: ['kode_seksi'],
+  kode_bagian: [],
   kode_seksi: [],
 };
 

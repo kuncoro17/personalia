@@ -41,7 +41,6 @@ const UNIT_FILTER_FIELDS = [
   { key: "kode_deputi", relation: "deputi", label: "Deputi" },
   { key: "kode_divisi", relation: "divisi", label: "Divisi" },
   { key: "kode_bagian", relation: "bagian", label: "Bagian" },
-  { key: "kode_seksi", relation: "seksi", label: "Seksi" },
 ];
 
 const UNIT_FILTER_PRIORITY = [...UNIT_FILTER_FIELDS].reverse();
