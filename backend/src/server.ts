@@ -146,7 +146,7 @@ app.use(
   })
 );
 
-app.get('/docs', swaggerUI({ url: '/openapi.json' }));
+app.get('/memek', swaggerUI({ url: '/openapi.json' }));
 
 app.use('*', requestLogger);
 
