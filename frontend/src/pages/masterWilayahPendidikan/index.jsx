@@ -24,6 +24,7 @@ const ORGANISASI_CONFIG = {
   divisi: {
     label: "Divisi",
     name: "divisi",
+    level: "divisi",
     queryKey: "master-divisi",
     endpoint: "personalia/divisi",
     idField: "div_id",
@@ -34,6 +35,7 @@ const ORGANISASI_CONFIG = {
   bagian: {
     label: "Bagian",
     name: "bagian",
+    level: "bagian",
     queryKey: "master-bagian",
     endpoint: "personalia/bagian",
     idField: "bag_id",
@@ -44,6 +46,7 @@ const ORGANISASI_CONFIG = {
   seksi: {
     label: "Seksi",
     name: "seksi",
+    level: "seksi",
     queryKey: "master-seksi",
     endpoint: "seksi",
     idField: "sek_id",
