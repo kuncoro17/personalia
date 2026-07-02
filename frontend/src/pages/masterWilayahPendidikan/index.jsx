@@ -8,13 +8,50 @@ import MasterProvinsiSection from "./components/MasterProvinsiSection";
 import MasterKotaSection from "./components/MasterKotaSection";
 import MasterKecamatanSection from "./components/MasterKecamatanSection";
 import MasterRiwPendidikanSection from "./components/MasterRiwPendidikanSection";
+import MasterOrganisasiSection from "./components/MasterOrganisasiSection";
 
 const TABS = [
   { key: "provinsi", label: "Provinsi" },
   { key: "kota", label: "Kota/Kabupaten" },
   { key: "kecamatan", label: "Kecamatan" },
   { key: "pendidikan", label: "Riwayat Pendidikan" },
+  { key: "divisi", label: "Divisi" },
+  { key: "bagian", label: "Bagian" },
+  { key: "seksi", label: "Seksi" },
 ];
+
+const ORGANISASI_CONFIG = {
+  divisi: {
+    label: "Divisi",
+    name: "divisi",
+    queryKey: "master-divisi",
+    endpoint: "personalia/divisi",
+    idField: "div_id",
+    codeField: "kode",
+    nameField: "nama_div",
+    example: "SDM",
+  },
+  bagian: {
+    label: "Bagian",
+    name: "bagian",
+    queryKey: "master-bagian",
+    endpoint: "personalia/bagian",
+    idField: "bag_id",
+    codeField: "kode",
+    nameField: "nama_bag",
+    example: "PPKSDM",
+  },
+  seksi: {
+    label: "Seksi",
+    name: "seksi",
+    queryKey: "master-seksi",
+    endpoint: "seksi",
+    idField: "sek_id",
+    codeField: "kode",
+    nameField: "nama_sek",
+    example: "Administrasi",
+  },
+};
 
 export default function MasterWilayahPendidikanPage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -69,6 +106,13 @@ export default function MasterWilayahPendidikanPage() {
           )}
           {active === "pendidikan" && (
             <MasterRiwPendidikanSection api={api} isReady={isReady} />
+          )}
+          {ORGANISASI_CONFIG[active] && (
+            <MasterOrganisasiSection
+              api={api}
+              isReady={isReady}
+              config={ORGANISASI_CONFIG[active]}
+            />
           )}
         </div>
       </section>
