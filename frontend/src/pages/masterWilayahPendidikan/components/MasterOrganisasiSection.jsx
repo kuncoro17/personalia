@@ -53,6 +53,13 @@ const toOption = (id, name) => ({
   name: String(name ?? "").trim(),
 });
 
+const normalizeNestedApiList = (payload) => {
+  const firstLevel = normalizeApiList(payload);
+  if (firstLevel.length > 0) return firstLevel;
+
+  return normalizeApiList(payload?.data);
+};
+
 const unitToFlat = (item) => ({
   id: item?.id ?? item?.uk_id ?? null,
   divisiId: String(item?.divisi?.id ?? item?.kode_divisi ?? "").trim(),
@@ -139,8 +146,8 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     [unitKerjaRaw],
   );
 
-  const toBagianOptions = (payload) =>
-    normalizeApiList(payload?.data ?? payload)
+  const toBagianOptions = (payload, selectedDivisi) => {
+    const endpointOptions = normalizeNestedApiList(payload)
       .map((item) =>
         toOption(
           item?.kode_bagian ?? item?.kode ?? item?.id,
@@ -149,14 +156,27 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
       )
       .filter((item) => item.id && item.name);
 
+    if (endpointOptions.length > 0) return endpointOptions;
+
+    const seen = new Set();
+    return unitRows
+      .filter((item) => item.divisiId === selectedDivisi && item.bagianId)
+      .map((item) => toOption(item.bagianId, item.bagianName || item.bagianId))
+      .filter((item) => {
+        if (!item.id || !item.name || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+  };
+
   const bagianFormOptions = useMemo(
-    () => toBagianOptions(bagianByFormDivisiRaw),
-    [bagianByFormDivisiRaw],
+    () => toBagianOptions(bagianByFormDivisiRaw, form.divisi),
+    [bagianByFormDivisiRaw, form.divisi, unitRows],
   );
 
   const bagianEditingOptions = useMemo(
-    () => toBagianOptions(bagianByEditingDivisiRaw),
-    [bagianByEditingDivisiRaw],
+    () => toBagianOptions(bagianByEditingDivisiRaw, editingForm.divisi),
+    [bagianByEditingDivisiRaw, editingForm.divisi, unitRows],
   );
 
   const findRelation = (kode) => {
@@ -382,15 +402,15 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     deleteMutation.isPending;
   const canSubmit = Boolean(
     form.kode.trim() &&
-      form.nama.trim() &&
-      (!needsDivisi || form.divisi) &&
-      (!needsBagian || form.bagian),
+    form.nama.trim() &&
+    (!needsDivisi || form.divisi) &&
+    (!needsBagian || form.bagian),
   );
   const canUpdate = Boolean(
     editingForm.kode.trim() &&
-      editingForm.nama.trim() &&
-      (!needsDivisi || editingForm.divisi) &&
-      (!needsBagian || editingForm.bagian),
+    editingForm.nama.trim() &&
+    (!needsDivisi || editingForm.divisi) &&
+    (!needsBagian || editingForm.bagian),
   );
 
   const updateForm = (field, value) =>

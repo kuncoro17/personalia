@@ -54,6 +54,10 @@ export const DETAILENDPOINT = {
   },
 };
 
+export const DOCSENDPOINT = {
+  upload: "personalia/docs/upload",
+};
+
 export const MASTERENDPOINT = {
   kelurahan: (params) => `master-kelurahan/ByKecamatan/${params}`,
   kecamatan: (params) => `master-kecamatan/kecamatan_kota/${params}`,

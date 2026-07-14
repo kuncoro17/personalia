@@ -1,10 +1,11 @@
 import PrsDokumen from '../models/prsDokumenModel';
+import PrsTipeDokumen from '../models/prsTipeDokumenModel';
 import { BadRequestException } from '../utils/http-exception';
 import { UploadedFile, uploadFile } from '../helper/fileHelper';
 
 interface CreateDokumenDTO {
   karyawan_id: string;
-  tipe_dokumen_id: string;
+  tipe_dokumen_id?: string;
   dokumen: UploadedFile | null;
 }
 
@@ -23,27 +24,34 @@ function isUploadedFile(file: unknown): file is UploadedFile {
   );
 }
 
+const getDefaultTipeDokumenId = async () => {
+  const [defaultTipeDokumen] = await PrsTipeDokumen.findOrCreate({
+    where: { tipe_dokumen: 'LAINNYA' },
+    defaults: { tipe_dokumen: 'LAINNYA' },
+  });
+
+  return defaultTipeDokumen.id;
+};
+
 // ---- CREATE ----
 export const create = async (data: CreateDokumenDTO) => {
   const { karyawan_id, tipe_dokumen_id, dokumen } = data;
 
-  if (!karyawan_id || !tipe_dokumen_id)
-    throw new BadRequestException(
-      'karyawan_id dan tipe_dokumen_id wajib diisi'
-    );
+  if (!karyawan_id) throw new BadRequestException('karyawan_id wajib diisi');
+  if (!dokumen || !isUploadedFile(dokumen)) {
+    throw new BadRequestException('dokumen wajib diisi');
+  }
 
   let uploadedPath: string | null = null;
 
-  if (dokumen && isUploadedFile(dokumen)) {
-    uploadedPath = await uploadFile(
-      dokumen,
-      `uploads/docs/${Date.now()}-${dokumen.originalname}`
-    );
-  }
+  uploadedPath = await uploadFile(
+    dokumen,
+    `uploads/docs/${Date.now()}-${dokumen.originalname}`
+  );
 
   const newDoc = await PrsDokumen.create({
     karyawan_id,
-    tipe_dokumen_id,
+    tipe_dokumen_id: tipe_dokumen_id || (await getDefaultTipeDokumenId()),
     dokumen_path: uploadedPath ?? '',
   });
 

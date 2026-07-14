@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { logger } from 'hono/logger';
-// import { swaggerUI } from '@hono/swagger-ui';
+import { swaggerUI } from '@hono/swagger-ui';
 import { serveStatic } from '@hono/node-server/serve-static';
 import 'dotenv/config';
 
@@ -130,13 +130,13 @@ app.doc('/openapi.json', {
 } as Parameters<typeof app.doc>[1]);
 
 // Serve Swagger UI static assets
-// app.use(
-//   '/swagger/*',
-//   serveStatic({
-//     root: './node_modules/swagger-ui-dist',
-//     rewriteRequestPath: requestPath => requestPath.replace(/^\/swagger/, ''),
-//   })
-// );
+app.use(
+  '/swagger/*',
+  serveStatic({
+    root: './node_modules/swagger-ui-dist',
+    rewriteRequestPath: requestPath => requestPath.replace(/^\/swagger/, ''),
+  })
+);
 
 app.use(
   '/uploads/*',
@@ -146,7 +146,7 @@ app.use(
   })
 );
 
-// app.get('/dok', swaggerUI({ url: '/openapi.json' }));
+app.get('/dok', swaggerUI({ url: '/openapi.json' }));
 
 app.use('*', requestLogger);
 

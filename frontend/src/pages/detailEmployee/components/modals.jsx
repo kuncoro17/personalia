@@ -100,7 +100,7 @@ export default function Modals({
     }));
   };
 
-  const handleUpdate = (e, onClose) => {
+  const handleUpdate = async (e, onClose) => {
     try {
       setLoading(true);
       e.preventDefault();
@@ -114,7 +114,7 @@ export default function Modals({
       }, {});
 
       if (hasChange || allowSubmitWithoutChange) {
-        onUpdate?.(changeValue, onClose);
+        await onUpdate?.(changeValue, onClose);
       }
     } finally {
       setLoading(false);

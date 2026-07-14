@@ -89,9 +89,11 @@ export const docRoutes = (app: OpenAPIHono) => {
             'multipart/form-data': {
               schema: z
                 .object({
-                  file: z.any().openapi({ type: 'string', format: 'binary' }),
-                  nama_dokumen: z.string(),
-                  deskripsi: z.string().optional(),
+                  karyawan_id: z.string().uuid(),
+                  tipe_dokumen_id: z.string().uuid().optional(),
+                  dokumen: z
+                    .any()
+                    .openapi({ type: 'string', format: 'binary' }),
                 })
                 .openapi('UploadDokumenBody'),
             },
@@ -133,12 +135,12 @@ export const docRoutes = (app: OpenAPIHono) => {
             'multipart/form-data': {
               schema: z
                 .object({
-                  file: z
+                  karyawan_id: z.string().uuid().optional(),
+                  tipe_dokumen_id: z.string().uuid().optional(),
+                  dokumen: z
                     .any()
                     .optional()
                     .openapi({ type: 'string', format: 'binary' }),
-                  nama_dokumen: z.string().optional(),
-                  deskripsi: z.string().optional(),
                 })
                 .openapi('UpdateDokumenBody'),
             },

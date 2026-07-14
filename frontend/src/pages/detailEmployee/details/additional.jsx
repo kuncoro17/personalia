@@ -13,7 +13,7 @@ import {
 import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
-import { DETAILENDPOINT } from "../../../constants/api";
+import { DETAILENDPOINT, DOCSENDPOINT } from "../../../constants/api";
 import { formatDataDetail } from "../../../utils/format";
 
 const readFileAsDataUrl = (file) =>
@@ -55,6 +55,7 @@ export default function Additional() {
 
       const requestBody = {};
       const fotoFile = value.foto instanceof File ? value.foto : null;
+      const dokumenFile = value.dokumen instanceof File ? value.dokumen : null;
 
       const allowedFields = [
         "kewarganegaraan",
@@ -76,7 +77,7 @@ export default function Additional() {
       ];
 
       Object.keys(value).forEach((key) => {
-        if (key === "foto") {
+        if (["foto", "dokumen"].includes(key)) {
           return;
         }
 
@@ -98,7 +99,7 @@ export default function Additional() {
 
       const hasAdditionalFieldChange = Object.keys(requestBody).length > 0;
 
-      if (!hasAdditionalFieldChange && !fotoFile) {
+      if (!hasAdditionalFieldChange && !fotoFile && !dokumenFile) {
         onClose();
         return;
       }
@@ -115,6 +116,21 @@ export default function Additional() {
           DETAILENDPOINT.update.additional(state.id),
           requestBody,
         );
+      }
+
+      if (dokumenFile) {
+        const formData = new FormData();
+
+        formData.append("karyawan_id", state.id);
+        formData.append("dokumen", dokumenFile);
+
+        await apiService("post", api, DOCSENDPOINT.upload, formData);
+
+        addToast({
+          title: "Dokumen berhasil diupload",
+          description: dokumenFile.name,
+          color: "success",
+        });
       }
 
       if (hasAdditionalFieldChange) {
@@ -141,6 +157,7 @@ export default function Additional() {
 
       queryClient.invalidateQueries([`tambahan-${state.id}`]);
       queryClient.invalidateQueries([`profile-${state.id}`]);
+      queryClient.invalidateQueries([`dokumen-${state.id}`]);
 
       onClose();
     } catch (err) {
@@ -171,6 +188,13 @@ export default function Additional() {
         form: "file",
         accept: "image/*",
         value: tambahan?.foto || "",
+      },
+      {
+        title: "Dokumen",
+        properties: "dokumen",
+        form: "file",
+        accept: "application/pdf,image/*,.doc,.docx,.xls,.xlsx",
+        value: "",
       },
     ],
     [additionalFields, tambahan?.foto],
