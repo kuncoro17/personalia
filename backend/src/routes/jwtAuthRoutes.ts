@@ -1,12 +1,30 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import * as controller from '../controllers/authController';
+import { rateLimit } from '../middlewares/rateLimit';
 
 const emailSchema = z.object({
   email: z.string().email(),
 });
 
 export const jwtAuthRoutes = (app: OpenAPIHono) => {
+  app.use(
+    '/auth/register',
+    rateLimit({
+      keyPrefix: 'auth-register',
+      limit: Number(process.env.AUTH_REGISTER_RATE_LIMIT || 20),
+      windowSeconds: 60,
+    })
+  );
+  app.use(
+    '/auth/login-jwt',
+    rateLimit({
+      keyPrefix: 'auth-login-jwt',
+      limit: Number(process.env.AUTH_LOGIN_RATE_LIMIT || 30),
+      windowSeconds: 60,
+    })
+  );
+
   app.openapi(
     createRoute({
       method: 'post',

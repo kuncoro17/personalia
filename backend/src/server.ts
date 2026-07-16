@@ -48,6 +48,7 @@ import { masterBankGiroRoutes } from './routes/masterBankGiroRoutes';
 import { userRoutes } from './routes/userRoutes';
 import { clerkAuthRoutes } from './routes/clerkAuthRoutes';
 import { jwtAuthRoutes } from './routes/jwtAuthRoutes';
+import { sasAuthRoutes } from './routes/sasAuthRoutes';
 // import { sdmCheckInOutRoutes } from './routes/sdmcheckinoutRoutes';
 
 const app = new OpenAPIHono({
@@ -62,12 +63,14 @@ const CORS_ALLOW_HEADERS = 'Content-Type, Authorization';
 app.use('*', async (c, next) => {
   const requestOrigin = c.req.header('origin');
   const allowOrigin = requestOrigin || '*';
+  const robotsHeader = 'noindex, nofollow, noarchive';
 
   if (c.req.method === 'OPTIONS') {
     const headers = new Headers();
     headers.set('Access-Control-Allow-Origin', allowOrigin);
     headers.set('Access-Control-Allow-Methods', CORS_ALLOW_METHODS);
     headers.set('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
+    headers.set('X-Robots-Tag', robotsHeader);
     if (requestOrigin) headers.set('Vary', 'Origin');
 
     return new Response(null, {
@@ -81,6 +84,7 @@ app.use('*', async (c, next) => {
   c.header('Access-Control-Allow-Origin', allowOrigin);
   c.header('Access-Control-Allow-Methods', CORS_ALLOW_METHODS);
   c.header('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
+  c.header('X-Robots-Tag', robotsHeader);
 
   if (requestOrigin) {
     const vary = c.res.headers.get('Vary');
@@ -156,6 +160,8 @@ app.get('/', c => c.text('API is running'));
 app.route('/redis', redisRoutes);
 
 // app.get('/', c => c.text('Hello with CORS!'));
+
+sasAuthRoutes(app);
 
 // absensiRoutes(app);
 bagianRoutes(app);

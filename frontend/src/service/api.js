@@ -2,6 +2,7 @@ import { addToast } from "@heroui/toast";
 import axios from "axios";
 
 import { useToastSlice } from "../stores/useToast";
+import { clearSasSession, getSasSessionToken } from "../utils/sasSession";
 
 const getResolvedApiUrl = () => {
   const configuredApiUrl = String(import.meta.env.VITE_API_URL || "").trim();
@@ -76,7 +77,17 @@ export const apiClient = (getToken) => {
   });
 
   api.interceptors.request.use(async (config) => {
-    const token = await getToken();
+    let clerkToken = "";
+
+    if (typeof getToken === "function") {
+      try {
+        clerkToken = (await getToken()) || "";
+      } catch {
+        clerkToken = "";
+      }
+    }
+
+    const token = clerkToken || getSasSessionToken();
 
     if (token) config.headers.Authorization = `Bearer ${token}`;
 
@@ -120,6 +131,10 @@ export const apiClient = (getToken) => {
               "Request ditolak karena tidak ada header Authorization. Pastikan sudah login dan token berhasil dibuat.",
             color: "danger",
           });
+        }
+
+        if (status === 401 && getSasSessionToken()) {
+          clearSasSession();
         }
 
         const normalizedPayload = (() => {

@@ -1,22 +1,34 @@
-import { RedirectToSignIn, useAuth, useUser } from "@clerk/clerk-react";
-import { Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { RedirectToSignIn, useAuth } from "@clerk/clerk-react";
+import { lazy, Suspense } from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { Spinner } from "@heroui/react";
 
-import { apiClient } from "../service/api";
 import { ROUTE } from "../constants/routes";
+import { hasSasSession } from "../utils/sasSession";
 
 const rawSignInUrl = import.meta.env.VITE_CLERK_SIGN_IN_URL;
 const signInUrl = rawSignInUrl;
+const SasVerifyPage = lazy(() => import("../pages/sasVerify"));
 
 function AppRouter() {
-  const { isSignedIn, isLoaded, getToken } = useAuth();
-  const { user } = useUser();
-  const api = apiClient(getToken);
+  const { isSignedIn, isLoaded } = useAuth();
+  const location = useLocation();
+  const hasInternalSasSession = hasSasSession();
+  const isSasVerifyRoute = location.pathname === "/sas/verify";
 
   if (!isLoaded) return <LoadingFallback />;
 
-  if (!isSignedIn) {
+  if (isSasVerifyRoute) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/sas/verify" element={<SasVerifyPage />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
+  if (!isSignedIn && !hasInternalSasSession) {
     // Prefer Clerk's redirect helper so it can attach the correct return URL.
     if (signInUrl) {
       return (
