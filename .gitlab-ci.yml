@@ -438,7 +438,19 @@ health-check-staging:
     - echo "Checking backend container health..."
     - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-backend | grep -q '^healthy$'"
     - echo "Checking frontend container health..."
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-frontend | grep -q '^healthy$'"
+    - |
+      ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" '
+        for attempt in $(seq 1 12); do
+          status=$(docker inspect -f "{{.State.Health.Status}}" personalia-jkt-frontend 2>/dev/null || echo missing)
+          echo "Frontend health attempt ${attempt}/12: ${status}"
+          [ "$status" = "healthy" ] && exit 0
+          sleep 5
+        done
+        echo "Frontend did not become healthy in time"
+        docker inspect -f "{{json .State.Health}}" personalia-jkt-frontend 2>/dev/null || true
+        docker logs personalia-jkt-frontend --tail 100 2>/dev/null || true
+        exit 1
+      '
     - 'echo "Public endpoint check (non-blocking): https://$STAGING_DOMAIN/health"'
     - 'wget -q --spider "https://$STAGING_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
   rules:
@@ -459,7 +471,19 @@ health-check-production:
     - echo "Checking backend container health..."
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-backend | grep -q '^healthy$'"
     - echo "Checking frontend container health..."
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker inspect -f '{{.State.Health.Status}}' personalia-jkt-frontend | grep -q '^healthy$'"
+    - |
+      ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" '
+        for attempt in $(seq 1 12); do
+          status=$(docker inspect -f "{{.State.Health.Status}}" personalia-jkt-frontend 2>/dev/null || echo missing)
+          echo "Frontend health attempt ${attempt}/12: ${status}"
+          [ "$status" = "healthy" ] && exit 0
+          sleep 5
+        done
+        echo "Frontend did not become healthy in time"
+        docker inspect -f "{{json .State.Health}}" personalia-jkt-frontend 2>/dev/null || true
+        docker logs personalia-jkt-frontend --tail 100 2>/dev/null || true
+        exit 1
+      '
     - 'echo "Public endpoint check (non-blocking): https://$PRODUCTION_DOMAIN/health"'
     - 'wget -q --spider "https://$PRODUCTION_DOMAIN/health" || echo "Warning: public health endpoint unavailable (possible Cloudflare 521)"'
   rules:

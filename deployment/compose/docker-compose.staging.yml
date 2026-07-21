@@ -99,10 +99,10 @@ services:
           "--spider",
           "http://localhost:3002/",
         ]
-      interval: 30s
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 5s
     networks:
       - personalia-network
     restart: unless-stopped
