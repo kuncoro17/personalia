@@ -34,7 +34,11 @@ function sanitizeObject<T extends Record<string, unknown>>(
 }
 
 export class PrsSeksiService {
-  constructor(private readonly repository: PrsSeksiRepository = repo) {}
+  private readonly repository: PrsSeksiRepository;
+
+  constructor(repository: PrsSeksiRepository = repo) {
+    this.repository = repository;
+  }
 
   async getAll(): Promise<PrsSeksiAttributes[]> {
     const data = await this.repository.findAll();
