@@ -612,14 +612,14 @@ export default function AllKaryawan() {
       <section className="flex min-w-0 flex-1 flex-col gap-4 px-3 pb-6 sm:gap-6 sm:px-6">
         <EmployeeStatus />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-5 rounded-2xl border border-[#00000010] bg-[#FBFCFE] p-3 shadow-sm sm:p-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-5 rounded-2xl border border-slate-200 bg-[#FBFCFE] p-3 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900/60 sm:p-4">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 flex-1 flex-col gap-3">
               <div>
-                <p className="font-Poppins text-xl font-semibold text-primary">
+                <p className="font-Poppins text-xl font-semibold text-primary dark:text-slate-100">
                   All Employee
                 </p>
-                <p className="font-Poppins text-sm text-primary/60">
+                <p className="font-Poppins text-sm text-primary/60 dark:text-slate-400">
                   Kelola data karyawan berdasarkan kota dan status aktif.
                 </p>
               </div>
@@ -740,7 +740,7 @@ export default function AllKaryawan() {
                 >
                   <PopoverTrigger>
                     <Button
-                      className="col-span-2 w-full justify-between rounded-md border-1 border-primary bg-white font-Poppins md:col-span-1 md:w-auto md:min-w-[220px]"
+                      className="col-span-2 w-full justify-between rounded-md border-1 border-primary bg-white font-Poppins dark:border-slate-600 dark:bg-slate-950 md:col-span-1 md:w-auto md:min-w-[220px]"
                       endContent={
                         <span className="text-xs text-default-500">▾</span>
                       }
@@ -759,7 +759,7 @@ export default function AllKaryawan() {
                         classNames={{
                           input: "font-Poppins text-small",
                           inputWrapper:
-                            "rounded-md border-1 border-default-300 bg-white shadow-none",
+                            "rounded-md border-1 border-default-300 bg-white shadow-none dark:border-slate-700 dark:bg-slate-950",
                         }}
                         placeholder="Search for an item..."
                         size="sm"
@@ -812,7 +812,7 @@ export default function AllKaryawan() {
                   classNames={{
                     input: "text-small",
                     inputWrapper:
-                      "font-DMSans border-1 shadow-sm bg-white rounded-md",
+                      "font-DMSans border-1 shadow-sm bg-white rounded-md dark:border-slate-700 dark:bg-slate-950",
                   }}
                   placeholder="Cari"
                   type="search"
@@ -822,9 +822,10 @@ export default function AllKaryawan() {
                       width="32"
                       height="32"
                       viewBox="0 0 24 24"
+                      className="text-primary dark:text-slate-300"
                     >
                       <path
-                        fill="#0B345E"
+                        fill="currentColor"
                         d="m19.485 20.154l-6.262-6.262q-.75.639-1.725.989t-1.96.35q-2.402 0-4.066-1.663T3.808 9.503T5.47 5.436t4.064-1.667t4.068 1.664T15.268 9.5q0 1.042-.369 2.017t-.97 1.668l6.262 6.261zM9.539 14.23q1.99 0 3.36-1.37t1.37-3.361t-1.37-3.36t-3.36-1.37t-3.361 1.37t-1.37 3.36t1.37 3.36t3.36 1.37"
                       />
                     </svg>
@@ -879,7 +880,7 @@ export default function AllKaryawan() {
               </Button>
 
               <button
-                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${!isTable ? "bg-primary" : "bg-white"}`}
+                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${!isTable ? "bg-primary" : "bg-white dark:bg-slate-950"}`}
                 onClick={() => setIsTable(false)}
                 type="button"
               >
@@ -889,7 +890,7 @@ export default function AllKaryawan() {
               </button>
 
               <button
-                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${isTable ? "bg-primary" : "bg-white"}`}
+                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${isTable ? "bg-primary" : "bg-white dark:bg-slate-950"}`}
                 onClick={() => setIsTable(true)}
                 type="button"
               >
@@ -901,12 +902,12 @@ export default function AllKaryawan() {
           </div>
 
           {isFetching || searchFetching ? (
-            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white">
+            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white dark:bg-slate-950">
               <Spinner size="md" color="primary" />
             </div>
           ) : error || searchError || setempatAccessError ? (
-            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4">
-              <p className="font-Poppins text-primary opacity-70 text-center">
+            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4 dark:bg-slate-950">
+              <p className="text-center font-Poppins text-primary opacity-70 dark:text-slate-300">
                 {setempatAccessError?.message ||
                   searchError?.message ||
                   error?.message ||
@@ -917,8 +918,8 @@ export default function AllKaryawan() {
             ((searchData?.data?.length ?? 0) === 0 &&
               search !== "" &&
               searchData) ? (
-            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4">
-              <p className="font-Poppins text-primary opacity-70">
+            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4 dark:bg-slate-950">
+              <p className="font-Poppins text-primary opacity-70 dark:text-slate-300">
                 Tidak ada data karyawan
               </p>
             </div>

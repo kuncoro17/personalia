@@ -15,6 +15,7 @@ import { prsMasterRiwPendidikanRoutes } from './routes/prsMasterRiwPendidikanRou
 import { PrsMasterAlamatroutes } from './routes/prsMasterAlamatRoutes';
 import { prsUnitKerjaKaryawanRoutes } from './routes/prsUnitKerjaKaryawanRoutes';
 import { prsStatusKaryawanRoutes } from './routes/prsStatusKaryawanRoutes';
+import { prsTipeDokumenRoutes } from './routes/prsTipeDokumenRoutes';
 import { PrsMasterMapelRoutes } from './routes/prsMasterMapelRoute';
 
 import { prsMasterProvRoutes } from './routes/prsMasterProvRoutes';
@@ -192,6 +193,7 @@ prsMasterRiwPendidikanRoutes(app);
 prsPengalamanRoutes(app);
 prsRiwPendidikanKarRoutes(app);
 prsStatusKaryawanRoutes(app);
+prsTipeDokumenRoutes(app);
 prsUnitKerjaKaryawanRoutes(app);
 prsSeksiRoutes(app);
 prsUnitKerjaRoutes(app);

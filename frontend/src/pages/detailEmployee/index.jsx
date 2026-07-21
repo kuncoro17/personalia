@@ -1,4 +1,9 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 
 import Layout from "../../components/layout";
@@ -8,15 +13,40 @@ import { DETAILENDPOINT } from "../../constants/api";
 import Detail from "./details";
 
 export default function EmployeeDetail() {
+  const location = useLocation();
+  const { employeeId: employeeIdFromUrl } = useParams();
+  const employeeId = employeeIdFromUrl || location.state?.id;
+
+  if (!employeeId) {
+    return <Navigate to="/employees" replace />;
+  }
+
+  if (!employeeIdFromUrl || location.state?.id !== employeeId) {
+    return (
+      <Navigate
+        to={`/detailEmployee/${employeeId}`}
+        replace
+        state={{
+          ...location.state,
+          id: employeeId,
+          title: location.state?.title || "Detail Karyawan",
+        }}
+      />
+    );
+  }
+
+  return <EmployeeDetailContent employeeId={employeeId} />;
+}
+
+function EmployeeDetailContent({ employeeId }) {
   const { getToken } = useAuth();
   const api = apiClient(getToken);
-  const { state } = useLocation();
   const navigate = useNavigate();
 
   const { data } = useMaster(
     api,
-    [`profile-${state.id}`],
-    DETAILENDPOINT.get.profile(state.id),
+    [`profile-${employeeId}`],
+    DETAILENDPOINT.get.profile(employeeId),
     {
       select: (data) => {
         const rawData = data.data;
@@ -72,7 +102,7 @@ export default function EmployeeDetail() {
         }
 
         return {
-          id_karyawan: rawData.id_karyawan || state.id,
+          id_karyawan: rawData.id_karyawan || employeeId,
           foto: rawData.foto || "",
           nama_lengkap: rawData.nama_lengkap || "-",
           jabatan: rawData.jabatan || "-",

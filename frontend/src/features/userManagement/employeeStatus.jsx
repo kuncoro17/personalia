@@ -38,7 +38,7 @@ export default function EmployeeStatus() {
   if (error)
     return (
       <div className="w-full flex items-center justify-center min-h-20">
-        <p className="font-Poppins text-primary opacity-70 text-center">
+        <p className="text-center font-Poppins text-primary opacity-70 dark:text-slate-300">
           {error.message || "Gagal memuat status karyawan"}
         </p>
       </div>
@@ -54,8 +54,10 @@ export default function EmployeeStatus() {
             index % 2 === 0 ? "bg-red" : "bg-primary"
           }`}
         >
-          <div className="flex h-11 min-w-11 items-center justify-center rounded-lg bg-white px-2">
-            <p className="text-center font-Poppins text-sm font-[600]">{key}</p>
+          <div className="flex h-11 min-w-11 items-center justify-center rounded-lg bg-white px-2 dark:bg-slate-950">
+            <p className="text-center font-Poppins text-sm font-[600] text-primary dark:text-slate-100">
+              {key}
+            </p>
           </div>
 
           <p className="truncate font-Poppins text-lg font-[600] text-white">

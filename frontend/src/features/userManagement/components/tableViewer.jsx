@@ -40,7 +40,9 @@ const renderCell = (data, columnKey, isSelect, selected = []) => {
       );
     default:
       return (
-        <p className="font-Poppins font-[500] text-primary">{cellValue}</p>
+        <p className="font-Poppins font-[500] text-primary dark:text-slate-200">
+          {cellValue}
+        </p>
       );
   }
 };
@@ -61,7 +63,7 @@ export const TableViewer = ({
       onRowAction={(item) => {
         isSelect
           ? onSelect(item)
-          : navigate("/detailEmployee", {
+          : navigate(`/detailEmployee/${item}`, {
               state: { id: item, title: "Detail Karyawan" },
             });
       }}

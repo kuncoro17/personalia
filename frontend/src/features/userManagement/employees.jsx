@@ -53,7 +53,7 @@ export default function Employees({
 
   if (isTable)
     return (
-      <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-[#00000010] bg-white p-2 shadow-sm">
+      <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-950">
         <TableViewer
           dataTable={dataTable}
           isSelect={isSelect}
@@ -70,7 +70,7 @@ export default function Employees({
         const handleActivate = () =>
           isSelect
             ? onSelect(String(item.id_karyawan))
-            : navigate("/detailEmployee", {
+            : navigate(`/detailEmployee/${item.id_karyawan}`, {
                 state: { id: item.id_karyawan, title: "Detail Karyawan" },
               });
 
@@ -79,10 +79,10 @@ export default function Employees({
             key={item.id_karyawan}
             role="button"
             tabIndex={0}
-            className={`group flex min-w-0 flex-col items-center justify-between gap-3 rounded-2xl bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md ${
+            className={`group flex min-w-0 flex-col items-center justify-between gap-3 rounded-2xl bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:hover:bg-slate-900 ${
               isSelect && selected.includes(String(item.id_karyawan))
-                ? "border-primary border-2"
-                : "border-[#00000010] border-1"
+                ? "border-2 border-primary dark:border-sky-400"
+                : "border-1 border-slate-200 dark:border-slate-800"
             }`}
             onClick={handleActivate}
             onKeyDown={(event) => {
@@ -92,7 +92,7 @@ export default function Employees({
               }
             }}
           >
-            <div className="flex h-24 w-24 justify-center rounded-2xl bg-[#F5F7FA] p-1">
+            <div className="flex h-24 w-24 justify-center rounded-2xl bg-[#F5F7FA] p-1 dark:bg-slate-900">
               <img
                 src={getEmployeeImageSrc(item)}
                 alt={item.nama_lengkap || "Foto karyawan"}
@@ -110,7 +110,7 @@ export default function Employees({
               className="font-Poppins text-xs"
               isDismissable={true}
             >
-              <p className="w-full truncate text-center font-Poppins font-[600] text-primary">
+              <p className="w-full truncate text-center font-Poppins font-[600] text-primary dark:text-slate-100">
                 {item.nama_lengkap}
               </p>
             </Tooltip>
@@ -121,11 +121,11 @@ export default function Employees({
               </p>
             </div>
 
-            <p className="w-full truncate text-center font-Poppins text-sm font-[500] text-[#0B345E]/80">
+            <p className="w-full truncate text-center font-Poppins text-sm font-[500] text-[#0B345E]/80 dark:text-slate-300">
               {item.jabatan}
             </p>
 
-            <p className="font-Poppins text-sm font-[500] text-[#0B345E]/60">
+            <p className="font-Poppins text-sm font-[500] text-[#0B345E]/60 dark:text-slate-400">
               {item.nik}
             </p>
 

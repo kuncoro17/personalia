@@ -73,6 +73,17 @@ export const getDokumen = async (c: Context): Promise<Response> => {
   return ok(c, result);
 };
 
+export const getDokumenByKaryawan = async (c: Context): Promise<Response> => {
+  try {
+    const karyawanId = c.req.param('karyawanId');
+    const result = await service.getByKaryawanId(karyawanId);
+    return ok(c, result);
+  } catch (err: unknown) {
+    await logError('Gagal mengambil dokumen karyawan', err);
+    return badRequest(c, err instanceof Error ? err.message : 'Unknown error');
+  }
+};
+
 // ---- UPDATE ----
 export const updateDokumen = async (c: Context): Promise<Response> => {
   try {

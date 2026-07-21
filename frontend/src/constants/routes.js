@@ -36,6 +36,10 @@ export const ROUTE = [
     element: createElement(PrintLetterPage),
   },
   {
+    path: "/detailEmployee/:employeeId",
+    element: createElement(EmployeeDetailPage),
+  },
+  {
     path: "/detailEmployee",
     element: createElement(EmployeeDetailPage),
   },

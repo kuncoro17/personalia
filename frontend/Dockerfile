@@ -46,9 +46,6 @@ RUN if command -v apk >/dev/null 2>&1; then \
       apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*; \
     fi
 
-# Install serve to serve static files
-RUN npm install -g serve
-
 # Create non-root user
 RUN if command -v addgroup >/dev/null 2>&1 && addgroup --system nodejs >/dev/null 2>&1; then \
       adduser --system --uid 1001 --ingroup nodejs reactjs; \
@@ -58,6 +55,7 @@ RUN if command -v addgroup >/dev/null 2>&1 && addgroup --system nodejs >/dev/nul
 
 # Copy built files from builder stage
 COPY --from=builder --chown=reactjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=reactjs:nodejs /app/server.mjs ./server.mjs
 
 # Switch to non-root user
 USER reactjs
@@ -71,4 +69,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start the application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["sh", "-c", "serve -s dist -l ${PORT}"]
+CMD ["node", "server.mjs"]

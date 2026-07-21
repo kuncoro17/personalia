@@ -202,16 +202,15 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
     return list
       .map((item) => {
-        const kode = String(
-          item?.kode ?? item?.[config.codeField] ?? "",
-        ).trim();
+        const row = item?.dataValues ?? item;
+        const kode = String(row?.kode ?? row?.[config.codeField] ?? "").trim();
         const relation = findRelation(kode);
 
         return {
-          id: item?.[config.idField] ?? item?.id ?? null,
+          id: row?.[config.idField] ?? row?.id ?? null,
           kode,
-          nama: String(item?.[config.nameField] ?? item?.nama ?? "").trim(),
-          alamat: String(item?.alamat ?? "").trim(),
+          nama: String(row?.[config.nameField] ?? row?.nama ?? "").trim(),
+          alamat: String(row?.alamat ?? "").trim(),
           divisi: relation?.divisiId ?? "",
           divisiName: relation?.divisiName ?? "",
           bagian: relation?.bagianId ?? "",
@@ -402,15 +401,15 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     deleteMutation.isPending;
   const canSubmit = Boolean(
     form.kode.trim() &&
-      form.nama.trim() &&
-      (!needsDivisi || form.divisi) &&
-      (!needsBagian || form.bagian),
+    form.nama.trim() &&
+    (!needsDivisi || form.divisi) &&
+    (!needsBagian || form.bagian),
   );
   const canUpdate = Boolean(
     editingForm.kode.trim() &&
-      editingForm.nama.trim() &&
-      (!needsDivisi || editingForm.divisi) &&
-      (!needsBagian || editingForm.bagian),
+    editingForm.nama.trim() &&
+    (!needsDivisi || editingForm.divisi) &&
+    (!needsBagian || editingForm.bagian),
   );
 
   const updateForm = (field, value) =>

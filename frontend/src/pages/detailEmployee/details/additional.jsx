@@ -13,7 +13,11 @@ import {
 import Modals from "../components/modals";
 import Loading from "../../../components/common/Loading";
 import { useMaster } from "../../../hooks/useMaster";
-import { DETAILENDPOINT, DOCSENDPOINT } from "../../../constants/api";
+import {
+  DETAILENDPOINT,
+  DOCSENDPOINT,
+  MASTERENDPOINT,
+} from "../../../constants/api";
 import { formatDataDetail } from "../../../utils/format";
 
 const readFileAsDataUrl = (file) =>
@@ -46,6 +50,28 @@ export default function Additional() {
     },
   );
 
+  const { data: tipeDokumenRaw } = useMaster(
+    api,
+    ["master-tipe-dokumen"],
+    MASTERENDPOINT.tipeDokumen,
+    {
+      select: (response) => {
+        const list = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+            ? response
+            : [];
+
+        return list
+          .map((item) => ({
+            id: item?.id ?? null,
+            name: String(item?.tipe_dokumen ?? "").trim(),
+          }))
+          .filter((item) => item.id && item.name);
+      },
+    },
+  );
+
   const onUpdate = async (value, onClose) => {
     try {
       if (Object.keys(value).length === 0) {
@@ -56,6 +82,11 @@ export default function Additional() {
       const requestBody = {};
       const fotoFile = value.foto instanceof File ? value.foto : null;
       const dokumenFile = value.dokumen instanceof File ? value.dokumen : null;
+      const tipeDokumenId = String(value.tipe_dokumen_id ?? "").trim();
+
+      if (dokumenFile && !tipeDokumenId) {
+        throw new Error("Tipe dokumen wajib dipilih untuk upload dokumen.");
+      }
 
       const allowedFields = [
         "kewarganegaraan",
@@ -122,6 +153,7 @@ export default function Additional() {
         const formData = new FormData();
 
         formData.append("karyawan_id", state.id);
+        formData.append("tipe_dokumen_id", tipeDokumenId);
         formData.append("dokumen", dokumenFile);
 
         await apiService("post", api, DOCSENDPOINT.upload, formData);
@@ -190,6 +222,15 @@ export default function Additional() {
         value: tambahan?.foto || "",
       },
       {
+        title: "Tipe Dokumen",
+        properties: "tipe_dokumen_id",
+        form: "select",
+        listSelect: tipeDokumenRaw ?? [],
+        valueMode: "key",
+        required: true,
+        value: "",
+      },
+      {
         title: "Dokumen",
         properties: "dokumen",
         form: "file",
@@ -197,7 +238,7 @@ export default function Additional() {
         value: "",
       },
     ],
-    [additionalFields, tambahan?.foto],
+    [additionalFields, tambahan?.foto, tipeDokumenRaw],
   );
   const imagePreview =
     (tambahan?.foto ? resolveApiAssetUrl(tambahan.foto) : "") ||

@@ -7,12 +7,18 @@ import {
 
 // ---- CREATE ----
 export const create = async (data: CreateTipeDokumenDTO) => {
-  if (!data.tipe_dokumen) {
+  const tipeDokumen = data.tipe_dokumen?.trim();
+
+  if (!tipeDokumen) {
     throw new BadRequestException('Field tipe_dokumen wajib diisi');
   }
 
+  if (tipeDokumen.length > 100) {
+    throw new BadRequestException('tipe_dokumen maksimal 100 karakter');
+  }
+
   const newTipe = await PrsTipeDokumen.create({
-    tipe_dokumen: data.tipe_dokumen.trim(),
+    tipe_dokumen: tipeDokumen,
   });
 
   return newTipe.toJSON();
@@ -46,9 +52,16 @@ export const updateTipeDokumenService = async (
     );
   }
 
-  await record.update({
-    tipe_dokumen: data.tipe_dokumen?.trim() ?? record.tipe_dokumen,
-  });
+  const tipeDokumen = data.tipe_dokumen?.trim();
+  if (!tipeDokumen) {
+    throw new BadRequestException('Field tipe_dokumen wajib diisi');
+  }
+
+  if (tipeDokumen.length > 100) {
+    throw new BadRequestException('tipe_dokumen maksimal 100 karakter');
+  }
+
+  await record.update({ tipe_dokumen: tipeDokumen });
 
   return record.toJSON();
 };

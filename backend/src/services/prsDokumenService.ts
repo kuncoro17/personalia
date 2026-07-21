@@ -30,7 +30,23 @@ const getDefaultTipeDokumenId = async () => {
     defaults: { tipe_dokumen: 'LAINNYA' },
   });
 
-  return defaultTipeDokumen.id;
+  // Some legacy databases do not have a database-side default for this UUID.
+  // In that setup findOrCreate can persist the row while returning an instance
+  // whose generated id has not been hydrated yet. Read it back before creating
+  // PrsDokumen so its required foreign key can never be passed as null.
+  if (defaultTipeDokumen.id) return defaultTipeDokumen.id;
+
+  const persistedDefault = await PrsTipeDokumen.findOne({
+    where: { tipe_dokumen: 'LAINNYA' },
+  });
+
+  if (!persistedDefault?.id) {
+    throw new BadRequestException(
+      'Tipe dokumen default LAINNYA tidak dapat dibuat'
+    );
+  }
+
+  return persistedDefault.id;
 };
 
 // ---- CREATE ----
@@ -62,6 +78,20 @@ export const create = async (data: CreateDokumenDTO) => {
 export const getAll = async () => await PrsDokumen.findAll();
 
 export const getById = async (id: string) => await PrsDokumen.findByPk(id);
+
+export const getByKaryawanId = async (karyawanId: string) =>
+  await PrsDokumen.findAll({
+    where: { karyawan_id: karyawanId },
+    include: [
+      {
+        model: PrsTipeDokumen,
+        as: 'tipe_dokumen',
+        attributes: ['id', 'tipe_dokumen'],
+        required: false,
+      },
+    ],
+    order: [['created_at', 'DESC']],
+  });
 
 // ---- UPDATE ----
 export const updateDokumenService = async (

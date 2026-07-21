@@ -207,10 +207,6 @@ export default function Modals({
         options.find((option) => option.key === resolvedKey) ??
         options.find((option) => option.label === resolvedKey);
 
-      const selectedKeys = selectedOption
-        ? new Set([selectedOption.key])
-        : new Set();
-
       return (
         <Autocomplete
           id={fieldId}
@@ -222,12 +218,17 @@ export default function Modals({
               onSelect(key, keys);
             }
 
-            setFieldValue(key, option?.label ?? "");
+            setFieldValue(
+              key,
+              item.valueMode === "key"
+                ? (option?.key ?? "")
+                : (option?.label ?? ""),
+            );
           }}
           radius="sm"
           variant="bordered"
           defaultSelectedKey={selectedOption?.key}
-          selectedKeys={selectedKeys}
+          selectedKey={selectedOption?.key ?? null}
           disabled={options.length === 0}
           items={options}
         >
@@ -402,6 +403,9 @@ export default function Modals({
                         className="font-Poppins font-normal opacity-50 text-sm"
                       >
                         {item.title}
+                        {item.required ? (
+                          <span className="ml-1 text-danger">*</span>
+                        ) : null}
                       </label>
 
                       {renderField(item, fieldId, labelId)}

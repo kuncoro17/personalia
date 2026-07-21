@@ -52,7 +52,10 @@ export const updateTipeDokumen = async (c: Context): Promise<Response> => {
     return ok(c, result, 'Tipe dokumen berhasil diperbarui');
   } catch (err: unknown) {
     await logError(`Gagal update tipe dokumen ID ${id}`, err);
-    return badRequest(c, err instanceof Error ? err.message : 'Unknown error');
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return message.includes('tidak ditemukan')
+      ? notFound(c, message)
+      : badRequest(c, message);
   }
 };
 

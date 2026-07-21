@@ -56,6 +56,8 @@ export const DETAILENDPOINT = {
 
 export const DOCSENDPOINT = {
   upload: "personalia/docs/upload",
+  byEmployee: (employeeId) => `personalia/docs/karyawan/${employeeId}`,
+  delete: (documentId) => `personalia/docs/${documentId}`,
 };
 
 export const MASTERENDPOINT = {
@@ -65,6 +67,7 @@ export const MASTERENDPOINT = {
   allKota: `master-kota`,
   provinsi: `master-provinsi`,
   setempat: "master-setempat",
+  tipeDokumen: "tipe-dokumen",
 
   lokasiKerja: "unit-kerja/getllUnitKerja",
 

@@ -8,6 +8,7 @@ import Family from "./details/family";
 import Location from "./details/location";
 import Profile from "./details/profile";
 import Salary from "./details/salary";
+import Documents from "./details/documents";
 
 export const HEADER = [
   {
@@ -37,6 +38,10 @@ export const HEADER = [
   {
     title: "Tambahan",
     content: <Additional />,
+  },
+  {
+    title: "Dokumen",
+    content: <Documents />,
   },
   {
     title: "Keluarga",

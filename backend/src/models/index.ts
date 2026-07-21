@@ -15,6 +15,7 @@ import PrsRiwPendidikanKar from './PrsRiwPendidikanKar';
 import PrsMasterRiwPendidikan from './PrsMasterRiwPendidikan';
 import PrsKontakDarurat from './prsKontakDarurat';
 import PrsDokumen from './prsDokumenModel';
+import PrsTipeDokumen from './prsTipeDokumenModel';
 import PrsJabatan from './prsJabatan';
 import PrsMasterDeputi from './PrsMasterDeputi';
 import PrsMasterDirektur from './PrsMasterDirektur';
@@ -212,9 +213,18 @@ PrsDokumen.belongsTo(PrsKaryawan, {
   as: 'karyawan',
 });
 
-// Jika perlu, relasi sebaliknya
-PrsKaryawan.hasOne(PrsDokumen, {
+PrsKaryawan.hasMany(PrsDokumen, {
   foreignKey: 'karyawan_id',
+  as: 'dokumen',
+});
+
+PrsDokumen.belongsTo(PrsTipeDokumen, {
+  foreignKey: 'tipe_dokumen_id',
+  as: 'tipe_dokumen',
+});
+
+PrsTipeDokumen.hasMany(PrsDokumen, {
+  foreignKey: 'tipe_dokumen_id',
   as: 'dokumen',
 });
 
@@ -346,6 +356,8 @@ export {
   PrsMasterMapel,
   PrsKontrak,
   PrsKontakDarurat,
+  PrsDokumen,
+  PrsTipeDokumen,
   PrsJabatan,
   PrsBagian,
   PrsDivisi,

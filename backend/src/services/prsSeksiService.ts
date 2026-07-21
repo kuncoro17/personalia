@@ -34,8 +34,10 @@ function sanitizeObject<T extends Record<string, unknown>>(
 class PrsSeksiService {
   async getAll(): Promise<PrsSeksiAttributes[]> {
     const data = await repo.findAll();
-    // pastikan kode tidak null jika mau dijadikan string
-    return data.map(d => ({ ...d, kode: d.kode ?? '' }));
+    return data.map(d => {
+      const plain = d.toJSON() as PrsSeksiAttributes;
+      return { ...plain, kode: plain.kode ?? '' };
+    });
   }
 
   async getById(id: string): Promise<PrsSeksiAttributes> {
@@ -46,7 +48,8 @@ class PrsSeksiService {
     const data = await repo.findById(sanitizedId);
     if (!data) throw new NotFoundException('ID tidak ditemukan');
 
-    return { ...data, kode: data.kode ?? '' };
+    const plain = data.toJSON() as PrsSeksiAttributes;
+    return { ...plain, kode: plain.kode ?? '' };
   }
 
   private validate(data: PrsSeksiCreationAttributes) {
@@ -67,7 +70,8 @@ class PrsSeksiService {
     const clean = sanitizeObject(data);
     this.validate(clean as PrsSeksiCreationAttributes);
     const created = await repo.create(clean as PrsSeksiCreationAttributes);
-    return { ...created, kode: created.kode ?? '' };
+    const plain = created.toJSON() as PrsSeksiAttributes;
+    return { ...plain, kode: plain.kode ?? '' };
   }
 
   async update(
@@ -82,7 +86,8 @@ class PrsSeksiService {
     const updated = await repo.update(sanitizedId, clean);
     if (!updated) throw new NotFoundException('ID tidak ditemukan');
 
-    return { ...updated, kode: updated.kode ?? '' };
+    const plain = updated.toJSON() as PrsSeksiAttributes;
+    return { ...plain, kode: plain.kode ?? '' };
   }
 
   async delete(id: string): Promise<boolean> {

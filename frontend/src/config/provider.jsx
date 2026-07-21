@@ -3,8 +3,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useHref, useNavigate } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { ToastProvider } from "@heroui/react";
+import { useEffect } from "react";
 
 import "@flaticon/flaticon-uicons/css/all/all.css";
+
+import { applyTheme, getPreferredTheme } from "../utils/theme";
 
 const queryClient = new QueryClient();
 
@@ -32,7 +35,22 @@ const normalizeClerkDomain = (value) => {
   return raw.split("/")[0];
 };
 
-const CLERK_DOMAIN = normalizeClerkDomain(RAW_CLERK_DOMAIN);
+const getClerkDomain = () => {
+  const configuredDomain = normalizeClerkDomain(RAW_CLERK_DOMAIN);
+  if (typeof window === "undefined") return configuredDomain;
+
+  const configuredHost = configuredDomain?.split(":")[0];
+  const currentHost = window.location.hostname;
+  const isConfiguredLocal = ["localhost", "127.0.0.1"].includes(configuredHost);
+  const isCurrentLocal = ["localhost", "127.0.0.1"].includes(currentHost);
+
+  // A local satellite must include the port it is actually served from.
+  if (isConfiguredLocal && isCurrentLocal) return window.location.host;
+
+  return configuredDomain;
+};
+
+const CLERK_DOMAIN = getClerkDomain();
 const CLERK_SIGN_IN_URL = RAW_CLERK_SIGN_IN_URL;
 const CLERK_IS_SATELLITE = RAW_CLERK_IS_SATELLITE;
 
@@ -52,6 +70,10 @@ export function Provider({ children }) {
         ]
       : undefined;
 
+  useEffect(() => {
+    applyTheme(getPreferredTheme());
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <HeroUIProvider navigate={navigate} useHref={useHref}>
@@ -66,7 +88,7 @@ export function Provider({ children }) {
           publishableKey={PUBLISHABLE_KEY}
           afterSignOutUrl="https://dt24ftxpcr79w.cloudfront.net/"
           signInUrl={CLERK_SIGN_IN_URL}
-          domain={CLERK_DOMAIN}
+          domain={CLERK_IS_SATELLITE ? CLERK_DOMAIN : undefined}
           isSatellite={CLERK_IS_SATELLITE}
           allowedRedirectOrigins={
             CLERK_IS_SATELLITE ? allowedRedirectOrigins : undefined

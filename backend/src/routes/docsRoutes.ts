@@ -10,8 +10,15 @@ export const docRoutes = (app: OpenAPIHono) => {
     .object({
       id: z.string().uuid(),
       karyawan_id: z.string().uuid(),
-      nama_file: z.string(),
-      url_file: z.string(),
+      tipe_dokumen_id: z.string().uuid(),
+      dokumen_path: z.string().nullable(),
+      tipe_dokumen: z
+        .object({
+          id: z.string().uuid(),
+          tipe_dokumen: z.string(),
+        })
+        .nullable()
+        .optional(),
       created_at: z.string().nullable(),
       updated_at: z.string().nullable(),
     })
@@ -42,6 +49,35 @@ export const docRoutes = (app: OpenAPIHono) => {
       },
     }),
     controller.getAll
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/personalia/docs/karyawan/{karyawanId}',
+      summary: 'Get documents by employee ID',
+      description: 'Mengambil semua dokumen milik satu karyawan',
+      tags: ['Dokumen'],
+      request: {
+        params: z.object({ karyawanId: z.string().uuid() }),
+      },
+      responses: {
+        200: {
+          description: 'Daftar dokumen karyawan',
+          content: {
+            'application/json': {
+              schema: z.object({
+                success: z.boolean(),
+                message: z.string(),
+                data: z.array(dokumenSchema),
+              }),
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+      },
+    }),
+    controller.getDokumenByKaryawan
   );
 
   // GET dokumen by ID

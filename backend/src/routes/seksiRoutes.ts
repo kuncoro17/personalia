@@ -29,13 +29,19 @@ export const prsSeksiRoutes = (app: OpenAPIHono) => {
    * SCHEMA
    * ======================= */
   const seksiSchema = z.object({
-    id: z.string(), // mapping dari sek_id
-    kode_seksi: z.string(), // mapping dari kode
-    nama_seksi: z.string(), // mapping dari nama_sek
-    kode_bagian: z.string(), // bisa default '' atau dari service
+    sek_id: z.string().uuid(),
+    kode: z.string(),
+    nama_sek: z.string(),
+    alamat: z.string().nullable().optional(),
+    created_at: z.string().nullable().optional(),
+    updated_at: z.string().nullable().optional(),
   });
 
-  const createSchema = seksiSchema.omit({ id: true });
+  const createSchema = z.object({
+    kode: z.string().trim().min(1).max(5),
+    nama_sek: z.string().trim().min(1),
+    alamat: z.string().optional(),
+  });
   const updateSchema = createSchema.partial();
 
   const responseListSchema = z.object({
