@@ -102,6 +102,6 @@ const server = createServer(async (request, response) => {
   sendFile(request, response, indexPath, indexStats);
 });
 
-server.listen(port, "0.0.0.0", () => {
-  console.log(`Frontend listening on http://0.0.0.0:${port}`);
+server.listen(port, () => {
+  console.log(`Frontend listening on port ${port}`);
 });
