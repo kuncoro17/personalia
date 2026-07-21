@@ -4,10 +4,12 @@ import {
   BadRequestException,
   NotFoundException,
 } from '../utils/http-exception';
-import {
+import type {
   PrsSeksiAttributes,
   PrsSeksiCreationAttributes,
 } from '../models/PrsSeksi';
+
+export type PrsSeksiRepository = typeof repo;
 
 // Validasi UUID
 function isValidUUID(id: string): boolean {
@@ -31,9 +33,11 @@ function sanitizeObject<T extends Record<string, unknown>>(
   return sanitized;
 }
 
-class PrsSeksiService {
+export class PrsSeksiService {
+  constructor(private readonly repository: PrsSeksiRepository = repo) {}
+
   async getAll(): Promise<PrsSeksiAttributes[]> {
-    const data = await repo.findAll();
+    const data = await this.repository.findAll();
     return data.map(d => {
       const plain = d.toJSON() as PrsSeksiAttributes;
       return { ...plain, kode: plain.kode ?? '' };
@@ -45,7 +49,7 @@ class PrsSeksiService {
     if (!isValidUUID(sanitizedId))
       throw new BadRequestException('Format ID tidak sesuai UUID');
 
-    const data = await repo.findById(sanitizedId);
+    const data = await this.repository.findById(sanitizedId);
     if (!data) throw new NotFoundException('ID tidak ditemukan');
 
     const plain = data.toJSON() as PrsSeksiAttributes;
@@ -69,7 +73,9 @@ class PrsSeksiService {
   async create(data: PrsSeksiCreationAttributes): Promise<PrsSeksiAttributes> {
     const clean = sanitizeObject(data);
     this.validate(clean as PrsSeksiCreationAttributes);
-    const created = await repo.create(clean as PrsSeksiCreationAttributes);
+    const created = await this.repository.create(
+      clean as PrsSeksiCreationAttributes
+    );
     const plain = created.toJSON() as PrsSeksiAttributes;
     return { ...plain, kode: plain.kode ?? '' };
   }
@@ -83,7 +89,7 @@ class PrsSeksiService {
       throw new BadRequestException('Format ID tidak sesuai UUID');
 
     const clean = sanitizeObject(data);
-    const updated = await repo.update(sanitizedId, clean);
+    const updated = await this.repository.update(sanitizedId, clean);
     if (!updated) throw new NotFoundException('ID tidak ditemukan');
 
     const plain = updated.toJSON() as PrsSeksiAttributes;
@@ -95,7 +101,7 @@ class PrsSeksiService {
     if (!isValidUUID(sanitizedId))
       throw new BadRequestException('Format ID tidak sesuai UUID');
 
-    const deleted = await repo.delete(sanitizedId);
+    const deleted = await this.repository.delete(sanitizedId);
     if (!deleted) throw new NotFoundException('ID tidak ditemukan');
 
     return deleted;
@@ -105,7 +111,7 @@ class PrsSeksiService {
       throw new BadRequestException('kode_bagian harus diisi');
     }
 
-    const data = await repo.findByKodeBagian(kode_bagian.trim());
+    const data = await this.repository.findByKodeBagian(kode_bagian.trim());
     return data;
   }
 }

@@ -6,6 +6,7 @@ const redis = new Redis({
   port: Number(process.env.REDIS_PORT),
   password: process.env.REDIS_PASSWORD,
   db: 0,
+  lazyConnect: process.env.NODE_ENV === 'test',
   retryStrategy: times => Math.min(times * 50, 2000),
 });
 

@@ -197,6 +197,7 @@ test-frontend:
     - npm ci --cache /tmp/.npm --no-audit --no-fund --prefer-online
     - npm cache clean --force
   script:
+    - npm run test:ci
     - npm run build
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"

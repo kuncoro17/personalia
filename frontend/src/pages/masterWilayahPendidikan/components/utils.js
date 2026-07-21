@@ -4,3 +4,5 @@ export const normalizeApiList = (payload) => {
 
   return [];
 };
+
+export const unwrapApiRecord = (record) => record?.dataValues ?? record ?? {};

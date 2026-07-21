@@ -23,7 +23,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useMaster } from "../../../hooks/useMaster";
 import { apiService } from "../../../service/api";
-import { normalizeApiList } from "./utils";
+import { normalizeApiList, unwrapApiRecord } from "./utils";
 
 const EMPTY_FORM = {
   kode: "",
@@ -202,7 +202,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
     return list
       .map((item) => {
-        const row = item?.dataValues ?? item;
+        const row = unwrapApiRecord(item);
         const kode = String(row?.kode ?? row?.[config.codeField] ?? "").trim();
         const relation = findRelation(kode);
 
