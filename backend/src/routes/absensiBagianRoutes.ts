@@ -2,9 +2,10 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { AbsensiController } from '../controllers/AbsensiBagianController';
 import { clerkAuthMiddleware } from '../middlewares/clerkAuth';
+import { apiKeyMiddleware } from '../middlewares/checkApiKey';
 
 export const absensiBagianRoutes = (app: OpenAPIHono) => {
-  app.use('*', clerkAuthMiddleware);
+  app.use('/personalia/pivotBagian', clerkAuthMiddleware, apiKeyMiddleware);
 
   const pivotQuerySchema = z.object({
     start: z.string().optional().openapi({
@@ -49,6 +50,7 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
       security: [
         {
           bearerAuth: [],
+          apiKeyAuth: [],
         },
       ],
       request: {
@@ -77,7 +79,10 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
           },
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Bearer token atau API key tidak valid',
+        },
+        400: {
+          description: 'Header x-api-key atau parameter periode tidak lengkap',
         },
       },
     }),

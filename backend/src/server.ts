@@ -59,7 +59,7 @@ const app = new OpenAPIHono({
 });
 
 const CORS_ALLOW_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
-const CORS_ALLOW_HEADERS = 'Content-Type, Authorization';
+const CORS_ALLOW_HEADERS = 'Content-Type, Authorization, X-API-Key';
 
 app.use('*', async (c, next) => {
   const requestOrigin = c.req.header('origin');
@@ -117,6 +117,11 @@ app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
   type: 'http',
   scheme: 'bearer',
   bearerFormat: 'JWT',
+});
+app.openAPIRegistry.registerComponent('securitySchemes', 'apiKeyAuth', {
+  type: 'apiKey',
+  in: 'header',
+  name: 'x-api-key',
 });
 
 // Endpoint OpenAPI JSON dengan argumen yang wajib

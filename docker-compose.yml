@@ -39,6 +39,8 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: personalia_jkt_backend
+    env_file:
+      - ./backend/.env
     environment:
       NODE_ENV: production
       AUTO_SYNC_MODELS: ${AUTO_SYNC_MODELS:-true}
