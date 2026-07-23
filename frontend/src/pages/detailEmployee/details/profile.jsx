@@ -320,7 +320,22 @@ export default function Profile() {
       const profilePayload = {};
       const unitKerjaPayload = {};
 
+      if (Object.keys(value).length === 0) {
+        const inactiveField = profile?.data?.find(
+          (item) => item.properties === "flag_inactive",
+        );
+        profilePayload.status_aktif = inactiveField?.value
+          ? "Tidak Aktif"
+          : "Aktif";
+      }
+
       Object.keys(value).forEach((key) => {
+        if (key === "flag_inactive") {
+          profilePayload.status_aktif = value[key] ? "Tidak Aktif" : "Aktif";
+          if (!value[key]) profilePayload.tanggal_inactive = null;
+          return;
+        }
+
         const dataProp = PROPERTIES.profile.find((i) => i.properties === key);
         if (!dataProp) return;
 
@@ -410,6 +425,10 @@ export default function Profile() {
         return next;
       });
 
+      await queryClient.invalidateQueries({
+        queryKey: [`profile-${state.id}`],
+      });
+
       onClose();
     } catch (err) {
       console.error(err);
@@ -473,6 +492,7 @@ export default function Profile() {
         onUpdate={onUpdate}
         isLoading={isLoading}
         onSelect={onSelect}
+        allowSubmitWithoutChange
       />
     </div>
   );

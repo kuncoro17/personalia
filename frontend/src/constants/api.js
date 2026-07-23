@@ -112,6 +112,7 @@ export const EMPLOYEEENDPOINT = {
       idMasterSetempat ? `&id_master_setempat=${idMasterSetempat}` : ""
     }${statusAktif ? `&status_aktif=${encodeURIComponent(statusAktif)}` : ""}${buildUnitKerjaFilterQuery(unitFilters)}`,
   joinToday: `personalia/karyawan/join-today`,
+  offboardingToday: `personalia/karyawan/offboarding-today`,
   statusKaryawan: "personalia/karyawan/status-karyawan",
 };
 

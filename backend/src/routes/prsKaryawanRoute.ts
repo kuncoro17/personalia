@@ -10,6 +10,7 @@ import {
   updateStatusTidakAktif,
   getKaryawanBirthdayToday,
   getKaryawanByJoinDate,
+  getKaryawanOffboardingToday,
   getJumlahKaryawanTidakAktif,
   getJumlahKaryawanAktif,
   updateKaryawan,
@@ -852,6 +853,36 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
       },
     }),
     getKaryawanByJoinDate
+  );
+
+  // OFFBOARDING TODAY
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: `${basePath}/offboarding-today`,
+      tags: ['Karyawan'],
+      summary: 'Karyawan resign berdasarkan tanggal hari ini',
+      responses: {
+        200: {
+          description: 'Data karyawan offboarding hari ini',
+          content: {
+            'application/json': {
+              schema: z.object({
+                success: z.boolean().default(true),
+                message: z.string(),
+                data: z.object({
+                  total: z.number(),
+                  date: z.string().openapi({ example: '2026-07-23' }),
+                  data: z.array(KaryawanSchema),
+                }),
+              }),
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+      },
+    }),
+    getKaryawanOffboardingToday
   );
 
   // DATA KELUARGA KARYAWAN

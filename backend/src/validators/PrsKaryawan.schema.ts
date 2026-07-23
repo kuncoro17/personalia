@@ -29,7 +29,7 @@ export const prsKaryawanSchema = z.object({
   kode_status_karyawan: z.string().max(5).optional(),
   tgl_status_permanen: z.string().optional(),
   tgl_penuh_waktu: z.string().optional(),
-  tanggal_inactive: z.string().optional(),
+  tanggal_inactive: z.string().nullable().optional(),
   alasan_berhenti_kerja: z.string().max(100).optional(),
   atasan_langsung: z.string().max(255).optional(),
   atasan_tidak_langsung: z.string().max(255).optional(),

@@ -70,7 +70,7 @@ export default function Modals({
       case "flag_inactive":
         inputValue["tanggal_inactive"] = fieldValue
           ? moment().format("YYYY-MM-DD")
-          : undefined;
+          : null;
         break;
 
       case "tanggal_inactive":

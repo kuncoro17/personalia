@@ -371,6 +371,16 @@ export class PrsKaryawanService {
     };
   }
 
+  async getKaryawanOffboardingByDate(date: string) {
+    const result = await repository.getByInactiveDate(date);
+
+    return {
+      total: result.length,
+      date,
+      data: result,
+    };
+  }
+
   async getKaryawanBirthdayToday(page = 1, limit = 3) {
     const offset = (page - 1) * limit;
     const { data, total } = await this.repository.getBirthdayToday(

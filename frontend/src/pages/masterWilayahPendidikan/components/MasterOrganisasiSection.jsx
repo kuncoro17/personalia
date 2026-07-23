@@ -401,15 +401,15 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     deleteMutation.isPending;
   const canSubmit = Boolean(
     form.kode.trim() &&
-      form.nama.trim() &&
-      (!needsDivisi || form.divisi) &&
-      (!needsBagian || form.bagian),
+    form.nama.trim() &&
+    (!needsDivisi || form.divisi) &&
+    (!needsBagian || form.bagian),
   );
   const canUpdate = Boolean(
     editingForm.kode.trim() &&
-      editingForm.nama.trim() &&
-      (!needsDivisi || editingForm.divisi) &&
-      (!needsBagian || editingForm.bagian),
+    editingForm.nama.trim() &&
+    (!needsDivisi || editingForm.divisi) &&
+    (!needsBagian || editingForm.bagian),
   );
 
   const updateForm = (field, value) =>

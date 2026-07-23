@@ -25,6 +25,8 @@ import { promises as fs } from 'fs';
 import { PrsMasterAlamat } from '../models';
 import User from '../models/userModel';
 import HistoryService from '../services/HistoryServices';
+import { getJakartaDateOnly } from '../utils/dateOnly';
+import { normalizeInactiveStatus } from '../utils/normalizeInactiveStatus';
 // import { PrsKeluargaKaryawanAttributes } from '../types/prsKeluargaKaryawan.types';
 
 // import { PrsJabatanService } from '../services/prsJabatanService';
@@ -850,6 +852,8 @@ export const updateEmployeeProfile = async (c: Context) => {
       return badRequest(c, 'Unsupported Content-Type');
     }
 
+    parsedBody = normalizeInactiveStatus(parsedBody);
+
     // =====================================================
     // NORMALISASI ANGKA
     // =====================================================
@@ -1255,6 +1259,30 @@ export const getKaryawanByJoinDate = async (c: Context) => {
 
     return badRequest(c, 'Terjadi kesalahan saat mengambil data karyawan', {
       message: errorMsg,
+    });
+  }
+};
+
+export const getKaryawanOffboardingToday = async (c: Context) => {
+  const service = new PrsKaryawanService();
+  const today = getJakartaDateOnly();
+
+  try {
+    const result = await service.getKaryawanOffboardingByDate(today);
+    const message = result.total
+      ? 'Berhasil ambil data karyawan offboarding hari ini'
+      : `Tidak ada karyawan offboarding pada tanggal ${today}`;
+
+    return ok(c, result, message);
+  } catch (err: unknown) {
+    const errorMessage = getErrorMessage(err);
+    await logError(
+      `Gagal ambil karyawan offboarding tanggal ${today}. ${errorMessage}`,
+      null
+    );
+
+    return badRequest(c, 'Terjadi kesalahan saat mengambil data offboarding', {
+      message: errorMessage,
     });
   }
 };

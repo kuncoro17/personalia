@@ -1015,6 +1015,7 @@ export class PrsKaryawanRepository {
   async getByJoinDate(date: string) {
     return await PrsKaryawan.findAll({
       attributes: [
+        'id_karyawan',
         'nik',
         'nama_lengkap',
         ['tgl_join_penabur', 'join_date_penabur'],
@@ -1031,6 +1032,32 @@ export class PrsKaryawanRepository {
           attributes: [],
         },
       ],
+    });
+  }
+
+  async getByInactiveDate(date: string) {
+    return await PrsKaryawan.findAll({
+      attributes: [
+        'id_karyawan',
+        'nik',
+        'nama_lengkap',
+        'email_penabur',
+        'tanggal_inactive',
+        'alasan_berhenti_kerja',
+        [Sequelize.col('status_karyawan.stat_karyawan_gp'), 'stat_karyawan_gp'],
+      ],
+      where: {
+        tanggal_inactive: date,
+        status_aktif: 'Tidak Aktif',
+      },
+      include: [
+        {
+          model: PrsStatusKaryawan,
+          as: 'status_karyawan',
+          attributes: [],
+        },
+      ],
+      order: [['nama_lengkap', 'ASC']],
     });
   }
   async getBirthdayToday(limit: number, offset: number) {
