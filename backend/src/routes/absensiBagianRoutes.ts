@@ -1,11 +1,10 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { AbsensiController } from '../controllers/AbsensiBagianController';
-import { clerkAuthMiddleware } from '../middlewares/clerkAuth';
 import { apiKeyMiddleware } from '../middlewares/checkApiKey';
 
 export const absensiBagianRoutes = (app: OpenAPIHono) => {
-  app.use('/personalia/pivotBagian', clerkAuthMiddleware, apiKeyMiddleware);
+  app.use('/personalia/pivotBagian', apiKeyMiddleware);
 
   const pivotQuerySchema = z.object({
     tanggal_mulai: z.string().optional().openapi({
@@ -30,6 +29,18 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
       .optional()
       .nullable()
       .openapi({ example: null, description: 'Kode unit (snake_case)' }),
+    page: z.string().optional().openapi({
+      example: '1',
+      description: 'Nomor halaman',
+    }),
+    limit: z.string().optional().openapi({
+      example: '5',
+      description: 'Jumlah data per halaman',
+    }),
+    search: z.string().optional().openapi({
+      example: 'budi',
+      description: 'Pencarian berdasarkan NIK, nama, atau unit',
+    }),
   });
 
   app.openapi(
@@ -37,11 +48,11 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
       method: 'get',
       path: '/personalia/pivotBagian',
       summary: 'Get pivot data for Bagian',
-      description: 'Mengambil data pivot Bagian',
+      description:
+        'Mengambil data pivot Bagian untuk server-to-server Core SAS menggunakan x-api-key',
       tags: ['Absensi'],
       security: [
         {
-          bearerAuth: [],
           apiKeyAuth: [],
         },
       ],
@@ -71,7 +82,7 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
           },
         },
         401: {
-          description: 'Bearer token atau API key tidak valid',
+          description: 'API key tidak valid',
         },
         400: {
           description: 'Header x-api-key atau parameter periode tidak lengkap',

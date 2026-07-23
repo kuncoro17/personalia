@@ -168,6 +168,7 @@ app.route('/redis', redisRoutes);
 // app.get('/', c => c.text('Hello with CORS!'));
 
 sasAuthRoutes(app);
+absensiBagianRoutes(app);
 
 // absensiRoutes(app);
 bagianRoutes(app);
@@ -184,7 +185,6 @@ registerPrsKontrakRoutes(app);
 registerPrsKaryawanRoutes(app);
 // sdmCheckInOutRoutes(app);
 prsMasterAgamaRoutes(app);
-absensiBagianRoutes(app);
 PrsMasterAlamatroutes(app);
 PrsMasterDeputiRoute(app);
 PrsMasterDirekturRoute(app);
