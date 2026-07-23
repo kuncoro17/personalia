@@ -27,8 +27,6 @@ const dateOnlySchema = z
 
 const pivotSchema = z
   .object({
-    start: dateOnlySchema,
-    end: dateOnlySchema,
     tanggal_mulai: dateOnlySchema,
     tanggal_selesai: dateOnlySchema,
     unitType: z.string().optional(),
@@ -37,8 +35,8 @@ const pivotSchema = z
     unit_kode: z.string().optional().nullable(),
   })
   .transform(value => ({
-    start: value.start ?? value.tanggal_mulai,
-    end: value.end ?? value.tanggal_selesai,
+    start: value.tanggal_mulai,
+    end: value.tanggal_selesai,
     unitType: value.unitType ?? value.unit_type,
     unitKode: value.unitKode ?? value.unit_kode ?? null,
   }));

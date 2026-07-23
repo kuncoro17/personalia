@@ -8,21 +8,13 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
   app.use('/personalia/pivotBagian', clerkAuthMiddleware, apiKeyMiddleware);
 
   const pivotQuerySchema = z.object({
-    start: z.string().optional().openapi({
-      example: '2026-05-01',
-      description: 'Tanggal mulai (YYYY-MM-DD)',
-    }),
-    end: z.string().optional().openapi({
-      example: '2026-05-19',
-      description: 'Tanggal akhir (YYYY-MM-DD)',
-    }),
     tanggal_mulai: z.string().optional().openapi({
       example: '2025-01-16',
-      description: 'Alias tanggal mulai periode (YYYY-MM-DD)',
+      description: 'Tanggal mulai periode (YYYY-MM-DD)',
     }),
     tanggal_selesai: z.string().optional().openapi({
       example: '2025-02-15',
-      description: 'Alias tanggal selesai periode (YYYY-MM-DD)',
+      description: 'Tanggal selesai periode (YYYY-MM-DD)',
     }),
     unitType: z.string().optional().openapi({
       example: 'BAGIAN',
