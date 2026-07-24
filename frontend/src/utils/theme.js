@@ -12,6 +12,7 @@ export const getPreferredTheme = () => {
   if (!isBrowser) return THEME.LIGHT;
 
   const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+
   if (savedTheme === THEME.LIGHT || savedTheme === THEME.DARK) {
     return savedTheme;
   }
@@ -38,6 +39,7 @@ export const listenThemeChange = (handler) => {
   if (!isBrowser) return () => {};
 
   const onThemeChange = (event) => handler(event.detail || getPreferredTheme());
+
   window.addEventListener(THEME_EVENT, onThemeChange);
 
   return () => window.removeEventListener(THEME_EVENT, onThemeChange);

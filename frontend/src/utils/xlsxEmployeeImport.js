@@ -3,11 +3,14 @@ import JSZip from "jszip";
 const toColumnIndex = (colLetters = "") => {
   let result = 0;
   const letters = String(colLetters).toUpperCase();
+
   for (let i = 0; i < letters.length; i += 1) {
     const code = letters.charCodeAt(i);
+
     if (code < 65 || code > 90) continue;
     result = result * 26 + (code - 64);
   }
+
   return result - 1;
 };
 
@@ -22,14 +25,18 @@ const normalizeHeaderKey = (value = "") =>
 
 const extractCellValue = (cell, sharedStrings) => {
   const t = cell.getAttribute("t");
+
   if (t === "inlineStr") {
     const textNode = cell.querySelector("is t");
+
     return textNode?.textContent ?? "";
   }
 
   const v = cell.querySelector("v")?.textContent ?? "";
+
   if (t === "s") {
     const index = Number(v);
+
     return Number.isInteger(index) && index >= 0
       ? (sharedStrings[index] ?? "")
       : "";
@@ -43,10 +50,12 @@ const parseSharedStrings = (xml) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, "application/xml");
   const items = Array.from(doc.querySelectorAll("sst si"));
+
   return items.map((si) => {
     const parts = Array.from(si.querySelectorAll("t")).map(
       (t) => t.textContent || "",
     );
+
     return parts.join("");
   });
 };
@@ -59,13 +68,16 @@ const parseWorksheetRows = (sheetXml, sharedStrings) => {
   const table = rows.map((row) => {
     const cells = Array.from(row.querySelectorAll("c"));
     const record = {};
+
     for (const cell of cells) {
       const ref = cell.getAttribute("r") || "";
       const match = ref.match(/^([A-Z]+)[0-9]+$/i);
       const colIndex = match ? toColumnIndex(match[1]) : -1;
+
       if (colIndex < 0) continue;
       record[colIndex] = extractCellValue(cell, sharedStrings);
     }
+
     return record;
   });
 
@@ -137,6 +149,7 @@ export const buildEmployeeImportTemplateXlsx = async (
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+
       return `<c r="${col}1" t="inlineStr"><is><t>${safe}</t></is></c>`;
     })
     .join("");
@@ -164,6 +177,7 @@ export const parseEmployeeXlsxFile = async (file) => {
   const zip = await JSZip.loadAsync(arrayBuffer);
 
   const sheetFile = zip.file("xl/worksheets/sheet1.xml");
+
   if (!sheetFile) {
     throw new Error("Sheet1 tidak ditemukan (xl/worksheets/sheet1.xml).");
   }
@@ -176,6 +190,7 @@ export const parseEmployeeXlsxFile = async (file) => {
 
   const sheetXml = await sheetFile.async("text");
   const table = parseWorksheetRows(sheetXml, sharedStrings);
+
   if (table.length === 0) return [];
 
   const headerRow = table[0] || {};
@@ -186,15 +201,19 @@ export const parseEmployeeXlsxFile = async (file) => {
     .map((idx) => normalizeHeaderKey(headerRow[idx]));
 
   const records = [];
+
   for (let i = 1; i < table.length; i += 1) {
     const row = table[i] || {};
     const obj = {};
+
     for (const [colIndexRaw, cellValue] of Object.entries(row)) {
       const colIndex = Number(colIndexRaw);
       const key = headers[colIndex];
+
       if (!key) continue;
       const value =
         typeof cellValue === "string" ? cellValue.trim() : cellValue;
+
       if (value === "") continue;
       obj[key] = value;
     }

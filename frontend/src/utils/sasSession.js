@@ -18,6 +18,7 @@ export const setSasSession = ({ token, user }) => {
 
 export const getSasSessionUser = () => {
   const raw = storage?.getItem(SAS_SESSION_USER_KEY);
+
   if (!raw) return null;
 
   try {

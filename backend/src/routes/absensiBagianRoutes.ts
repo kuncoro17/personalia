@@ -29,18 +29,6 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
       .optional()
       .nullable()
       .openapi({ example: null, description: 'Kode unit (snake_case)' }),
-    page: z.string().optional().openapi({
-      example: '1',
-      description: 'Nomor halaman',
-    }),
-    limit: z.string().optional().openapi({
-      example: '5',
-      description: 'Jumlah data per halaman',
-    }),
-    search: z.string().optional().openapi({
-      example: 'budi',
-      description: 'Pencarian berdasarkan NIK, nama, atau unit',
-    }),
   });
 
   app.openapi(
