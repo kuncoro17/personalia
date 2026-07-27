@@ -7,10 +7,22 @@ WORKDIR /app
 # Copy package files first so dependency install can be cached separately.
 COPY package*.json ./
 
-# Build needs devDependencies such as TypeScript and Vite.
-# `npm ci` has been flaky in this Alpine-based image on local Docker,
-# so use `npm install` for a more reliable builder setup.
-RUN npm install --include=dev --no-audit --no-fund && npm cache clean --force
+# Build needs devDependencies such as TypeScript and Vite. Use the lockfile for
+# reproducible installs. A bounded retry handles transient overlayfs ETXTBSY
+# errors that can occur when esbuild validates its freshly extracted binary.
+RUN set -eu; \
+    attempt=1; \
+    until npm ci --include=dev --no-audit --no-fund; do \
+      if [ "$attempt" -ge 3 ]; then \
+        echo "npm ci failed after $attempt attempts" >&2; \
+        exit 1; \
+      fi; \
+      echo "npm ci attempt $attempt failed; retrying..." >&2; \
+      attempt=$((attempt + 1)); \
+      rm -rf node_modules; \
+      sleep 2; \
+    done; \
+    npm cache clean --force
 
 # Copy source code
 COPY . .
