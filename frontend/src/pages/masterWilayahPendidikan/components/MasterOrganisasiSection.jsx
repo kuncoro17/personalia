@@ -43,9 +43,11 @@ const isNoneValue = (value) => {
 };
 
 const getErrorMessage = (err, fallback) =>
+  err?.payload?.error?.message ||
+  err?.response?.data?.error?.message ||
   err?.payload?.message ||
-  err?.message ||
   err?.response?.data?.message ||
+  err?.message ||
   fallback;
 
 const toOption = (id, name) => ({
