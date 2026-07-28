@@ -272,11 +272,13 @@ PrsBagian.hasMany(PrsUnitKerja, {
   foreignKey: 'kode_bagian',
   sourceKey: 'kode',
   as: 'unit_kerja',
+  onUpdate: 'CASCADE',
 });
 PrsUnitKerja.belongsTo(PrsBagian, {
   foreignKey: 'kode_bagian',
   targetKey: 'kode',
   as: 'bagian',
+  onUpdate: 'CASCADE',
 });
 //kode_seksi
 PrsSeksi.hasMany(PrsUnitKerja, {
