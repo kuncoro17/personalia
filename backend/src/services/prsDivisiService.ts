@@ -8,17 +8,29 @@ import {
 import xss from 'xss';
 import { PrsDivisiCreationAttributes } from '../models/PrsDivisi';
 
-const divisiSchema = z.object({
-  kode: z
-    .string()
-    .max(5, 'Kode maksimal 5 karakter')
-    .nonempty('Kode wajib diisi'),
-  nama_div: z
-    .string()
-    .max(255, 'Nama divisi maksimal 255 karakter')
-    .nonempty('Nama divisi wajib diisi'),
-  alamat: z.string().max(255).optional(),
-});
+const divisiSchema = z.preprocess(
+  input => {
+    if (!input || typeof input !== 'object') return input;
+
+    const data = input as Record<string, unknown>;
+    return {
+      kode: data.kode ?? data.kode_divisi,
+      nama_div: data.nama_div ?? data.nama_divisi,
+      alamat: data.alamat,
+    };
+  },
+  z.object({
+    kode: z
+      .string()
+      .max(5, 'Kode maksimal 5 karakter')
+      .nonempty('Kode wajib diisi'),
+    nama_div: z
+      .string()
+      .max(255, 'Nama divisi maksimal 255 karakter')
+      .nonempty('Nama divisi wajib diisi'),
+    alamat: z.string().max(255).optional(),
+  })
+);
 function sanitize(
   data: z.infer<typeof divisiSchema>
 ): PrsDivisiCreationAttributes {

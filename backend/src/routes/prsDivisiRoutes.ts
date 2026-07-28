@@ -28,13 +28,27 @@ export const prsDivisiRoutes = (app: OpenAPIHono) => {
   // ============================
   const divisiSchema = z
     .object({
-      id: z.string().uuid().optional(),
-      kode_divisi: z.string().max(5),
-      nama_divisi: z.string(),
+      div_id: z.string().uuid(),
+      kode: z.string().max(5),
+      nama_div: z.string(),
+      alamat: z.string(),
     })
     .openapi('Divisi');
 
-  const divisiBodySchema = divisiSchema.omit({ id: true });
+  const divisiBodySchema = z
+    .union([
+      z.object({
+        kode: z.string().trim().min(1).max(5),
+        nama_div: z.string().trim().min(1).max(255),
+        alamat: z.string().max(255).optional(),
+      }),
+      z.object({
+        kode_divisi: z.string().trim().min(1).max(5),
+        nama_divisi: z.string().trim().min(1).max(255),
+        alamat: z.string().max(255).optional(),
+      }),
+    ])
+    .openapi('DivisiBody');
   const divisiArraySchema = z.array(divisiSchema).openapi('DivisiArray');
 
   // ============================

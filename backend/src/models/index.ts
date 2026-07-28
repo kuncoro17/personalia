@@ -266,6 +266,7 @@ PrsUnitKerja.belongsTo(PrsDivisi, {
   foreignKey: 'kode_divisi',
   targetKey: 'kode',
   as: 'divisi',
+  onUpdate: 'CASCADE',
 });
 //kode_bagian
 PrsBagian.hasMany(PrsUnitKerja, {
@@ -285,11 +286,13 @@ PrsSeksi.hasMany(PrsUnitKerja, {
   foreignKey: 'kode_seksi',
   sourceKey: 'kode',
   as: 'unit_kerja',
+  onUpdate: 'CASCADE',
 });
 PrsUnitKerja.belongsTo(PrsSeksi, {
   foreignKey: 'kode_seksi',
   targetKey: 'kode',
   as: 'seksi',
+  onUpdate: 'CASCADE',
 });
 
 // models/PrsMasterProv.ts
