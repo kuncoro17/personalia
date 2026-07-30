@@ -19,6 +19,14 @@ const isValidDateOnly = (value: string): boolean => {
   );
 };
 
+const MAX_PIVOT_RANGE_DAYS = 62;
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const dateOnlyToUtcTimestamp = (value: string): number => {
+  const [year, month, day] = value.split('-').map(Number);
+  return Date.UTC(year, month - 1, day);
+};
+
 export class AbsensiServiceBagian {
   private readonly repo: AbsensiBagianRepository;
 
@@ -43,6 +51,16 @@ export class AbsensiServiceBagian {
     if (start > end) {
       throw new BadRequestException(
         'Tanggal mulai tidak boleh melewati tanggal selesai'
+      );
+    }
+
+    const rangeDays =
+      (dateOnlyToUtcTimestamp(end) - dateOnlyToUtcTimestamp(start)) /
+        DAY_IN_MS +
+      1;
+    if (rangeDays > MAX_PIVOT_RANGE_DAYS) {
+      throw new BadRequestException(
+        `Rentang tanggal maksimal ${MAX_PIVOT_RANGE_DAYS} hari`
       );
     }
 

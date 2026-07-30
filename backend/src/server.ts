@@ -1,5 +1,4 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { logger } from 'hono/logger';
 import { swaggerUI } from '@hono/swagger-ui';
 import { serveStatic } from '@hono/node-server/serve-static';
 import 'dotenv/config';
@@ -103,7 +102,6 @@ app.use('*', async (c, next) => {
   }
 });
 
-app.use('*', logger());
 app.onError(errorHandler);
 
 app.get('/health', c => {

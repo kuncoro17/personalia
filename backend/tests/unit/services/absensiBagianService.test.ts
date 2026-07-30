@@ -45,4 +45,14 @@ describe('AbsensiServiceBagian', () => {
     ).rejects.toThrow('Tanggal mulai tidak boleh melewati tanggal selesai');
     expect(repository.getAbsensiPivotBagian).not.toHaveBeenCalled();
   });
+
+  it('menolak rentang pivot lebih dari 62 hari', async () => {
+    const repository = createRepository();
+    const service = new AbsensiServiceBagian(repository);
+
+    await expect(
+      service.getPivot('2025-01-01', '2025-03-04', 'BAGIAN', null)
+    ).rejects.toThrow('Rentang tanggal maksimal 62 hari');
+    expect(repository.getAbsensiPivotBagian).not.toHaveBeenCalled();
+  });
 });

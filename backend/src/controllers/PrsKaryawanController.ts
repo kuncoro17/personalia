@@ -245,6 +245,12 @@ export const getAllKaryawan = async (c: Context): Promise<Response> => {
   try {
     const page = Number(c.req.query('page')) || 1;
     const limit = Number(c.req.query('limit')) || 10;
+    if (!Number.isSafeInteger(page) || page < 1) {
+      return badRequest(c, 'Query parameter page harus bilangan bulat positif');
+    }
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+      return badRequest(c, 'Query parameter limit harus antara 1 dan 100');
+    }
     const statusAktif = normalizeStatusAktifFilter(c.req.query('status_aktif'));
     const unitKerjaFilter = getUnitKerjaFilterFromQuery(c);
     const requestedSetempatId = toPositiveInteger(
@@ -364,6 +370,12 @@ export const getAllKaryawanBySetempat = async (
   try {
     const page = Number(c.req.query('page')) || 1;
     const limit = Number(c.req.query('limit')) || 10;
+    if (!Number.isSafeInteger(page) || page < 1) {
+      return badRequest(c, 'Query parameter page harus bilangan bulat positif');
+    }
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+      return badRequest(c, 'Query parameter limit harus antara 1 dan 100');
+    }
     const statusAktif = normalizeStatusAktifFilter(c.req.query('status_aktif'));
     const unitKerjaFilter = getUnitKerjaFilterFromQuery(c);
 

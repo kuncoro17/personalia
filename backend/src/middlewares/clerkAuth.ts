@@ -125,6 +125,13 @@ export const clerkAuthMiddleware: MiddlewareHandler<{
     return next();
   }
 
+  // Beberapa modul route lama mendaftarkan middleware ini pada wildcard `*`.
+  // Setelah satu middleware berhasil memverifikasi token, jangan ulangi
+  // verifikasi kriptografis pada middleware wildcard berikutnya.
+  if (c.get('auth')) {
+    return next();
+  }
+
   const token = extractBearerToken(c.req.header('Authorization'));
   if (!token) {
     return c.json({ message: 'Missing Authorization header' }, 401);

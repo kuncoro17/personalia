@@ -29,6 +29,18 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
       .optional()
       .nullable()
       .openapi({ example: null, description: 'Kode unit (snake_case)' }),
+    page: z.coerce.number().int().min(1).optional().openapi({
+      example: 1,
+      description: 'Halaman hasil',
+    }),
+    limit: z.coerce.number().int().min(1).max(500).optional().openapi({
+      example: 100,
+      description: 'Maksimal 500 data per halaman',
+    }),
+    search: z.string().trim().optional().openapi({
+      example: 'BPA',
+      description: 'Pencarian pada data hasil pivot',
+    }),
   });
 
   app.openapi(
