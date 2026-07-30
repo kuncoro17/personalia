@@ -77,9 +77,14 @@ export const apiClient = (getToken) => {
   });
 
   api.interceptors.request.use(async (config) => {
+    const sasToken = getSasSessionToken();
     let clerkToken = "";
 
-    if (typeof getToken === "function") {
+    // Pengguna yang masuk melalui portal SAS sudah memiliki JWT internal.
+    // Jangan tetap meminta token Clerk untuk setiap request karena itu menambah
+    // network call lintas origin dan membuat request API bergantung pada FAPI
+    // Clerk/Cloudflare walaupun token SAS sudah cukup.
+    if (!sasToken && typeof getToken === "function") {
       try {
         clerkToken = (await getToken()) || "";
       } catch {
@@ -87,7 +92,7 @@ export const apiClient = (getToken) => {
       }
     }
 
-    const token = clerkToken || getSasSessionToken();
+    const token = sasToken || clerkToken;
 
     if (token) config.headers.Authorization = `Bearer ${token}`;
 
