@@ -3,7 +3,7 @@ import PrsBagian, {
   PrsBagianCreationAttributes,
 } from '../models/PrsBagian';
 import PrsUnitKerja from '../models/PrsUnitKerja';
-import { col } from 'sequelize';
+import { Op } from 'sequelize';
 
 const PrsBagianRepository = {
   async findAll(): Promise<PrsBagian[]> {
@@ -36,20 +36,32 @@ const PrsBagianRepository = {
   async findByKodeDivisi(
     kode_divisi: string
   ): Promise<{ kode_bagian: string; nama_bag: string }[]> {
-    const result = await PrsUnitKerja.findAll({
+    const unitRows = await PrsUnitKerja.findAll({
       where: { kode_divisi },
-      attributes: [
-        [col('bagian.kode'), 'kode_bagian'],
-        [col('bagian.nama_bag'), 'nama_bag'],
-      ],
-      include: [{ model: PrsBagian, as: 'bagian', attributes: [] }],
-      group: ['PrsUnitKerja.kode_divisi', 'bagian.kode', 'bagian.nama_bag'],
-      order: [[col('bagian.kode'), 'ASC']],
+      attributes: ['kode_bagian'],
+      raw: true,
+    });
+    const codes = [
+      ...new Set(
+        unitRows
+          .map(row => row.kode_bagian)
+          .filter(code => code && code !== 'nnn')
+      ),
+    ];
+
+    if (codes.length === 0) return [];
+
+    const bagianRows = await PrsBagian.findAll({
+      where: { kode: { [Op.in]: codes } },
+      attributes: ['kode', 'nama_bag'],
+      order: [['kode', 'ASC']],
       raw: true,
     });
 
-    // cast ke unknown dulu supaya TypeScript percaya
-    return result as unknown as { kode_bagian: string; nama_bag: string }[];
+    return bagianRows.map(row => ({
+      kode_bagian: row.kode,
+      nama_bag: row.nama_bag,
+    }));
   },
 };
 
