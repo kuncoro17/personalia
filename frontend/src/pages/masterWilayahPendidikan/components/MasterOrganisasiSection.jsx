@@ -250,7 +250,11 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
         item.divisiName,
         item.bagian,
         item.bagianName,
-      ].some((value) => String(value ?? "").toLowerCase().includes(keyword)),
+      ].some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(keyword),
+      ),
     );
   }, [hasDataTableSearch, rows, search]);
 
