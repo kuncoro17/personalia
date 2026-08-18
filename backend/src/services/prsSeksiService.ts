@@ -8,8 +8,10 @@ import type {
   PrsSeksiAttributes,
   PrsSeksiCreationAttributes,
 } from '../models/PrsSeksi';
+import { deleteOrganizationMaster } from './deleteOrganizationMaster';
 
 export type PrsSeksiRepository = typeof repo;
+type DeleteOrganizationMaster = typeof deleteOrganizationMaster;
 
 // Validasi UUID
 function isValidUUID(id: string): boolean {
@@ -35,9 +37,14 @@ function sanitizeObject<T extends Record<string, unknown>>(
 
 export class PrsSeksiService {
   private readonly repository: PrsSeksiRepository;
+  private readonly deleteMaster: DeleteOrganizationMaster;
 
-  constructor(repository: PrsSeksiRepository = repo) {
+  constructor(
+    repository: PrsSeksiRepository = repo,
+    deleteMaster: DeleteOrganizationMaster = deleteOrganizationMaster
+  ) {
     this.repository = repository;
+    this.deleteMaster = deleteMaster;
   }
 
   async getAll(): Promise<PrsSeksiAttributes[]> {
@@ -105,10 +112,17 @@ export class PrsSeksiService {
     if (!isValidUUID(sanitizedId))
       throw new BadRequestException('Format ID tidak sesuai UUID');
 
-    const deleted = await this.repository.delete(sanitizedId);
-    if (!deleted) throw new NotFoundException('ID tidak ditemukan');
+    const record = await this.repository.findById(sanitizedId);
+    if (!record) throw new NotFoundException('ID tidak ditemukan');
 
-    return deleted;
+    await this.deleteMaster({
+      record,
+      code: record.getDataValue('kode') ?? '',
+      column: 'kode_seksi',
+      label: 'Seksi',
+    });
+
+    return true;
   }
   async getSeksiByKodeBagian(kode_bagian: string) {
     if (!kode_bagian || kode_bagian.trim() === '') {

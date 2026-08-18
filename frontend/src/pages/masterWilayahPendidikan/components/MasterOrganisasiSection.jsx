@@ -6,6 +6,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Pagination,
   Select,
   SelectItem,
   Spinner,
@@ -77,19 +78,30 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [editing, setEditing] = useState(null);
   const [editingForm, setEditingForm] = useState(EMPTY_FORM);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
   const needsDivisi = config.level === "bagian" || config.level === "seksi";
   const needsBagian = config.level === "seksi";
+  const hasDataTableSearch = ["divisi", "bagian", "seksi"].includes(
+    config.level,
+  );
+  const rowsPerPage = 10;
 
   const {
     data: rowsRaw,
     isFetching,
     error,
-  } = useMaster(api, [config.queryKey], config.endpoint, {
-    enabled: isReady,
-    returnEmptyOnError: false,
-  });
+  } = useMaster(
+    api,
+    [config.queryKey],
+    config.listEndpoint || config.endpoint,
+    {
+      enabled: isReady,
+      returnEmptyOnError: false,
+    },
+  );
 
   const { data: divisiRaw } = useMaster(
     api,
@@ -222,6 +234,42 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
       .filter((item) => item.id);
   }, [config.codeField, config.idField, config.nameField, rowsRaw, unitRows]);
 
+  const filteredRows = useMemo(() => {
+    if (!hasDataTableSearch) return rows;
+
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return rows;
+
+    return rows.filter((item) =>
+      [
+        item.id,
+        item.kode,
+        item.nama,
+        item.alamat,
+        item.divisi,
+        item.divisiName,
+        item.bagian,
+        item.bagianName,
+      ].some((value) => String(value ?? "").toLowerCase().includes(keyword)),
+    );
+  }, [hasDataTableSearch, rows, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+  const displayedRows = useMemo(() => {
+    if (!hasDataTableSearch) return filteredRows;
+    const start = (page - 1) * rowsPerPage;
+    return filteredRows.slice(start, start + rowsPerPage);
+  }, [filteredRows, hasDataTableSearch, page]);
+
+  useEffect(() => {
+    setSearch("");
+    setPage(1);
+  }, [config.level]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   const columns = useMemo(() => {
     const base = [
       { key: "id", label: "ID" },
@@ -325,7 +373,10 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.post(config.endpoint, buildPayload(form));
+      const response = await api.post(
+        config.createEndpoint || config.endpoint,
+        buildPayload(form),
+      );
       await syncUnitKerjaRelation(form);
       return response.data;
     },
@@ -351,7 +402,8 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     mutationFn: async () => {
       if (!editing?.id) throw new Error(`ID ${config.name} tidak ditemukan`);
       const response = await api.put(
-        `${config.endpoint}/${editing.id}`,
+        config.updateEndpoint?.(editing.id) ||
+          `${config.endpoint}/${editing.id}`,
         buildPayload(editingForm),
       );
       await syncUnitKerjaRelation(editingForm, editing.kode);
@@ -379,7 +431,11 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) =>
-      apiService("delete", api, `${config.endpoint}/${id}`),
+      apiService(
+        "delete",
+        api,
+        config.deleteEndpoint?.(id) || `${config.endpoint}/${id}`,
+      ),
     onSuccess: async () => {
       addToast({
         title: "Berhasil",
@@ -550,6 +606,48 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm p-3">
+        {hasDataTableSearch && (
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <Input
+              isClearable
+              aria-label={`Cari ${config.label}`}
+              className="w-full sm:max-w-xs"
+              classNames={{
+                input: "text-small",
+                inputWrapper:
+                  "font-DMSans border-1 shadow-sm bg-white rounded-md dark:border-slate-700 dark:bg-slate-950",
+              }}
+              placeholder={`Cari ${config.label.toLowerCase()}...`}
+              startContent={
+                <svg
+                  className="text-primary dark:text-slate-300"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m19.485 20.154l-6.262-6.262q-.75.639-1.725.989t-1.96.35q-2.402 0-4.066-1.663T3.808 9.503T5.47 5.436t4.064-1.667t4.068 1.664T15.268 9.5q0 1.042-.369 2.017t-.97 1.668l6.262 6.261zM9.539 14.23q1.99 0 3.36-1.37t1.37-3.361t-1.37-3.36t-3.36-1.37t-3.361 1.37t-1.37 3.36t1.37 3.36t3.36 1.37"
+                    fill="currentColor"
+                  />
+                </svg>
+              }
+              type="search"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              onClear={() => {
+                setSearch("");
+                setPage(1);
+              }}
+            />
+            <span className="shrink-0 font-Poppins text-sm text-default-500">
+              {filteredRows.length} data
+            </span>
+          </div>
+        )}
         {isFetching ? (
           <div className="w-full flex items-center justify-center min-h-20">
             <Spinner size="md" color="primary" />
@@ -569,7 +667,10 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody items={rows}>
+            <TableBody
+              emptyContent={`Tidak ada data ${config.name}`}
+              items={displayedRows}
+            >
               {(item) => (
                 <TableRow key={String(item.id)}>
                   {(columnKey) => (
@@ -579,6 +680,16 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
               )}
             </TableBody>
           </Table>
+        )}
+        {hasDataTableSearch && !isFetching && totalPages > 1 && (
+          <div className="mt-4 flex justify-center">
+            <Pagination
+              showControls
+              page={page}
+              total={totalPages}
+              onChange={setPage}
+            />
+          </div>
         )}
       </div>
 

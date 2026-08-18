@@ -104,7 +104,7 @@ function getSyncConfig(options: AttendanceSyncOptions): SyncConfig {
     dryRun: options.dryRun ?? readBoolean('ATTENDANCE_SYNC_DRY_RUN'),
     fromDate: validateDate(
       'ATTENDANCE_SYNC_FROM_DATE',
-      options.fromDate ?? process.env.ATTENDANCE_SYNC_FROM_DATE ?? '2026-06-01'
+      options.fromDate ?? process.env.ATTENDANCE_SYNC_FROM_DATE ?? '1970-01-01'
     ),
   };
 }

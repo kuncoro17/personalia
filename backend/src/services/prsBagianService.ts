@@ -5,6 +5,7 @@ import {
   PrsBagianAttributes,
   PrsBagianCreationAttributes,
 } from '../models/PrsBagian';
+import { deleteOrganizationMaster } from './deleteOrganizationMaster';
 
 class PrsBagianService {
   private sanitize(
@@ -64,11 +65,17 @@ class PrsBagianService {
 
   async delete(id: string) {
     const sanitizedId = xss(id);
-    const deleted = await repo.delete(sanitizedId);
-    if (!deleted) {
+    const record = await repo.findById(sanitizedId);
+    if (!record) {
       throw new HTTPException(404, { message: 'Bagian tidak ditemukan' });
     }
-    return deleted;
+    await deleteOrganizationMaster({
+      record,
+      code: record.getDataValue('kode'),
+      column: 'kode_bagian',
+      label: 'Bagian',
+    });
+    return true;
   }
   async getUnitKerjaByDivisi(kode_divisi: string) {
     if (!kode_divisi || kode_divisi.trim() === '') {

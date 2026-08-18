@@ -55,11 +55,22 @@ describe('PrsSeksiService', () => {
 
   it('menghapus seksi dengan UUID valid', async () => {
     const repository = createRepository();
-    repository.delete.mockResolvedValue(true);
-    const service = new PrsSeksiService(repository);
+    const record = {
+      getDataValue: jest.fn(() => 'SDDK'),
+    } as never;
+    repository.findById.mockResolvedValue(record);
+    const deleteMaster = jest.fn(async (options: unknown) => {
+      void options;
+    });
+    const service = new PrsSeksiService(repository, deleteMaster);
 
     await expect(service.delete(UUID)).resolves.toBe(true);
-    expect(repository.delete).toHaveBeenCalledWith(UUID);
+    expect(deleteMaster).toHaveBeenCalledWith({
+      record,
+      code: 'SDDK',
+      column: 'kode_seksi',
+      label: 'Seksi',
+    });
   });
 
   it('merapikan kode bagian sebelum pencarian', async () => {

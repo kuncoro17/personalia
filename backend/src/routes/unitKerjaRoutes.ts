@@ -27,16 +27,18 @@ export const prsUnitKerjaRoutes = (app: OpenAPIHono) => {
    * SCHEMA
    * ======================= */
   const unitKerjaSchema = z.object({
-    id: z.string(),
-    kode_unit: z.string(),
-    nama_unit: z.string(),
-    lokasi: z.string().optional(),
+    uk_id: z.string().uuid(),
+    kode_seksi: z.string().min(1).max(5),
+    kode_bagian: z.string().min(1).max(5),
+    kode_divisi: z.string().min(1).max(5),
+    kode_direktur: z.string().min(1).max(5).optional().nullable(),
+    kode_deputi: z.string().min(1).max(5).optional().nullable(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
   });
 
   const createSchema = unitKerjaSchema.omit({
-    id: true,
+    uk_id: true,
     created_at: true,
     updated_at: true,
   });

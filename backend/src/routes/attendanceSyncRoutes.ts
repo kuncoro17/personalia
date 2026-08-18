@@ -37,9 +37,9 @@ const syncQuerySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
-    .default('2026-06-01')
+    .default('1970-01-01')
     .openapi({
-      example: '2026-06-01',
+      example: '1970-01-01',
       description:
         'Hanya menarik record dengan stime mulai tanggal ini (YYYY-MM-DD)',
     }),

@@ -7,6 +7,7 @@ import {
 } from '../utils/http-exception';
 import xss from 'xss';
 import { PrsDivisiCreationAttributes } from '../models/PrsDivisi';
+import { deleteOrganizationMaster } from './deleteOrganizationMaster';
 
 const divisiSchema = z.preprocess(
   input => {
@@ -80,5 +81,11 @@ export const remove = async (id: string) => {
   const sanitizedId = xss(id);
   const exist = await repo.findById(sanitizedId);
   if (!exist) throw new NotFoundException('Divisi tidak ditemukan');
-  return repo.hardDelete(sanitizedId);
+  await deleteOrganizationMaster({
+    record: exist,
+    code: exist.getDataValue('kode'),
+    column: 'kode_divisi',
+    label: 'Divisi',
+  });
+  return exist;
 };
