@@ -15,6 +15,7 @@ import { EMPLOYEEENDPOINT } from "../../constants/api";
 import { useMaster } from "../../hooks/useMaster";
 import { apiClient, resolveApiAssetUrl } from "../../service/api";
 import { capitalizeWords } from "../../utils/format";
+import { getSasSdmUrl, hasSasEntry } from "../../utils/sasSession";
 import {
   applyTheme,
   getPreferredTheme,
@@ -83,6 +84,22 @@ export const Navbar = ({ children }) => {
         </NavbarContent>
 
         <NavbarContent justify="end" className="min-w-0">
+          {hasSasEntry() ? (
+            <Button
+              as="a"
+              href={getSasSdmUrl()}
+              aria-label="Kembali ke halaman SDM SAS"
+              className="shrink-0 font-Poppins"
+              color="primary"
+              radius="sm"
+              size="sm"
+              variant="flat"
+            >
+              <i className="fi fi-rr-arrow-left" />
+              <span className="hidden sm:inline">Kembali ke SAS</span>
+            </Button>
+          ) : null}
+
           <Tooltip
             content={isDark ? "Gunakan light mode" : "Gunakan dark mode"}
             showArrow

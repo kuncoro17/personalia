@@ -3,12 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiClient, apiService } from "../../service/api";
-import { setSasSession } from "../../utils/sasSession";
-
-const getPortalUrl = () =>
-  import.meta.env.VITE_SAS_PORTAL_URL ||
-  import.meta.env.VITE_CLERK_SIGN_IN_URL ||
-  "/";
+import {
+  getSasSdmUrl,
+  markSasEntry,
+  setSasSession,
+} from "../../utils/sasSession";
 
 export default function SasVerify() {
   const navigate = useNavigate();
@@ -42,6 +41,7 @@ export default function SasVerify() {
           token: data.token,
           user: data.user,
         });
+        markSasEntry();
 
         if (!isMounted) return;
         setStatus("success");
@@ -76,7 +76,7 @@ export default function SasVerify() {
             color="primary"
             radius="sm"
             onPress={() => {
-              window.location.href = getPortalUrl();
+              window.location.href = getSasSdmUrl();
             }}
           >
             Kembali ke SAS

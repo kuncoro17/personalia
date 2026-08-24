@@ -1,5 +1,6 @@
 const SAS_SESSION_TOKEN_KEY = "personalia:sas-session-token";
 const SAS_SESSION_USER_KEY = "personalia:sas-session-user";
+const SAS_ENTRY_KEY = "personalia:sas-entry";
 
 const storage =
   typeof window !== "undefined" ? window.sessionStorage : undefined;
@@ -34,3 +35,27 @@ export const clearSasSession = () => {
 };
 
 export const hasSasSession = () => Boolean(getSasSessionToken());
+
+export const markSasEntry = () => {
+  storage?.setItem(SAS_ENTRY_KEY, "true");
+};
+
+export const hasSasEntry = () => storage?.getItem(SAS_ENTRY_KEY) === "true";
+
+export const getSasSdmUrl = () => {
+  const configuredUrl = import.meta.env.VITE_SAS_SDM_URL;
+
+  if (configuredUrl) return configuredUrl;
+
+  const portalUrl = import.meta.env.VITE_SAS_PORTAL_URL;
+
+  if (portalUrl) {
+    try {
+      return new URL("/sumber-daya-manusia", portalUrl).toString();
+    } catch {
+      // Gunakan fallback jika konfigurasi URL tidak valid.
+    }
+  }
+
+  return "https://staging-new-sas.bpkpenaburjakarta.or.id/sumber-daya-manusia";
+};

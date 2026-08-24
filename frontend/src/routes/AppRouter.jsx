@@ -1,10 +1,15 @@
-import { RedirectToSignIn, useAuth } from "@clerk/clerk-react";
-import { lazy, Suspense } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { RedirectToSignIn, useAuth, useUser } from "@clerk/clerk-react";
+import { lazy, Suspense, useEffect } from "react";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Spinner } from "@heroui/react";
 
 import { ROUTE } from "../constants/routes";
-import { hasSasSession } from "../utils/sasSession";
+import {
+  getSasSessionUser,
+  hasSasEntry,
+  hasSasSession,
+  markSasEntry,
+} from "../utils/sasSession";
 
 const rawSignInUrl = import.meta.env.VITE_CLERK_SIGN_IN_URL;
 const signInUrl = rawSignInUrl;
@@ -12,9 +17,42 @@ const SasVerifyPage = lazy(() => import("../pages/sasVerify"));
 
 function AppRouter() {
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const hasInternalSasSession = hasSasSession();
   const isSasVerifyRoute = location.pathname === "/sas/verify";
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const isSasEntry =
+      params.get("source") === "sas" && params.get("auto_login") === "true";
+
+    if (isSasEntry) markSasEntry();
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!isLoaded || (!isSignedIn && !hasInternalSasSession)) return;
+    if (!hasSasEntry() || location.pathname !== "/") return;
+
+    const params = new URLSearchParams(location.search);
+    const hasLegacySasParams =
+      params.has("email") || params.has("source") || params.has("auto_login");
+    if (!hasLegacySasParams) return;
+
+    const userId = getSasSessionUser()?.id || user?.id;
+    if (!userId) return;
+
+    navigate(`/?id=${encodeURIComponent(userId)}`, { replace: true });
+  }, [
+    hasInternalSasSession,
+    isLoaded,
+    isSignedIn,
+    location.pathname,
+    location.search,
+    navigate,
+    user?.id,
+  ]);
 
   if (!isLoaded) return <LoadingFallback />;
 
