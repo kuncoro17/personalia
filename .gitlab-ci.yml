@@ -315,7 +315,7 @@ deploy-staging:
       sudo chown -R $STAGING_SERVER_USER:$STAGING_SERVER_USER /opt/$APP_NAME && sudo chmod -R 775 /opt/$APP_NAME &&
       sudo chown -R 1001:1001 /opt/$APP_NAME/backend/uploads"
     # Pull + run services
-    - ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - printf '%s' "$CI_JOB_TOKEN" | ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "docker login -u gitlab-ci-token --password-stdin '$CI_REGISTRY'"
     - |
       ssh -p "$STAGING_SERVER_PORT" "$STAGING_TARGET" "\
         echo '=== Server disk (before pull) ===' && \
@@ -385,7 +385,7 @@ deploy-production:
     - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "rm -rf '$PRODUCTION_TMP_DIR'"
 
     # Pull + run services
-    - ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin '$CI_REGISTRY'"
+    - printf '%s' "$CI_JOB_TOKEN" | ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "docker login -u gitlab-ci-token --password-stdin '$CI_REGISTRY'"
     - |
       ssh -p "$PRODUCTION_SERVER_PORT" "$PRODUCTION_TARGET" "\
         echo '=== Server disk (before pull) ===' && \
