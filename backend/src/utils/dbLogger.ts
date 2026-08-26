@@ -1,6 +1,18 @@
 import AppLog from '../models/AppLog';
 import logger from './logger';
 
+export interface AuditLogPayload {
+  action: 'READ' | 'CREATE' | 'UPDATE';
+  method: string;
+  path: string;
+  statusCode: number;
+  responseTime: number;
+  actorId: string;
+  actorEmail?: string | null;
+  actorName?: string | null;
+  authSource?: string | null;
+}
+
 let isAppLogTableEnsured = false;
 let ensureTablePromise: Promise<void> | null = null;
 
@@ -69,5 +81,27 @@ export async function saveLogToDB(
     await AppLog.create(payload);
   } catch (err) {
     logger.warn({ err }, 'Failed to create/write app_logs table');
+  }
+}
+
+export async function saveAuditLogToDB(payload: AuditLogPayload) {
+  try {
+    await AppLog.create({
+      level: 'info',
+      message: `${payload.action} ${payload.method} ${payload.path}`,
+      error: null,
+      response_time_ms: payload.responseTime,
+      action: payload.action,
+      http_method: payload.method,
+      path: payload.path,
+      status_code: payload.statusCode,
+      actor_id: payload.actorId,
+      actor_email: payload.actorEmail ?? null,
+      actor_name: payload.actorName ?? null,
+      auth_source: payload.authSource ?? null,
+    });
+    isAppLogTableEnsured = true;
+  } catch (err) {
+    logger.warn({ err }, 'Failed to write audit log to database');
   }
 }

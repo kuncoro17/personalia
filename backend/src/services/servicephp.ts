@@ -1,48 +1,41 @@
-import {
-  BadGatewayException,
-  GatewayTimeoutException,
-} from '../utils/http-exception';
+import { QueryTypes } from 'sequelize';
 
-// src/services/servicephp.ts
+import { sequelize } from '../config/database';
+
+export interface PresensiRecord {
+  tanggal: string;
+  nik: string;
+  employeename: string;
+  jamMasuk: string;
+  jamPulang: string;
+}
+
+export interface PresensiResponse {
+  success: true;
+  data: PresensiRecord[];
+}
+
 export class PresensiService {
-  static async getLatest(userid: string) {
-    const url = `https://plims.bpkpenaburjakarta.or.id/presensi/latest?userid=${encodeURIComponent(userid)}`;
+  static async getLatest(userid: string): Promise<PresensiResponse> {
+    const normalizedUserId = userid.trim();
 
-    let res: Response;
+    const data = await sequelize.query<PresensiRecord>(
+      `SELECT TO_CHAR(checktime::date, 'YYYY-MM-DD') AS tanggal,
+              COALESCE(MAX(nik), '') AS nik,
+              COALESCE(MAX(employeename), '') AS employeename,
+              TO_CHAR(MIN(checktime), 'HH24:MI:SS') AS "jamMasuk",
+              TO_CHAR(MAX(checktime), 'HH24:MI:SS') AS "jamPulang"
+         FROM public.sdm_checkinout
+        WHERE userid = $userid
+        GROUP BY checktime::date
+        ORDER BY checktime::date DESC
+        LIMIT 14`,
+      {
+        bind: { userid: normalizedUserId },
+        type: QueryTypes.SELECT,
+      }
+    );
 
-    try {
-      res = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'X-API-KEY': process.env.PERSONALIA_API_KEY!, // API key PHP
-          Accept: 'application/json',
-        },
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown upstream error';
-      throw new GatewayTimeoutException(
-        `Gagal menghubungi PHP API presensi: ${message}`
-      );
-    }
-
-    const text = await res.text();
-
-    if (!res.ok) {
-      const detail = text.trim() || `HTTP ${res.status}`;
-      throw new BadGatewayException(`PHP API error: ${detail}`);
-    }
-
-    if (!text.trim()) {
-      throw new BadGatewayException('PHP API mengembalikan body kosong');
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new BadGatewayException(
-        'PHP API mengembalikan JSON tidak valid atau terpotong'
-      );
-    }
+    return { success: true, data };
   }
 }

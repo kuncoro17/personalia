@@ -26,7 +26,7 @@ export const presensiRoutes = (app: OpenAPIHono) => {
       path: '/presensi/latest',
       summary: 'Get Latest Presensi',
       description:
-        'Memanggil PHP API untuk mengambil data presensi berdasarkan userid',
+        'Mengambil presensi 14 tanggal terbaru dari tabel sdm_checkinout berdasarkan userid',
       tags: ['Presensi'],
       request: {
         query: z.object({
@@ -43,8 +43,6 @@ export const presensiRoutes = (app: OpenAPIHono) => {
           },
         },
         400: { description: 'Bad request, userid wajib diisi' },
-        502: { description: 'Upstream PHP mengembalikan response tidak valid' },
-        504: { description: 'Upstream PHP timeout atau tidak dapat dihubungi' },
         500: { description: 'Server error' },
       },
     }),
