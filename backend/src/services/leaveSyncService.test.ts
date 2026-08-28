@@ -1,12 +1,11 @@
+import { describe, expect, it } from '@jest/globals';
+
 import { expandWeekdays, mapLeaveRecord } from './leaveSyncService';
 
 describe('leaveSyncService', () => {
   it('mengabaikan Sabtu dan Minggu saat memecah rentang', () => {
     expect(
-      expandWeekdays(
-        '2026-06-26T00:00:00.000Z',
-        '2026-06-30T00:00:00.000Z'
-      )
+      expandWeekdays('2026-06-26T00:00:00.000Z', '2026-06-30T00:00:00.000Z')
     ).toEqual(['2026-06-26', '2026-06-29', '2026-06-30']);
   });
 
