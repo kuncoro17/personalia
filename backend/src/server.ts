@@ -31,6 +31,7 @@ import { PrsMasterDeputiRoute } from './routes/prsMasterDeputiRoute';
 
 import { absensiBagianRoutes } from './routes/absensiBagianRoutes';
 import { attendanceSyncRoutes } from './routes/attendanceSyncRoutes';
+import { leaveSyncRoutes } from './routes/leaveSyncRoutes';
 import { bagianRoutes } from './routes/bagianRoutes';
 
 import { docRoutes } from './routes/docsRoutes';
@@ -169,6 +170,7 @@ app.route('/redis', redisRoutes);
 sasAuthRoutes(app);
 absensiBagianRoutes(app);
 attendanceSyncRoutes(app);
+leaveSyncRoutes(app);
 
 // absensiRoutes(app);
 bagianRoutes(app);

@@ -8,6 +8,7 @@
     "start": "node --import tsx src/app.ts",
     "db:sync": "node --import tsx src/scripts/sync-models.ts",
     "sync:attendance": "node --import tsx src/scripts/sync-attendance.ts",
+    "sync:leave": "node --import tsx src/scripts/sync-leave.ts",
     "migrate": "node --import tsx src/scripts/migrate.ts up",
     "migrate:status": "node --import tsx src/scripts/migrate.ts status",
     "migrate:undo": "node --import tsx src/scripts/migrate.ts down",
