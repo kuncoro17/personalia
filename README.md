@@ -229,13 +229,22 @@ Saat Merge Request digabungkan ke `main`:
 
 1. Backend dan frontend divalidasi.
 2. SonarQube berjalan jika `SONAR_ENABLED=true`.
-3. Image backend dan frontend staging dengan tag commit dibuat dan dipush ke GitLab Container Registry.
+3. Image backend dan frontend staging dengan tag commit dibuat dan dipush ke ACR melalui endpoint VPC.
 4. Trivy memindai image dan menyimpan report tanpa memblokir pipeline.
 5. Staging dideploy otomatis dan kedua endpoint publik diperiksa.
 6. Production tersedia sebagai job manual. Job ini menolak variable kosong atau `change this`, membangun frontend production, memindai image, menjalankan migration, lalu deploy.
 7. Health check production berjalan setelah deployment manual sukses.
 
 ## Required GitLab CI/CD Variables
+
+Container registry:
+
+- `APP_NAME`
+- `ACR_REGISTRY`
+- `ACR_INTERNET_REGISTRY`
+- `ACR_NAMESPACE`
+- `ACR_USERNAME`
+- `ACR_PASSWORD`
 
 Quality:
 
@@ -277,7 +286,9 @@ Production:
 - `PRODUCTION_FE_SAS_PORTAL_URL`
 - `PRODUCTION_FE_SAS_SDM_URL`
 
-GitLab menyediakan `CI_REGISTRY`, `CI_REGISTRY_IMAGE`, dan `CI_JOB_TOKEN`; pipeline tidak memerlukan credential registry tambahan. Variable production bernilai `change this` harus diganti sebelum job manual dijalankan.
+Pipeline menggunakan Alibaba Cloud Container Registry (ACR). Build, push, dan image scan memakai `ACR_REGISTRY`, server staging menarik image melalui `ACR_INTERNET_REGISTRY`, dan production memakai `ACR_REGISTRY`. `ACR_PASSWORD` harus protected dan masked. Variable production bernilai `change this` harus diganti sebelum job manual dijalankan.
+
+Konfigurasi runtime backend disimpan sebagai satu File variable untuk setiap environment, bukan dipecah menjadi satu GitLab variable per key. Variable koneksi deployment/SSH tetap terpisah, sedangkan `VITE_*` frontend disimpan terpisah karena digunakan saat image frontend dibangun dan nilainya menjadi bagian dari bundle browser.
 
 ## Deployment Staging Manual
 
@@ -285,8 +296,8 @@ Jika perlu deploy manual di server:
 
 ```bash
 cd /opt/personalia-jkt
-export BACKEND_IMAGE='<registry>/personalia-jkt:backend-<commit-sha>'
-export FRONTEND_IMAGE='<registry>/personalia-jkt:frontend-staging-<commit-sha>'
+export BACKEND_IMAGE='new-sas-acr-registry.ap-southeast-5.cr.aliyuncs.com/new-sas/personalia-jkt:backend-<commit-sha>'
+export FRONTEND_IMAGE='new-sas-acr-registry.ap-southeast-5.cr.aliyuncs.com/new-sas/personalia-jkt:frontend-staging-<commit-sha>'
 export BACKEND_ENV_FILE='.env.staging'
 docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml pull
 docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans
