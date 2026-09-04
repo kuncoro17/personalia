@@ -1,0 +1,224 @@
+import JSZip from "jszip";
+
+const toColumnIndex = (colLetters = "") => {
+  let result = 0;
+  const letters = String(colLetters).toUpperCase();
+
+  for (let i = 0; i < letters.length; i += 1) {
+    const code = letters.charCodeAt(i);
+
+    if (code < 65 || code > 90) continue;
+    result = result * 26 + (code - 64);
+  }
+
+  return result - 1;
+};
+
+const normalizeHeaderKey = (value = "") =>
+  String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+const extractCellValue = (cell, sharedStrings) => {
+  const t = cell.getAttribute("t");
+
+  if (t === "inlineStr") {
+    const textNode = cell.querySelector("is t");
+
+    return textNode?.textContent ?? "";
+  }
+
+  const v = cell.querySelector("v")?.textContent ?? "";
+
+  if (t === "s") {
+    const index = Number(v);
+
+    return Number.isInteger(index) && index >= 0
+      ? (sharedStrings[index] ?? "")
+      : "";
+  }
+
+  return v;
+};
+
+const parseSharedStrings = (xml) => {
+  if (!xml) return [];
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, "application/xml");
+  const items = Array.from(doc.querySelectorAll("sst si"));
+
+  return items.map((si) => {
+    const parts = Array.from(si.querySelectorAll("t")).map(
+      (t) => t.textContent || "",
+    );
+
+    return parts.join("");
+  });
+};
+
+const parseWorksheetRows = (sheetXml, sharedStrings) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(sheetXml, "application/xml");
+  const rows = Array.from(doc.querySelectorAll("worksheet sheetData row"));
+
+  const table = rows.map((row) => {
+    const cells = Array.from(row.querySelectorAll("c"));
+    const record = {};
+
+    for (const cell of cells) {
+      const ref = cell.getAttribute("r") || "";
+      const match = ref.match(/^([A-Z]+)[0-9]+$/i);
+      const colIndex = match ? toColumnIndex(match[1]) : -1;
+
+      if (colIndex < 0) continue;
+      record[colIndex] = extractCellValue(cell, sharedStrings);
+    }
+
+    return record;
+  });
+
+  return table;
+};
+
+const DEFAULT_EMPLOYEE_HEADERS = [
+  "nik",
+  "no_ktp",
+  "status_aktif",
+  "nama_lengkap",
+  "nama_panggilan",
+  "email_pribadi",
+  "email_penabur",
+  "tgl_join_penabur",
+  "tgl_join_penabur_jkt",
+  "agama",
+  "status_nikah",
+  "tanggal_pernikahan",
+  "tipe_sekolah",
+  "kode_status_karyawan",
+  "tempat_lahir",
+  "birth_date",
+  "gender",
+  "gol_darah",
+  "tinggi_badan",
+  "berat_badan",
+  "kewarganegaraan",
+  "npwp",
+  "rekening",
+  "id_master_setempat",
+];
+
+export const buildEmployeeImportTemplateXlsx = async (
+  headers = DEFAULT_EMPLOYEE_HEADERS,
+) => {
+  const zip = new JSZip();
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+</Types>`;
+
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+ xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="Sheet1" sheetId="1" r:id="rId1"/>
+  </sheets>
+</workbook>`;
+
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>`;
+
+  const cells = headers
+    .map((h, i) => {
+      const col = String.fromCharCode(65 + i); // supports up to Z columns for our template
+      const safe = String(h)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      return `<c r="${col}1" t="inlineStr"><is><t>${safe}</t></is></c>`;
+    })
+    .join("");
+
+  const sheet1 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    <row r="1">
+      ${cells}
+    </row>
+  </sheetData>
+</worksheet>`;
+
+  zip.file("[Content_Types].xml", contentTypes);
+  zip.folder("_rels").file(".rels", rels);
+  zip.folder("xl").file("workbook.xml", workbook);
+  zip.folder("xl").folder("_rels").file("workbook.xml.rels", workbookRels);
+  zip.folder("xl").folder("worksheets").file("sheet1.xml", sheet1);
+
+  return zip.generateAsync({ type: "blob" });
+};
+
+export const parseEmployeeXlsxFile = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(arrayBuffer);
+
+  const sheetFile = zip.file("xl/worksheets/sheet1.xml");
+
+  if (!sheetFile) {
+    throw new Error("Sheet1 tidak ditemukan (xl/worksheets/sheet1.xml).");
+  }
+
+  const sharedStringsXml = await zip
+    .file("xl/sharedStrings.xml")
+    ?.async("text")
+    .catch(() => null);
+  const sharedStrings = parseSharedStrings(sharedStringsXml);
+
+  const sheetXml = await sheetFile.async("text");
+  const table = parseWorksheetRows(sheetXml, sharedStrings);
+
+  if (table.length === 0) return [];
+
+  const headerRow = table[0] || {};
+  const headers = Object.keys(headerRow)
+    .map((k) => Number(k))
+    .filter((n) => Number.isInteger(n) && n >= 0)
+    .sort((a, b) => a - b)
+    .map((idx) => normalizeHeaderKey(headerRow[idx]));
+
+  const records = [];
+
+  for (let i = 1; i < table.length; i += 1) {
+    const row = table[i] || {};
+    const obj = {};
+
+    for (const [colIndexRaw, cellValue] of Object.entries(row)) {
+      const colIndex = Number(colIndexRaw);
+      const key = headers[colIndex];
+
+      if (!key) continue;
+      const value =
+        typeof cellValue === "string" ? cellValue.trim() : cellValue;
+
+      if (value === "") continue;
+      obj[key] = value;
+    }
+    if (Object.keys(obj).length > 0) records.push(obj);
+  }
+
+  return records;
+};

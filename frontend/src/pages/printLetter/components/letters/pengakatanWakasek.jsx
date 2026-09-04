@@ -1,0 +1,318 @@
+import {
+  Page,
+  Text,
+  Image,
+  Document,
+  StyleSheet,
+  View,
+  Font,
+} from "@react-pdf/renderer";
+
+Font.register({
+  family: "Times New Roman",
+  fonts: [
+    { src: "/assets/fonts/TimesNewRoman/TimesNewRoman.ttf" },
+    {
+      src: "/assets/fonts/TimesNewRoman/TimesNewRoman_Bold.ttf",
+      fontWeight: "bold",
+    },
+    {
+      src: "/assets/fonts/TimesNewRoman/TimesNewRoman_BoldItalic.ttf",
+      fontStyle: "bold italic",
+    },
+    {
+      src: "/assets/fonts/TimesNewRoman/TimesNewRoman_Italic.ttf",
+      fontStyle: "italic",
+    },
+  ],
+});
+
+Font.registerHyphenationCallback((word) => {
+  return [word];
+});
+
+export default function PengangkatanWakasek(data) {
+  const payload = data?.data ?? data ?? {};
+
+  const BULAN = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  function formatAlamat(a) {
+    if (!a) return "—";
+    if (typeof a === "string") return a.trim() || "—";
+
+    const alamat = String(a?.alamat ?? "").trim();
+    const rt = String(a?.rt ?? "").trim();
+    const rw = String(a?.rw ?? "").trim();
+    const kel = String(a?.kelurahan?.nama ?? "").trim();
+    const kec = String(a?.kecamatan?.nama ?? "").trim();
+    const kota = String(a?.kota?.nama ?? "").trim();
+    const prov = String(a?.provinsi?.nama ?? "").trim();
+    const kodePos = String(a?.kode_pos ?? "").trim();
+
+    const rtRw = rt || rw ? `RT ${rt || "-"} / RW ${rw || "-"}` : "";
+    const bagian = [alamat, rtRw, kel, kec, kota, prov, kodePos]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    return bagian.join(", ") || "—";
+  }
+
+  function formatTanggalIndo(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+
+    const tanggal = date.getDate();
+    const bulan = BULAN[date.getMonth()];
+    const tahun = date.getFullYear();
+
+    return `${tanggal} ${bulan} ${tahun}`;
+  }
+  const getNamaUnit = (uk) => {
+    const detail = uk?.unit_kerja_detail;
+
+    return (
+      detail?.seksi?.nama_sek ||
+      detail?.bagian?.nama_bag ||
+      detail?.divisi?.nama_div ||
+      detail?.deputi?.nama_dep ||
+      detail?.deputi?.nama_deputi ||
+      detail?.direktur?.nama_dir ||
+      detail?.direktur?.nama_direktur ||
+      null
+    );
+  };
+
+  const unitKerja = payload?.unitKerja ?? payload?.unit_kerja_karyawan;
+  const divisiList = Array.isArray(unitKerja)
+    ? unitKerja.map((uk) => getNamaUnit(uk)).filter(Boolean)
+    : unitKerja
+      ? [getNamaUnit(unitKerja)].filter(Boolean)
+      : [];
+  const divisiText = divisiList.join(", ") || "—";
+  const namaLengkap =
+    String(payload?.nama_lengkap ?? payload?.nama ?? "").trim() || "—";
+  const tgl_join_penabur_jkt = formatTanggalIndo(payload?.tgl_join_penabur_jkt);
+  const tanggal_inactive = formatTanggalIndo(payload?.tanggal_inactive);
+  const today = formatTanggalIndo(new Date());
+  const kode_golongan = payload?.kode_golongan ?? "—";
+  const jabatan =
+    unitKerja?.jabatan?.jabatan ?? unitKerja?.[0]?.jabatan?.jabatan ?? "—";
+  return (
+    <Page style={styles.containerDocument} size={"A4"}>
+      <Image src={"/assets/images/kop.png"} style={styles.kopSurat} fixed />
+
+      <View style={styles.containerHeader}>
+        <Text style={styles.titleHeader}>SURAT PENGANGKATAN</Text>
+        <Text style={[styles.textNormal, { color: "blue" }]}>
+          Nomor : 001/SDM/SP.Wakasek/08/2024
+        </Text>
+      </View>
+
+      <Text style={[styles.textBold, { textAlign: "center" }]}>
+        BADAN PENDIDIKAN KRISTEN PENABUR JAKARTA
+      </Text>
+
+      <View style={{ marginTop: 30 }}>
+        <View style={{ flexDirection: "row" }}>
+          <View
+            style={{
+              width: "25%",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={styles.textNormal}>Menimbang</Text>
+            <Text style={styles.textNormal}>:</Text>
+          </View>
+          <View style={{ flex: 1, width: "75%" }}>
+            <Text style={[styles.textNormal, { paddingLeft: 5 }]}>
+              Bahwa masih dibutuhkan Tenaga Pendidik di BPK PENABUR Jakarta, dan
+              perlunya
+              <Text style={[styles.textNormal, { color: "blue" }]}>
+                Wakil Kepala Sekolah Bidang Kesiswaan di SPK SMPK & SMAK 8
+                PENABUR.
+              </Text>
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: "row", marginTop: 10 }}>
+          <View
+            style={{
+              width: "25%",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={styles.textNormal}>Membaca</Text>
+            <Text style={styles.textNormal}>:</Text>
+          </View>
+          <View style={{ flex: 1, width: "75%" }}>
+            <Text
+              style={[styles.textNormal, { paddingLeft: 5, color: "blue" }]}
+            >
+              Berdasarkan Formasi Wakil Kepala Sekolah Jenjang SPK Tahun
+              Pelajaran 2024/2025 tanggal 13 Juni 2024.
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: "row", marginTop: 10 }}>
+          <View
+            style={{
+              width: "25%",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={styles.textNormal}>Menetapkan</Text>
+            <Text style={styles.textNormal}>:</Text>
+          </View>
+          <View style={{ flex: 1, width: "75%" }}>
+            <Text style={[styles.textNormal, { paddingLeft: 5 }]}>
+              <Text style={[styles.textBold, { color: "blue" }]}>
+                Sdr. {namaLengkap}
+              </Text>
+              Sebagai
+              <Text style={[styles.textBold, { color: "blue" }]}>
+                {jabatan} Bidang Kesiswaan di {divisiList}.
+              </Text>
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <Text style={[styles.textNormal, { marginTop: 15 }]}>
+        Dalam dinas Badan Pendidikan Kristen PENABUR Jakarta dengan
+        ketentuan-ketentuan sebagai berikut
+      </Text>
+
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginTop: 15,
+        }}
+      >
+        <View style={{ flexDirection: "row" }}>
+          <Text style={[styles.textNormal, { width: 20 }]}>a)</Text>
+          <Text style={styles.textNormal}>
+            Pengangkatan ini berlaku mulai tanggal{" "}
+            <Text style={[styles.textBold, { color: "blue" }]}>
+              1 Juli 2024
+            </Text>{" "}
+            s.d{" "}
+            <Text style={[styles.textBold, { color: "blue" }]}>
+              30 Juni 2025;
+            </Text>
+          </Text>
+        </View>
+        <Text style={styles.textNormal}>:</Text>
+      </View>
+
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginTop: 15,
+        }}
+      >
+        <View style={{ flexDirection: "row" }}>
+          <Text style={[styles.textNormal, { width: 20 }]}>b)</Text>
+          <Text style={styles.textNormal}>
+            Segala sesuatu akan diubah dan diperhitungkan sebagaimana mestinya,
+            apabila di kemudian hari ternyata terdapat kekeliruan dalam Surat
+            Pengangkatan ini.
+          </Text>
+        </View>
+      </View>
+
+      <Text style={[styles.textNormal, { marginTop: 15 }]}>
+        Demikian Surat Pengangkatan ini dibuat, semoga Saudara dapat menerima
+        dan melaksanakan tugas Saudara dengan baik.
+      </Text>
+
+      <View
+        style={{
+          alignSelf: "flex-end",
+          marginRight: 30,
+          alignItems: "center",
+          marginTop: 20,
+        }}
+      >
+        <Text style={styles.textNormal}>
+          Jakarta, <Text style={{ color: "blue" }}>tanggal surat</Text>
+        </Text>
+        <Text style={styles.textNormal}>BPK PENABUR Jakarta,</Text>
+
+        <Text
+          style={[
+            styles.textBold,
+            { textDecoration: "underline", marginTop: 70, color: "blue" },
+          ]}
+        >
+          Irani Waruwu
+        </Text>
+        <Text style={styles.textNormal}> Plt. Direktur Pelaksana</Text>
+      </View>
+    </Page>
+  );
+}
+
+const styles = StyleSheet.create({
+  containerDocument: {
+    height: "11.69in",
+    width: "8.26in",
+    backgroundColor: "white",
+    alignSelf: "center",
+    paddingHorizontal: 83.52 - 18.27,
+    paddingTop: 120,
+    paddingBottom: 75.84,
+  },
+
+  containerHeader: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  kopSurat: {
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: "100%",
+  },
+
+  textBold: {
+    fontFamily: "Times New Roman",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+
+  textNormal: {
+    fontFamily: "Times New Roman",
+    fontSize: 12,
+    textAlign: "justify",
+  },
+
+  titleHeader: {
+    fontFamily: "Times New Roman",
+    textDecoration: "underline",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+});

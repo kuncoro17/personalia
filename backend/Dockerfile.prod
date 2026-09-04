@@ -1,0 +1,41 @@
+# Multi-stage build for backend
+ARG NODE_IMAGE=node:20-alpine
+FROM ${NODE_IMAGE} AS base
+
+FROM base AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=optional --no-audit --no-fund \
+  && test -f /app/node_modules/tsx/dist/cli.mjs \
+  && npm cache clean --force
+
+FROM base AS deps-dev
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=optional && npm cache clean --force
+
+FROM base AS dev
+WORKDIR /app
+COPY --from=deps-dev /app/node_modules ./node_modules
+COPY . .
+EXPOSE 3001
+CMD ["npm", "run", "dev"]
+
+FROM base AS production
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 hono \
+  && mkdir -p uploads/docs uploads/karyawan \
+  && chown -R hono:nodejs /app
+
+USER hono
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+
+CMD ["npm", "start"]

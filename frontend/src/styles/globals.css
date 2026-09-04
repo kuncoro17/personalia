@@ -1,0 +1,60 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+@import "tailwindcss";
+
+@config "../../tailwind.config.js";
+
+:root {
+  background: #f8fafc;
+  color-scheme: light;
+}
+
+:root.dark {
+  background: #020617;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+:root.dark body {
+  background: #020617;
+  color: #e2e8f0;
+}
+
+:root.dark .bg-white {
+  background-color: #0f172a;
+}
+
+:root.dark .bg-\[\#FBFCFE\] {
+  background-color: #0b1220;
+}
+
+:root.dark .bg-\[\#F5F7FA\] {
+  background-color: #111827;
+}
+
+:root.dark .text-primary,
+:root.dark .text-\[\#0B345E\] {
+  color: #e2e8f0;
+}
+
+:root.dark .border-\[\#00000010\] {
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+:root.dark img[src$=".svg"] {
+  color-scheme: light;
+}

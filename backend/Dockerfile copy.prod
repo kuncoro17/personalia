@@ -1,0 +1,40 @@
+# Multi-stage build for backend
+FROM node:20-alpine AS base
+
+FROM base AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci && npm cache clean --force
+
+FROM base AS dev
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+EXPOSE 3001
+CMD ["npm", "run", "dev"]
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build 2>/dev/null || echo "No build script found, using source directly"
+
+FROM base AS production
+WORKDIR /app
+
+# Keep full dependencies because runtime uses tsx via `npm start`.
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app ./
+
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 hono \
+  && mkdir -p uploads/docs uploads/karyawan \
+  && chown -R hono:nodejs /app
+
+USER hono
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+
+CMD ["npm", "start"]

@@ -1,93 +1,363 @@
-# personalia-jkt
+# Personalia JKT
 
+Monorepo fullstack untuk aplikasi Personalia JKT.
 
+- `backend`: Node.js API berbasis Hono
+- `frontend`: React, Vite, Tailwind CSS, dan HeroUI
+- `deployment`: Docker Compose, konfigurasi Nginx, dan observability
 
-## Getting started
+Repo ini memakai alur branch feature menuju `main` melalui Merge Request. Pipeline Merge Request hanya melakukan validasi; setelah merge ke `main`, staging dideploy otomatis dan production tersedia sebagai job manual.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Stack
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Node.js 20
+- Backend: Hono, TypeScript, Sequelize, PostgreSQL, Redis
+- Frontend: React 18, Vite, Tailwind CSS, HeroUI, React Router
+- Auth: Clerk
+- Runtime: Docker + Nginx
+- CI/CD: GitLab CI
 
-## Add your files
+## Arsitektur Staging
 
-* [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+Service utama di server:
 
+- Frontend container: `127.0.0.1:3000`
+- Backend container: `127.0.0.1:3001`
+- Loki: `127.0.0.1:3100`
+- Promtail: `127.0.0.1:9080`
+
+Domain staging:
+
+- Frontend: `https://staging-personalia.bpkpenaburjakarta.or.id`
+- API publik: `https://api-staging-personalia.bpkpenaburjakarta.or.id`
+
+Routing Nginx host:
+
+- `staging-personalia...` path `/` -> `127.0.0.1:3000`
+- `staging-personalia...` path `/api/` -> `127.0.0.1:3001`
+- `api-staging-personalia...` -> `127.0.0.1:3001`
+
+Catatan CORS untuk testing dari localhost:
+
+- Kalau frontend dijalankan di `http://localhost:5173` dan `VITE_API_URL` diarahkan ke domain staging, browser akan melakukan request cross-origin ke `api-staging...`.
+- Pastikan backend staging mengizinkan origin tersebut lewat `CORS_ALLOWED_ORIGINS`, contoh `http://localhost:5173`.
+
+## Struktur Folder
+
+```text
+backend/
+frontend/
+deployment/
+  be/
+    init-db.sql
+  compose/
+    docker-compose.local.yml
+    docker-compose.staging.yml
+  nginx/
+    staging/
+      frontend.conf
+      api.conf
+  observability/
+    loki-config.yaml
+    promtail-config.yaml
+.gitlab-ci.yml
 ```
-cd existing_repo
-git remote add origin https://gitlab.penabur.org/kuncoro017/personalia-jkt.git
-git branch -M main
-git push -uf origin main
+
+## Local Development
+
+Gunakan Node.js 20 atau versi LTS yang kompatibel.
+
+Install dependency backend dan frontend:
+
+```bash
+npm --prefix backend ci
+npm --prefix frontend ci
 ```
 
-## Integrate with your tools
+Jalankan backend:
 
-* [Set up project integrations](https://gitlab.penabur.org/kuncoro017/personalia-jkt/-/settings/integrations)
+```bash
+npm --prefix backend run dev
+```
 
-## Collaborate with your team
+Jalankan frontend:
 
-* [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```bash
+npm --prefix frontend run dev
+```
 
-## Test and Deploy
+Default Vite dev server biasanya berjalan di:
 
-Use the built-in continuous integration in GitLab.
+```text
+http://localhost:5173
+```
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Untuk cek sebelum membuat Merge Request:
 
-***
+```bash
+npm run lint:check
+npm run format:check
+npm run test:ci
+npm run build
+```
 
-# Editing this README
+## Local Docker
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Contoh menjalankan stack lokal lewat Docker Compose:
 
-## Suggestions for a good README
+```bash
+docker compose \
+  -f deployment/compose/docker-compose.local.yml \
+  --env-file .env.example \
+  up -d --build
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Akses default lokal:
 
-## Name
-Choose a self-explaining name for your project.
+- Frontend: `http://localhost:3003`
+- Backend: `http://localhost:3002`
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Stop service:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+docker compose -f deployment/compose/docker-compose.local.yml down
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Menjalankan Lokal Otomatis
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Untuk local dev tanpa mengetik beberapa command manual:
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+npm run dev
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Command ini akan menyiapkan frontend, menjalankan service Docker Compose yang dibutuhkan, menunggu backend sehat, lalu membuka flow lokal sesuai konfigurasi project.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Untuk menghentikan container Docker yang dinyalakan flow ini:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```bash
+npm run dev:stop
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Environment Variables
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Contoh variable ada di `.env.example`.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Untuk local development, buat file `.env` sendiri:
 
-## License
-For open source projects, say how it is licensed.
+```bash
+cp .env.example .env
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Jangan commit file berikut:
+
+- `.env`
+- `.env.local`
+- `.env.staging`
+- `.env.production`
+- secret key atau credential apa pun
+
+Variable secret untuk staging dan production harus disimpan di GitLab CI/CD Variables, bukan di repository.
+
+## Developer Workflow
+
+Jangan kerja langsung di `main`.
+
+Mulai dari branch terbaru:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/login
+```
+
+Kerjakan perubahan, lalu cek di local sebelum push:
+
+```bash
+npm run lint:check
+npm run format:check
+npm run test:ci
+npm run build
+```
+
+Jika sudah aman, commit dan push branch:
+
+```bash
+git add .
+git commit -m "Add login feature"
+git push -u origin feature/login
+```
+
+Setelah push selesai, buka GitLab web untuk membuat Merge Request.
+
+## Membuat Merge Request di GitLab Web
+
+1. Buka halaman project di GitLab.
+2. Biasanya GitLab menampilkan tombol **Create merge request** untuk branch yang baru dipush.
+3. Klik **Create merge request**.
+4. Pastikan source branch adalah branch developer, contoh `feature/login`.
+5. Pilih `main` sebagai target branch.
+6. Isi title dengan ringkas, contoh `Add login feature`.
+7. Isi description dengan poin perubahan dan cara test jika ada.
+8. Tunggu pipeline selesai.
+9. Jika pipeline hijau dan review sudah oke, MR bisa di-merge.
+
+Contoh nama branch:
+
+- `feature/login`
+- `feature/dashboard-filter`
+- `fix/navbar-mobile`
+- `fix/api-error-state`
+- `chore/update-dependencies`
+
+## CI/CD Flow
+
+Pipeline GitLab menjalankan stage berikut:
+
+- `validate`
+- `quality`
+- `build`
+- `security`
+- `deploy-staging`
+- `post-deploy-staging`
+- `deploy-production`
+- `post-deploy-production`
+
+Saat Merge Request menuju `main` dibuat, pipeline menjalankan lint, format check, test, build backend/frontend, dan Trivy filesystem scan. Job deployment dan variable protected tidak tersedia di pipeline Merge Request.
+
+Saat Merge Request digabungkan ke `main`:
+
+1. Backend dan frontend divalidasi.
+2. SonarQube berjalan jika `SONAR_ENABLED=true`.
+3. Image backend dan frontend staging dengan tag commit dibuat dan dipush ke GitLab Container Registry.
+4. Trivy memindai image dan menyimpan report tanpa memblokir pipeline.
+5. Staging dideploy otomatis dan kedua endpoint publik diperiksa.
+6. Production tersedia sebagai job manual. Job ini menolak variable kosong atau `change this`, membangun frontend production, memindai image, menjalankan migration, lalu deploy.
+7. Health check production berjalan setelah deployment manual sukses.
+
+## Required GitLab CI/CD Variables
+
+Quality:
+
+- `SONAR_ENABLED`
+- `SONAR_HOST_URL`
+- `SONAR_TOKEN`
+
+Staging:
+
+- `STAGING_SERVER_USER`
+- `STAGING_SERVER_IP`
+- `STAGING_SSH_PORT`
+- `STAGING_SSH_PRIVATE_KEY` (File)
+- `STAGING_SSH_KNOWN_HOSTS` (File)
+- `STAGING_ENV_FILE` (File)
+- `STAGING_DOMAIN`
+- `STAGING_API_DOMAIN`
+- `STAGING_FE_CLERK_PUBLISHABLE_KEY`
+- `STAGING_FE_CLERK_SIGN_IN_URL`
+- `STAGING_FE_CLERK_DOMAIN`
+- `STAGING_FE_CLERK_IS_SATELLITE`
+- `STAGING_FE_SAS_PORTAL_URL`
+- `STAGING_FE_SAS_SDM_URL`
+
+Production:
+
+- `PRODUCTION_SERVER_USER`
+- `PRODUCTION_SERVER_IP`
+- `PRODUCTION_SSH_PORT`
+- `PRODUCTION_SSH_PRIVATE_KEY` (File)
+- `PRODUCTION_SSH_KNOWN_HOSTS` (File)
+- `PRODUCTION_ENV_FILE` (File)
+- `PRODUCTION_DOMAIN`
+- `PRODUCTION_API_DOMAIN`
+- `PRODUCTION_FE_CLERK_PUBLISHABLE_KEY`
+- `PRODUCTION_FE_CLERK_SIGN_IN_URL`
+- `PRODUCTION_FE_CLERK_DOMAIN`
+- `PRODUCTION_FE_CLERK_IS_SATELLITE`
+- `PRODUCTION_FE_SAS_PORTAL_URL`
+- `PRODUCTION_FE_SAS_SDM_URL`
+
+GitLab menyediakan `CI_REGISTRY`, `CI_REGISTRY_IMAGE`, dan `CI_JOB_TOKEN`; pipeline tidak memerlukan credential registry tambahan. Variable production bernilai `change this` harus diganti sebelum job manual dijalankan.
+
+## Deployment Staging Manual
+
+Jika perlu deploy manual di server:
+
+```bash
+cd /opt/personalia-jkt
+export BACKEND_IMAGE='<registry>/personalia-jkt:backend-<commit-sha>'
+export FRONTEND_IMAGE='<registry>/personalia-jkt:frontend-staging-<commit-sha>'
+export BACKEND_ENV_FILE='.env.staging'
+docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml pull
+docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans
+```
+
+Cek service:
+
+```bash
+docker compose -f deployment/compose/docker-compose.staging.yml ps
+```
+
+## Nginx Host
+
+Template konfigurasi Nginx ada di:
+
+- `deployment/nginx/staging/frontend.conf`
+- `deployment/nginx/staging/api.conf`
+
+Contoh pemasangan:
+
+```bash
+sudo cp deployment/nginx/staging/frontend.conf /etc/nginx/sites-available/personalia-frontend
+sudo cp deployment/nginx/staging/api.conf /etc/nginx/sites-available/personalia-api
+sudo ln -sf /etc/nginx/sites-available/personalia-frontend /etc/nginx/sites-enabled/personalia-frontend
+sudo ln -sf /etc/nginx/sites-available/personalia-api /etc/nginx/sites-enabled/personalia-api
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+SSL dijalankan manual di server, misalnya dengan Let's Encrypt.
+
+## Useful Commands
+
+Update branch feature dengan perubahan terbaru dari `main`:
+
+```bash
+git checkout main
+git pull origin main
+git checkout feature/login
+git merge main
+```
+
+Hapus branch local setelah MR sudah merge:
+
+```bash
+git checkout main
+git pull origin main
+git branch -d feature/login
+```
+
+Preview production build frontend secara local:
+
+```bash
+npm --prefix frontend run build
+npm --prefix frontend run preview
+```
+
+## Troubleshooting Singkat
+
+1. Missing CI variable
+
+Tambahkan variable yang disebutkan error ke GitLab CI/CD Variables.
+
+2. Container backend/frontend tidak healthy
+
+Cek log container di server:
+
+```bash
+docker logs personalia-jkt-backend --tail 200
+docker logs personalia-jkt-frontend --tail 200
+```
+
+3. `no space left on device` saat deploy
+
+Bersihkan Docker cache, image lama, dan container yang tidak dipakai di server.

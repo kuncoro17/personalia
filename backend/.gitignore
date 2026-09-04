@@ -1,0 +1,44 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+.env
+
+# TypeScript cache
+*.tsbuildinfo
+
+
+
+
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# Docker files (optional)
+docker-compose.override.yml
+
+# Redis dump
+dump.rdb
+
+# Git
+.git/
+
+# Optional: ignore coverage from testing
+coverage/
+Dockerfile

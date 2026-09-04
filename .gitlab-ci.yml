@@ -1,0 +1,536 @@
+stages:
+  - validate
+  - quality
+  - build
+  - security
+  - deploy-staging
+  - post-deploy-staging
+  - deploy-production
+  - post-deploy-production
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
+
+variables:
+  APP_NAME: personalia-jkt
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  GIT_DEPTH: "1"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  CI_IMAGE_PREFIX: ""
+  BACKEND_IMAGE: "$CI_REGISTRY_IMAGE:backend-$CI_COMMIT_SHORT_SHA"
+  STAGING_FRONTEND_IMAGE: "$CI_REGISTRY_IMAGE:frontend-staging-$CI_COMMIT_SHORT_SHA"
+  PRODUCTION_FRONTEND_IMAGE: "$CI_REGISTRY_IMAGE:frontend-production-$CI_COMMIT_SHORT_SHA"
+  TRIVY_NO_PROGRESS: "true"
+  TRIVY_CACHE_DIR: "$CI_PROJECT_DIR/.trivycache"
+  SONAR_ENABLED: "false"
+
+default:
+  image: "${CI_IMAGE_PREFIX}node:20-alpine"
+  interruptible: true
+
+cache:
+  key:
+    files:
+      - backend/package-lock.json
+      - frontend/package-lock.json
+  paths:
+    - .npm/
+
+.main-and-mr-rules: &main-and-mr-rules
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+  - if: '$CI_COMMIT_BRANCH == "main"'
+
+.main-only-rules: &main-only-rules
+  - if: '$CI_COMMIT_BRANCH == "main"'
+
+.docker-build-template: &docker-build-template
+  stage: build
+  image: "${CI_IMAGE_PREFIX}docker:24.0.7"
+  services:
+    - name: "${CI_IMAGE_PREFIX}docker:24.0.7-dind"
+      alias: docker
+  timeout: 30m
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+  before_script:
+    - test -n "$CI_REGISTRY" || { echo "CI_REGISTRY is unavailable"; exit 1; }
+    - test -n "$CI_REGISTRY_IMAGE" || { echo "CI_REGISTRY_IMAGE is unavailable"; exit 1; }
+    - printf '%s' "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
+    - docker info
+  rules: *main-only-rules
+
+.staging-ssh-template: &staging-ssh-template
+  image: "${CI_IMAGE_PREFIX}alpine:3.20"
+  interruptible: false
+  timeout: 30m
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+  before_script:
+    - apk add --no-cache openssh-client rsync docker-cli
+    - |
+      for variable in STAGING_SERVER_USER STAGING_SERVER_IP STAGING_SSH_PORT; do
+        value="$(printenv "$variable" || true)"
+        if [ -z "$value" ] || [ "$value" = "change this" ]; then
+          echo "$variable is not configured"
+          exit 1
+        fi
+      done
+    - |
+      for variable in STAGING_ENV_FILE STAGING_SSH_PRIVATE_KEY STAGING_SSH_KNOWN_HOSTS; do
+        path="$(printenv "$variable" || true)"
+        if [ -z "$path" ] || [ ! -s "$path" ] || grep -Fqx "change this" "$path"; then
+          echo "$variable is missing, empty, or still a placeholder"
+          exit 1
+        fi
+      done
+    - install -m 700 -d ~/.ssh
+    - awk '{ sub(/\r$/, ""); print }' "$STAGING_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keygen -y -P '' -f ~/.ssh/id_rsa >/dev/null
+    - awk '{ sub(/\r$/, ""); print }' "$STAGING_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+
+# -------------------- Validate --------------------
+
+lint-backend:
+  stage: validate
+  timeout: 15m
+  before_script:
+    - npm --prefix backend ci --cache "$NPM_CONFIG_CACHE" --no-audit --no-fund --prefer-offline --omit=optional
+  script:
+    - npm --prefix backend run lint:check
+    - npm --prefix backend run format:check
+  rules: *main-and-mr-rules
+
+build-backend:
+  stage: validate
+  timeout: 15m
+  before_script:
+    - npm --prefix backend ci --cache "$NPM_CONFIG_CACHE" --no-audit --no-fund --prefer-offline --omit=optional
+  script:
+    - npm --prefix backend run build
+  rules: *main-and-mr-rules
+
+test-backend:
+  stage: validate
+  timeout: 20m
+  variables:
+    NODE_ENV: test
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_USER: postgres
+    DB_PASSWORD: postgres
+    DB_NAME: personalia_test
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: ""
+    AUTO_SYNC_MODELS: "true"
+  services:
+    - name: "${CI_IMAGE_PREFIX}postgres:15-alpine"
+      alias: postgres
+      variables:
+        POSTGRES_DB: personalia_test
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+    - name: "${CI_IMAGE_PREFIX}redis:7-alpine"
+      alias: redis
+  before_script:
+    - npm --prefix backend ci --cache "$NPM_CONFIG_CACHE" --no-audit --no-fund --prefer-offline --omit=optional
+    - apk add --no-cache postgresql-client
+    - timeout 60 sh -c 'until PGPASSWORD="$DB_PASSWORD" pg_isready -h postgres -p 5432 -U "$DB_USER" -d "$DB_NAME"; do echo "Waiting for PostgreSQL..."; sleep 2; done'
+  script:
+    - npm --prefix backend run test:ci
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    when: always
+    paths:
+      - backend/coverage/
+    expire_in: 1 week
+  rules: *main-and-mr-rules
+
+lint-frontend:
+  stage: validate
+  timeout: 15m
+  before_script:
+    - npm --prefix frontend ci --cache "$NPM_CONFIG_CACHE" --no-audit --no-fund --prefer-offline
+  script:
+    - npm --prefix frontend run lint:check
+    - npm --prefix frontend run format:check
+  rules: *main-and-mr-rules
+
+test-frontend:
+  stage: validate
+  timeout: 15m
+  before_script:
+    - npm --prefix frontend ci --cache "$NPM_CONFIG_CACHE" --no-audit --no-fund --prefer-offline
+  script:
+    - npm --prefix frontend run test:ci
+  rules: *main-and-mr-rules
+
+build-frontend:
+  stage: validate
+  timeout: 15m
+  before_script:
+    - npm --prefix frontend ci --cache "$NPM_CONFIG_CACHE" --no-audit --no-fund --prefer-offline
+  script:
+    - npm --prefix frontend run build
+  rules: *main-and-mr-rules
+
+trivy-fs-scan:
+  stage: validate
+  image:
+    name: docker.io/aquasec/trivy:latest
+    entrypoint: [""]
+  timeout: 20m
+  allow_failure: true
+  cache:
+    key: trivy-cache
+    policy: pull-push
+    paths:
+      - .trivycache/
+  script:
+    - trivy --version
+    - |
+      trivy fs \
+        --scanners vuln,secret,misconfig \
+        --severity HIGH,CRITICAL \
+        --exit-code 0 \
+        --format table \
+        --output trivy-fs-report.txt \
+        --skip-dirs node_modules \
+        --skip-dirs dist \
+        --skip-dirs coverage \
+        --skip-dirs .git \
+        --skip-dirs .npm \
+        --skip-dirs .sonar \
+        --skip-dirs .trivycache \
+        .
+  after_script:
+    - test -f trivy-fs-report.txt && cat trivy-fs-report.txt || true
+  artifacts:
+    when: always
+    paths:
+      - trivy-fs-report.txt
+    expire_in: 1 week
+  rules: *main-and-mr-rules
+
+# -------------------- Quality --------------------
+
+sonarqube-check:
+  stage: quality
+  image:
+    name: sonarsource/sonar-scanner-cli:11
+    entrypoint: [""]
+  timeout: 20m
+  variables:
+    SONAR_USER_HOME: "$CI_PROJECT_DIR/.sonar"
+    GIT_DEPTH: "0"
+  cache:
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+    policy: pull-push
+    paths:
+      - .sonar/cache/
+  script:
+    - test -n "$SONAR_HOST_URL" && [ "$SONAR_HOST_URL" != "change this" ] || { echo "SONAR_HOST_URL is not configured"; exit 1; }
+    - test -n "$SONAR_TOKEN" && [ "$SONAR_TOKEN" != "change this" ] || { echo "SONAR_TOKEN is not configured"; exit 1; }
+    - sonar-scanner -Dsonar.host.url="$SONAR_HOST_URL"
+  needs:
+    - job: test-backend
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $SONAR_ENABLED == "true"'
+
+# -------------------- Build --------------------
+
+build-backend-image:
+  <<: *docker-build-template
+  script:
+    - |
+      docker build \
+        --label "app=$APP_NAME" \
+        --label "ci.commit=$CI_COMMIT_SHA" \
+        --build-arg NODE_IMAGE="${CI_IMAGE_PREFIX}node:20-alpine" \
+        -t "$BACKEND_IMAGE" \
+        -f backend/Dockerfile.prod \
+        backend
+    - docker push "$BACKEND_IMAGE"
+
+build-frontend-staging-image:
+  <<: *docker-build-template
+  environment:
+    name: staging
+    action: prepare
+  script:
+    - |
+      for variable in STAGING_API_DOMAIN STAGING_FE_CLERK_PUBLISHABLE_KEY STAGING_FE_CLERK_SIGN_IN_URL STAGING_FE_CLERK_DOMAIN STAGING_FE_CLERK_IS_SATELLITE STAGING_FE_SAS_PORTAL_URL STAGING_FE_SAS_SDM_URL; do
+        value="$(printenv "$variable" || true)"
+        if [ -z "$value" ] || [ "$value" = "change this" ]; then
+          echo "$variable is not configured"
+          exit 1
+        fi
+      done
+    - |
+      case "$STAGING_API_DOMAIN" in
+        http://*|https://*) staging_api_url="${STAGING_API_DOMAIN%/}" ;;
+        *) staging_api_url="https://${STAGING_API_DOMAIN%/}" ;;
+      esac
+      docker build \
+        --label "app=$APP_NAME" \
+        --label "ci.commit=$CI_COMMIT_SHA" \
+        --build-arg NODE_IMAGE="${CI_IMAGE_PREFIX}node:20-alpine" \
+        --build-arg VITE_API_URL="$staging_api_url" \
+        --build-arg VITE_CLERK_PUBLISHABLE_KEY="$STAGING_FE_CLERK_PUBLISHABLE_KEY" \
+        --build-arg VITE_CLERK_SIGN_IN_URL="$STAGING_FE_CLERK_SIGN_IN_URL" \
+        --build-arg VITE_CLERK_DOMAIN="$STAGING_FE_CLERK_DOMAIN" \
+        --build-arg VITE_CLERK_IS_SATELLITE="$STAGING_FE_CLERK_IS_SATELLITE" \
+        --build-arg VITE_SAS_PORTAL_URL="$STAGING_FE_SAS_PORTAL_URL" \
+        --build-arg VITE_SAS_SDM_URL="$STAGING_FE_SAS_SDM_URL" \
+        -t "$STAGING_FRONTEND_IMAGE" \
+        -f frontend/Dockerfile.prod \
+        frontend
+    - docker push "$STAGING_FRONTEND_IMAGE"
+
+# -------------------- Security --------------------
+
+trivy-image-scan:
+  stage: security
+  image:
+    name: docker.io/aquasec/trivy:latest
+    entrypoint: [""]
+  timeout: 25m
+  allow_failure: true
+  variables:
+    GIT_STRATEGY: none
+    TRIVY_USERNAME: gitlab-ci-token
+    TRIVY_PASSWORD: "$CI_JOB_TOKEN"
+  cache:
+    key: trivy-cache
+    policy: pull-push
+    paths:
+      - .trivycache/
+  script:
+    - trivy --version
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 --format table --output trivy-backend-image-report.txt "$BACKEND_IMAGE"
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 --format table --output trivy-frontend-staging-image-report.txt "$STAGING_FRONTEND_IMAGE"
+  after_script:
+    - test -f trivy-backend-image-report.txt && cat trivy-backend-image-report.txt || true
+    - test -f trivy-frontend-staging-image-report.txt && cat trivy-frontend-staging-image-report.txt || true
+  artifacts:
+    when: always
+    paths:
+      - trivy-backend-image-report.txt
+      - trivy-frontend-staging-image-report.txt
+    expire_in: 1 week
+  needs:
+    - build-backend-image
+    - build-frontend-staging-image
+  rules: *main-only-rules
+
+# -------------------- Staging --------------------
+
+deploy-staging:
+  stage: deploy-staging
+  <<: *staging-ssh-template
+  resource_group: staging
+  script:
+    - export STAGING_TARGET="$STAGING_SERVER_USER@$STAGING_SERVER_IP"
+    - export STAGING_TMP_DIR="/tmp/$APP_NAME-$CI_PIPELINE_ID-staging"
+    - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
+    - |
+      ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" \
+        "sudo mkdir -p '/opt/$APP_NAME/deployment' '/opt/$APP_NAME/backend/uploads/karyawan' '/opt/$APP_NAME/backend/uploads/docs' && \
+         sudo chown -R '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME' && \
+         sudo chown -R 1001:1001 '/opt/$APP_NAME/backend/uploads'"
+    - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $STAGING_SSH_PORT" deployment/ "$STAGING_TARGET:/opt/$APP_NAME/deployment/"
+    - scp -P "$STAGING_SSH_PORT" "$STAGING_ENV_FILE" "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
+    - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging' && sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging' && rm -rf '$STAGING_TMP_DIR'"
+    - printf '%s' "$CI_JOB_TOKEN" | ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "docker login -u gitlab-ci-token --password-stdin '$CI_REGISTRY'"
+    - |
+      ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "
+        cd '/opt/$APP_NAME' &&
+        export BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$STAGING_FRONTEND_IMAGE' BACKEND_ENV_FILE='.env.staging' &&
+        docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml config --quiet &&
+        docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml pull &&
+        docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml up -d postgres redis &&
+        docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml run --rm backend npm run migrate &&
+        docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans &&
+        docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml ps
+      "
+  environment:
+    name: staging
+    url: "https://$STAGING_DOMAIN"
+  needs:
+    - build-backend-image
+    - build-frontend-staging-image
+    - trivy-image-scan
+  rules: *main-only-rules
+
+health-check-staging:
+  stage: post-deploy-staging
+  image: curlimages/curl:8.11.1
+  timeout: 5m
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+  script:
+    - |
+      case "$STAGING_DOMAIN" in
+        http://*|https://*) frontend_url="${STAGING_DOMAIN%/}" ;;
+        *) frontend_url="https://${STAGING_DOMAIN%/}" ;;
+      esac
+      case "$STAGING_API_DOMAIN" in
+        http://*|https://*) api_url="${STAGING_API_DOMAIN%/}" ;;
+        *) api_url="https://${STAGING_API_DOMAIN%/}" ;;
+      esac
+      frontend_response="$(curl -fsSL --retry 6 --retry-delay 5 --max-time 20 "$frontend_url/health")"
+      printf '%s\n' "$frontend_response"
+      printf '%s' "$frontend_response" | grep -Eq '^ok[[:space:]]*$'
+      api_response="$(curl -fsSL --retry 6 --retry-delay 5 --max-time 20 "$api_url/health")"
+      printf '%s\n' "$api_response"
+      printf '%s' "$api_response" | grep -Eq '"status"[[:space:]]*:[[:space:]]*"healthy"'
+  environment:
+    name: staging
+    url: "https://$STAGING_DOMAIN"
+  needs:
+    - deploy-staging
+  rules: *main-only-rules
+
+# -------------------- Production --------------------
+
+deploy-production:
+  stage: deploy-production
+  image: "${CI_IMAGE_PREFIX}docker:24.0.7"
+  services:
+    - name: "${CI_IMAGE_PREFIX}docker:24.0.7-dind"
+      alias: docker
+  interruptible: false
+  timeout: 45m
+  resource_group: production
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - |
+      for variable in PRODUCTION_SERVER_USER PRODUCTION_SERVER_IP PRODUCTION_SSH_PORT PRODUCTION_DOMAIN PRODUCTION_API_DOMAIN PRODUCTION_FE_CLERK_PUBLISHABLE_KEY PRODUCTION_FE_CLERK_SIGN_IN_URL PRODUCTION_FE_CLERK_DOMAIN PRODUCTION_FE_CLERK_IS_SATELLITE PRODUCTION_FE_SAS_PORTAL_URL PRODUCTION_FE_SAS_SDM_URL; do
+        value="$(printenv "$variable" || true)"
+        if [ -z "$value" ] || [ "$value" = "change this" ]; then
+          echo "$variable is not configured"
+          exit 1
+        fi
+      done
+    - |
+      for variable in PRODUCTION_ENV_FILE PRODUCTION_SSH_PRIVATE_KEY PRODUCTION_SSH_KNOWN_HOSTS; do
+        path="$(printenv "$variable" || true)"
+        if [ -z "$path" ] || [ ! -s "$path" ] || grep -Fqx "change this" "$path"; then
+          echo "$variable is missing, empty, or still a placeholder"
+          exit 1
+        fi
+      done
+    - install -m 700 -d ~/.ssh
+    - awk '{ sub(/\r$/, ""); print }' "$PRODUCTION_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keygen -y -P '' -f ~/.ssh/id_rsa >/dev/null
+    - awk '{ sub(/\r$/, ""); print }' "$PRODUCTION_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+    - printf '%s' "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
+    - docker info
+  script:
+    - |
+      case "$PRODUCTION_API_DOMAIN" in
+        http://*|https://*) production_api_url="${PRODUCTION_API_DOMAIN%/}" ;;
+        *) production_api_url="https://${PRODUCTION_API_DOMAIN%/}" ;;
+      esac
+      docker build \
+        --label "app=$APP_NAME" \
+        --label "ci.commit=$CI_COMMIT_SHA" \
+        --build-arg NODE_IMAGE="${CI_IMAGE_PREFIX}node:20-alpine" \
+        --build-arg VITE_API_URL="$production_api_url" \
+        --build-arg VITE_CLERK_PUBLISHABLE_KEY="$PRODUCTION_FE_CLERK_PUBLISHABLE_KEY" \
+        --build-arg VITE_CLERK_SIGN_IN_URL="$PRODUCTION_FE_CLERK_SIGN_IN_URL" \
+        --build-arg VITE_CLERK_DOMAIN="$PRODUCTION_FE_CLERK_DOMAIN" \
+        --build-arg VITE_CLERK_IS_SATELLITE="$PRODUCTION_FE_CLERK_IS_SATELLITE" \
+        --build-arg VITE_SAS_PORTAL_URL="$PRODUCTION_FE_SAS_PORTAL_URL" \
+        --build-arg VITE_SAS_SDM_URL="$PRODUCTION_FE_SAS_SDM_URL" \
+        -t "$PRODUCTION_FRONTEND_IMAGE" \
+        -f frontend/Dockerfile.prod \
+        frontend
+    - docker push "$PRODUCTION_FRONTEND_IMAGE"
+    - export TRIVY_USERNAME=gitlab-ci-token TRIVY_PASSWORD="$CI_JOB_TOKEN"
+    - docker run --rm -e TRIVY_USERNAME -e TRIVY_PASSWORD docker.io/aquasec/trivy:latest image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 --format table "$PRODUCTION_FRONTEND_IMAGE" | tee trivy-production-frontend-image-report.txt
+    - export PRODUCTION_TARGET="$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP"
+    - export PRODUCTION_TMP_DIR="/tmp/$APP_NAME-$CI_PIPELINE_ID-production"
+    - ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "mkdir -p '$PRODUCTION_TMP_DIR'"
+    - |
+      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" \
+        "sudo mkdir -p '/opt/$APP_NAME/deployment' '/opt/$APP_NAME/backend/uploads/karyawan' '/opt/$APP_NAME/backend/uploads/docs' && \
+         sudo chown -R '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME' && \
+         sudo chown -R 1001:1001 '/opt/$APP_NAME/backend/uploads'"
+    - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $PRODUCTION_SSH_PORT" deployment/ "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/"
+    - scp -P "$PRODUCTION_SSH_PORT" "$PRODUCTION_ENV_FILE" "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/.env.production"
+    - ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production' && sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production' && rm -rf '$PRODUCTION_TMP_DIR'"
+    - printf '%s' "$CI_JOB_TOKEN" | ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "docker login -u gitlab-ci-token --password-stdin '$CI_REGISTRY'"
+    - |
+      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "
+        cd '/opt/$APP_NAME' &&
+        export BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$PRODUCTION_FRONTEND_IMAGE' BACKEND_ENV_FILE='.env.production' &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml config --quiet &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml pull &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml up -d postgres redis &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml run --rm backend npm run migrate &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml ps
+      "
+  artifacts:
+    when: always
+    paths:
+      - trivy-production-frontend-image-report.txt
+    expire_in: 1 week
+  environment:
+    name: production
+    url: "https://$PRODUCTION_DOMAIN"
+  needs:
+    - build-backend-image
+    - health-check-staging
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: false
+
+health-check-production:
+  stage: post-deploy-production
+  image: curlimages/curl:8.11.1
+  timeout: 5m
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+  script:
+    - |
+      case "$PRODUCTION_DOMAIN" in
+        http://*|https://*) frontend_url="${PRODUCTION_DOMAIN%/}" ;;
+        *) frontend_url="https://${PRODUCTION_DOMAIN%/}" ;;
+      esac
+      case "$PRODUCTION_API_DOMAIN" in
+        http://*|https://*) api_url="${PRODUCTION_API_DOMAIN%/}" ;;
+        *) api_url="https://${PRODUCTION_API_DOMAIN%/}" ;;
+      esac
+      frontend_response="$(curl -fsSL --retry 6 --retry-delay 5 --max-time 20 "$frontend_url/health")"
+      printf '%s\n' "$frontend_response"
+      printf '%s' "$frontend_response" | grep -Eq '^ok[[:space:]]*$'
+      api_response="$(curl -fsSL --retry 6 --retry-delay 5 --max-time 20 "$api_url/health")"
+      printf '%s\n' "$api_response"
+      printf '%s' "$api_response" | grep -Eq '"status"[[:space:]]*:[[:space:]]*"healthy"'
+  environment:
+    name: production
+    url: "https://$PRODUCTION_DOMAIN"
+  needs:
+    - deploy-production
+  rules: *main-only-rules
