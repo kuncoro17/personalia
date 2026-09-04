@@ -4,9 +4,13 @@ set -eu
 
 env_file="${1:-}"
 
-if [ -z "$env_file" ] || [ ! -s "$env_file" ]; then
-  echo "PRODUCTION_ENV_FILE is missing or empty"
+configuration_error() {
+  echo "APPLICATION_CONFIGURATION_ERROR: $*" >&2
   exit 1
+}
+
+if [ -z "$env_file" ] || [ ! -s "$env_file" ]; then
+  configuration_error "PRODUCTION_ENV_FILE is missing or empty"
 fi
 
 read_value() {
@@ -40,14 +44,12 @@ for variable in \
   SAS_AUTO_LOGIN_SECRET \
   PERSONALIA_API_KEY; do
   value="$(read_value "$variable")" || {
-    echo "$variable is missing from PRODUCTION_ENV_FILE"
-    exit 1
+    configuration_error "$variable is missing from PRODUCTION_ENV_FILE"
   }
 
   case "$value" in
     ""|"change this"|change-me*|your_*)
-      echo "$variable is not configured in PRODUCTION_ENV_FILE"
-      exit 1
+      configuration_error "$variable is not configured in PRODUCTION_ENV_FILE"
       ;;
   esac
 done
@@ -56,27 +58,23 @@ node_env="$(read_value NODE_ENV)"
 auto_sync_models="$(read_value AUTO_SYNC_MODELS)"
 
 if [ "$node_env" != "production" ]; then
-  echo "NODE_ENV must be production in PRODUCTION_ENV_FILE"
-  exit 1
+  configuration_error "NODE_ENV must be production in PRODUCTION_ENV_FILE"
 fi
 
 if [ "$auto_sync_models" != "false" ]; then
-  echo "AUTO_SYNC_MODELS must be false in PRODUCTION_ENV_FILE"
-  exit 1
+  configuration_error "AUTO_SYNC_MODELS must be false in PRODUCTION_ENV_FILE"
 fi
 
 for variable in PORT DB_PORT REDIS_PORT; do
   value="$(read_value "$variable")"
   case "$value" in
     ""|*[!0-9]*)
-      echo "$variable must be a positive integer in PRODUCTION_ENV_FILE"
-      exit 1
+      configuration_error "$variable must be a positive integer in PRODUCTION_ENV_FILE"
       ;;
   esac
 
   if [ "$value" -eq 0 ]; then
-    echo "$variable must be a positive integer in PRODUCTION_ENV_FILE"
-    exit 1
+    configuration_error "$variable must be a positive integer in PRODUCTION_ENV_FILE"
   fi
 done
 

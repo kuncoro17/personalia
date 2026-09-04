@@ -424,7 +424,7 @@ deploy-production:
       for variable in APP_NAME ACR_REGISTRY ACR_NAMESPACE ACR_USERNAME ACR_PASSWORD PRODUCTION_SERVER_USER PRODUCTION_SERVER_IP PRODUCTION_SSH_PORT PRODUCTION_DOMAIN PRODUCTION_API_DOMAIN; do
         value="$(printenv "$variable" || true)"
         if [ -z "$value" ] || [ "$value" = "change this" ]; then
-          echo "$variable is not configured"
+          echo "APPLICATION_CONFIGURATION_ERROR: $variable is not configured"
           exit 1
         fi
       done
@@ -432,7 +432,7 @@ deploy-production:
       for variable in PRODUCTION_ENV_FILE PRODUCTION_FRONTEND_ENV_FILE PRODUCTION_SSH_PRIVATE_KEY PRODUCTION_SSH_KNOWN_HOSTS; do
         path="$(printenv "$variable" || true)"
         if [ -z "$path" ] || [ ! -s "$path" ] || grep -Fqx "change this" "$path"; then
-          echo "$variable is missing, empty, or still a placeholder"
+          echo "APPLICATION_CONFIGURATION_ERROR: $variable is missing, empty, or still a placeholder"
           exit 1
         fi
       done
@@ -447,42 +447,92 @@ deploy-production:
       export FRONTEND_ENV_FILE="$PRODUCTION_FRONTEND_ENV_FILE"
       export FRONTEND_API_DOMAIN="$PRODUCTION_API_DOMAIN"
       export FRONTEND_ENV_LABEL="PRODUCTION_FRONTEND_ENV_FILE"
-      . scripts/ci/load-frontend-env.sh
-    - printf '%s' "$ACR_PASSWORD" | docker login -u "$ACR_USERNAME" --password-stdin "$ACR_REGISTRY"
-    - docker info
+      if ! . scripts/ci/load-frontend-env.sh; then
+        echo "APPLICATION_CONFIGURATION_ERROR: PRODUCTION_FRONTEND_ENV_FILE validation failed"
+        exit 1
+      fi
+    - |
+      if ! printf '%s' "$ACR_PASSWORD" | docker login -u "$ACR_USERNAME" --password-stdin "$ACR_REGISTRY"; then
+        echo "REGISTRY_ERROR: authentication to ACR failed"
+        exit 1
+      fi
+    - |
+      docker info || {
+        echo "CI_RUNNER_DOCKER_ERROR: Docker daemon is unavailable"
+        exit 1
+      }
   script:
     - |
-      docker build \
-        --label "app=$APP_NAME" \
-        --label "ci.commit=$CI_COMMIT_SHA" \
-        --build-arg NODE_IMAGE="${CI_IMAGE_PREFIX}node:20-alpine" \
-        --build-arg VITE_API_URL="$VITE_API_URL" \
-        --build-arg VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" \
-        --build-arg VITE_CLERK_SIGN_IN_URL="$VITE_CLERK_SIGN_IN_URL" \
-        --build-arg VITE_CLERK_DOMAIN="$VITE_CLERK_DOMAIN" \
-        --build-arg VITE_CLERK_IS_SATELLITE="$VITE_CLERK_IS_SATELLITE" \
-        --build-arg VITE_SAS_PORTAL_URL="$VITE_SAS_PORTAL_URL" \
-        --build-arg VITE_SAS_SDM_URL="$VITE_SAS_SDM_URL" \
-        -t "$PRODUCTION_FRONTEND_IMAGE" \
-        -f frontend/Dockerfile.prod \
-        frontend
-    - docker push "$PRODUCTION_FRONTEND_IMAGE"
+      manifest_error_file="$(mktemp)"
+      trap 'rm -f "$manifest_error_file"' EXIT
+
+      if docker manifest inspect "$PRODUCTION_FRONTEND_IMAGE" >/dev/null 2>"$manifest_error_file"; then
+        echo "ACR image already exists; reusing immutable tag $PRODUCTION_FRONTEND_IMAGE"
+      elif grep -Eqi 'manifest unknown|no such manifest|manifest.*not found|not found.*manifest' "$manifest_error_file"; then
+        echo "ACR image does not exist; building immutable tag $PRODUCTION_FRONTEND_IMAGE"
+        docker build \
+          --label "app=$APP_NAME" \
+          --label "ci.commit=$CI_COMMIT_SHA" \
+          --build-arg NODE_IMAGE="${CI_IMAGE_PREFIX}node:20-alpine" \
+          --build-arg VITE_API_URL="$VITE_API_URL" \
+          --build-arg VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" \
+          --build-arg VITE_CLERK_SIGN_IN_URL="$VITE_CLERK_SIGN_IN_URL" \
+          --build-arg VITE_CLERK_DOMAIN="$VITE_CLERK_DOMAIN" \
+          --build-arg VITE_CLERK_IS_SATELLITE="$VITE_CLERK_IS_SATELLITE" \
+          --build-arg VITE_SAS_PORTAL_URL="$VITE_SAS_PORTAL_URL" \
+          --build-arg VITE_SAS_SDM_URL="$VITE_SAS_SDM_URL" \
+          -t "$PRODUCTION_FRONTEND_IMAGE" \
+          -f frontend/Dockerfile.prod \
+          frontend || {
+            echo "APPLICATION_BUILD_ERROR: production frontend image build failed"
+            exit 1
+          }
+        docker push "$PRODUCTION_FRONTEND_IMAGE" || {
+          echo "REGISTRY_ERROR: production frontend image push failed"
+          exit 1
+        }
+      else
+        echo "REGISTRY_ERROR: unable to determine whether the production frontend image exists"
+        cat "$manifest_error_file" >&2
+        exit 1
+      fi
     - export TRIVY_USERNAME="$ACR_USERNAME" TRIVY_PASSWORD="$ACR_PASSWORD" TRIVY_AUTH_URL="$ACR_REGISTRY"
     - docker run --rm -e TRIVY_USERNAME -e TRIVY_PASSWORD -e TRIVY_AUTH_URL docker.io/aquasec/trivy:latest image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 --format table "$PRODUCTION_FRONTEND_IMAGE" | tee trivy-production-frontend-image-report.txt
     - export PRODUCTION_TARGET="$PRODUCTION_SERVER_USER@$PRODUCTION_SERVER_IP"
     - export PRODUCTION_TMP_DIR="/tmp/$APP_NAME-$CI_PIPELINE_ID-production"
-    - ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "mkdir -p '$PRODUCTION_TMP_DIR'"
+    - |
+      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "mkdir -p '$PRODUCTION_TMP_DIR'" || {
+        echo "INFRASTRUCTURE_ERROR: unable to initialize the production SSH target"
+        exit 1
+      }
     - |
       ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" \
         "sudo mkdir -p '/opt/$APP_NAME/deployment' '/opt/$APP_NAME/backend/uploads/karyawan' '/opt/$APP_NAME/backend/uploads/docs' && \
          sudo chown -R '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME' && \
-         sudo chown -R 1001:1001 '/opt/$APP_NAME/backend/uploads'"
-    - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $PRODUCTION_SSH_PORT" deployment/ "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/"
-    - scp -P "$PRODUCTION_SSH_PORT" "$PRODUCTION_ENV_FILE" "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/.env.production"
-    - ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production' && sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production' && rm -rf '$PRODUCTION_TMP_DIR'"
-    - printf '%s' "$ACR_PASSWORD" | ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "docker login -u '$ACR_USERNAME' --password-stdin '$ACR_REGISTRY'"
+         sudo chown -R 1001:1001 '/opt/$APP_NAME/backend/uploads'" || \
+        { echo "INFRASTRUCTURE_ERROR: unable to prepare production directories"; exit 1; }
     - |
-      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "
+      rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $PRODUCTION_SSH_PORT" deployment/ "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/" || {
+        echo "INFRASTRUCTURE_ERROR: unable to synchronize deployment files"
+        exit 1
+      }
+    - |
+      scp -P "$PRODUCTION_SSH_PORT" "$PRODUCTION_ENV_FILE" "$PRODUCTION_TARGET:$PRODUCTION_TMP_DIR/.env.production" || {
+        echo "INFRASTRUCTURE_ERROR: unable to upload the production environment file"
+        exit 1
+      }
+    - |
+      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production' && sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production' && rm -rf '$PRODUCTION_TMP_DIR'" || {
+        echo "INFRASTRUCTURE_ERROR: unable to install the production environment file"
+        exit 1
+      }
+    - |
+      printf '%s' "$ACR_PASSWORD" | ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "docker login -u '$ACR_USERNAME' --password-stdin '$ACR_REGISTRY'" || {
+        echo "REGISTRY_ERROR: production server authentication to ACR failed"
+        exit 1
+      }
+    - |
+      if ! ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "
         cd '/opt/$APP_NAME' &&
         export BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$PRODUCTION_FRONTEND_IMAGE' BACKEND_ENV_FILE='.env.production' &&
         docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml config --quiet &&
@@ -491,7 +541,10 @@ deploy-production:
         docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml run --rm backend npm run migrate &&
         docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml up -d --remove-orphans &&
         docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml ps
-      "
+      "; then
+        echo "DEPLOYMENT_ERROR: production migration or Docker Compose deployment failed"
+        exit 1
+      fi
   artifacts:
     when: always
     paths:
