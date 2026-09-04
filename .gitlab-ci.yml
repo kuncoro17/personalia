@@ -436,6 +436,7 @@ deploy-production:
           exit 1
         fi
       done
+    - sh scripts/ci/validate-production-env.sh "$PRODUCTION_ENV_FILE"
     - install -m 700 -d ~/.ssh
     - awk '{ sub(/\r$/, ""); print }' "$PRODUCTION_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
@@ -484,12 +485,12 @@ deploy-production:
       ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "
         cd '/opt/$APP_NAME' &&
         export BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$PRODUCTION_FRONTEND_IMAGE' BACKEND_ENV_FILE='.env.production' &&
-        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml config --quiet &&
-        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml pull &&
-        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml up -d postgres redis &&
-        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml run --rm backend npm run migrate &&
-        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans &&
-        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.staging.yml ps
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml config --quiet &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml pull &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml up -d redis &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml run --rm backend npm run migrate &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml up -d --remove-orphans &&
+        docker compose --env-file backend/.env.production -f deployment/compose/docker-compose.production.yml ps
       "
   artifacts:
     when: always

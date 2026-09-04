@@ -53,6 +53,7 @@ deployment/
   compose/
     docker-compose.local.yml
     docker-compose.staging.yml
+    docker-compose.production.yml
   nginx/
     staging/
       frontend.conf
@@ -279,6 +280,13 @@ Production:
 Pipeline menggunakan Alibaba Cloud Container Registry (ACR). Build, push, dan image scan memakai `ACR_REGISTRY`, server staging menarik image melalui `ACR_INTERNET_REGISTRY`, dan production memakai `ACR_REGISTRY`. `ACR_PASSWORD` harus protected dan masked. Variable production bernilai `change this` harus diganti sebelum job manual dijalankan.
 
 Konfigurasi runtime backend dan build frontend disimpan sebagai File variable yang terpisah untuk setiap environment. `STAGING_FRONTEND_ENV_FILE` dan `PRODUCTION_FRONTEND_ENV_FILE` hanya boleh memuat `VITE_API_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`, `VITE_CLERK_DOMAIN`, `VITE_CLERK_IS_SATELLITE`, `VITE_SAS_PORTAL_URL`, dan `VITE_SAS_SDM_URL`. Semua `VITE_*` menjadi bagian dari bundle browser dan tidak boleh berisi secret. Variable koneksi deployment/SSH tetap terpisah.
+
+Production memakai `deployment/compose/docker-compose.production.yml`. PostgreSQL tidak dijalankan sebagai container karena backend terhubung langsung ke Alibaba RDS melalui `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, dan `DB_PASSWORD` dalam `PRODUCTION_ENV_FILE`. Compose production tetap menyediakan Redis pada network internal aplikasi. Contoh isi kedua File variable tersedia di `backend/.env.prod.example` dan `frontend/.env.production.example`; nilai kosong wajib dilengkapi sebelum job production dijalankan.
+
+Domain production:
+
+- Frontend: `https://personalia.bpkpenabur.or.id`
+- API: `https://personalia.bpkpenabur.or.id/api`
 
 ## Deployment Staging Manual
 
