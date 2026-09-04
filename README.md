@@ -260,14 +260,9 @@ Staging:
 - `STAGING_SSH_PRIVATE_KEY` (File)
 - `STAGING_SSH_KNOWN_HOSTS` (File)
 - `STAGING_ENV_FILE` (File)
+- `STAGING_FRONTEND_ENV_FILE` (File)
 - `STAGING_DOMAIN`
 - `STAGING_API_DOMAIN`
-- `STAGING_FE_CLERK_PUBLISHABLE_KEY`
-- `STAGING_FE_CLERK_SIGN_IN_URL`
-- `STAGING_FE_CLERK_DOMAIN`
-- `STAGING_FE_CLERK_IS_SATELLITE`
-- `STAGING_FE_SAS_PORTAL_URL`
-- `STAGING_FE_SAS_SDM_URL`
 
 Production:
 
@@ -277,18 +272,13 @@ Production:
 - `PRODUCTION_SSH_PRIVATE_KEY` (File)
 - `PRODUCTION_SSH_KNOWN_HOSTS` (File)
 - `PRODUCTION_ENV_FILE` (File)
+- `PRODUCTION_FRONTEND_ENV_FILE` (File)
 - `PRODUCTION_DOMAIN`
 - `PRODUCTION_API_DOMAIN`
-- `PRODUCTION_FE_CLERK_PUBLISHABLE_KEY`
-- `PRODUCTION_FE_CLERK_SIGN_IN_URL`
-- `PRODUCTION_FE_CLERK_DOMAIN`
-- `PRODUCTION_FE_CLERK_IS_SATELLITE`
-- `PRODUCTION_FE_SAS_PORTAL_URL`
-- `PRODUCTION_FE_SAS_SDM_URL`
 
 Pipeline menggunakan Alibaba Cloud Container Registry (ACR). Build, push, dan image scan memakai `ACR_REGISTRY`, server staging menarik image melalui `ACR_INTERNET_REGISTRY`, dan production memakai `ACR_REGISTRY`. `ACR_PASSWORD` harus protected dan masked. Variable production bernilai `change this` harus diganti sebelum job manual dijalankan.
 
-Konfigurasi runtime backend disimpan sebagai satu File variable untuk setiap environment, bukan dipecah menjadi satu GitLab variable per key. Variable koneksi deployment/SSH tetap terpisah, sedangkan `VITE_*` frontend disimpan terpisah karena digunakan saat image frontend dibangun dan nilainya menjadi bagian dari bundle browser.
+Konfigurasi runtime backend dan build frontend disimpan sebagai File variable yang terpisah untuk setiap environment. `STAGING_FRONTEND_ENV_FILE` dan `PRODUCTION_FRONTEND_ENV_FILE` hanya boleh memuat `VITE_API_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`, `VITE_CLERK_DOMAIN`, `VITE_CLERK_IS_SATELLITE`, `VITE_SAS_PORTAL_URL`, dan `VITE_SAS_SDM_URL`. Semua `VITE_*` menjadi bagian dari bundle browser dan tidak boleh berisi secret. Variable koneksi deployment/SSH tetap terpisah.
 
 ## Deployment Staging Manual
 
