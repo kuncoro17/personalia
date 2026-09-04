@@ -6,7 +6,7 @@ Monorepo fullstack untuk aplikasi Personalia JKT.
 - `frontend`: React, Vite, Tailwind CSS, dan HeroUI
 - `deployment`: Docker Compose, konfigurasi Nginx, dan observability
 
-Repo ini memakai alur branch `dev` untuk staging dan `main` untuk production. Perubahan developer sebaiknya masuk lewat branch feature, dibuat Merge Request, lalu dimerge ke branch target sesuai kebutuhan release.
+Repo ini memakai alur branch feature menuju `main` melalui Merge Request. Pipeline Merge Request hanya melakukan validasi; setelah merge ke `main`, staging dideploy otomatis dan production tersedia sebagai job manual.
 
 ## Stack
 
@@ -166,8 +166,8 @@ Jangan kerja langsung di `main`.
 Mulai dari branch terbaru:
 
 ```bash
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git checkout -b feature/login
 ```
 
@@ -196,9 +196,7 @@ Setelah push selesai, buka GitLab web untuk membuat Merge Request.
 2. Biasanya GitLab menampilkan tombol **Create merge request** untuk branch yang baru dipush.
 3. Klik **Create merge request**.
 4. Pastikan source branch adalah branch developer, contoh `feature/login`.
-5. Pilih target branch sesuai tujuan:
-   - `dev` untuk perubahan yang akan masuk staging.
-   - `main` untuk release production.
+5. Pilih `main` sebagai target branch.
 6. Isi title dengan ringkas, contoh `Add login feature`.
 7. Isi description dengan poin perubahan dan cara test jika ada.
 8. Tunggu pipeline selesai.
@@ -217,58 +215,69 @@ Contoh nama branch:
 Pipeline GitLab menjalankan stage berikut:
 
 - `validate`
+- `quality`
 - `build`
+- `security`
 - `deploy-staging`
-- `smoke-staging`
+- `post-deploy-staging`
 - `deploy-production`
-- `smoke-production`
+- `post-deploy-production`
 
-Saat Merge Request dibuat, pipeline menjalankan validasi backend dan frontend.
+Saat Merge Request menuju `main` dibuat, pipeline menjalankan lint, format check, test, build backend/frontend, dan Trivy filesystem scan. Job deployment dan variable protected tidak tersedia di pipeline Merge Request.
 
-Saat branch `dev` diperbarui:
-
-1. Backend dan frontend divalidasi.
-2. Test backend berjalan.
-3. Build frontend berjalan.
-4. Docker image staging dibuat dan dipush ke registry.
-5. Staging deploy otomatis.
-6. Staging health check berjalan.
-
-Saat branch `main` diperbarui:
+Saat Merge Request digabungkan ke `main`:
 
 1. Backend dan frontend divalidasi.
-2. Test backend berjalan.
-3. Build frontend berjalan.
-4. Docker image production dibuat dan dipush ke registry.
-5. Production deploy tersedia sebagai manual job.
-6. Production health check berjalan setelah deploy sukses.
+2. SonarQube berjalan jika `SONAR_ENABLED=true`.
+3. Image backend dan frontend staging dengan tag commit dibuat dan dipush ke GitLab Container Registry.
+4. Trivy memindai image dan menyimpan report tanpa memblokir pipeline.
+5. Staging dideploy otomatis dan kedua endpoint publik diperiksa.
+6. Production tersedia sebagai job manual. Job ini menolak variable kosong atau `change this`, membangun frontend production, memindai image, menjalankan migration, lalu deploy.
+7. Health check production berjalan setelah deployment manual sukses.
 
 ## Required GitLab CI/CD Variables
 
-Shared:
+Quality:
 
-- `CONTAINER_IMAGE`
-- `SSH_PRIVATE_KEY`
+- `SONAR_ENABLED`
+- `SONAR_HOST_URL`
+- `SONAR_TOKEN`
 
 Staging:
 
 - `STAGING_SERVER_USER`
 - `STAGING_SERVER_IP`
+- `STAGING_SSH_PORT`
+- `STAGING_SSH_PRIVATE_KEY` (File)
+- `STAGING_SSH_KNOWN_HOSTS` (File)
+- `STAGING_ENV_FILE` (File)
 - `STAGING_DOMAIN`
-- `STAGING_FE_API_URL`
 - `STAGING_API_DOMAIN`
+- `STAGING_FE_CLERK_PUBLISHABLE_KEY`
 - `STAGING_FE_CLERK_SIGN_IN_URL`
 - `STAGING_FE_CLERK_DOMAIN`
 - `STAGING_FE_CLERK_IS_SATELLITE`
+- `STAGING_FE_SAS_PORTAL_URL`
+- `STAGING_FE_SAS_SDM_URL`
 
 Production:
 
-- `BACKEND_ENV_PRODUCTION`
 - `PRODUCTION_SERVER_USER`
 - `PRODUCTION_SERVER_IP`
+- `PRODUCTION_SSH_PORT`
+- `PRODUCTION_SSH_PRIVATE_KEY` (File)
+- `PRODUCTION_SSH_KNOWN_HOSTS` (File)
+- `PRODUCTION_ENV_FILE` (File)
 - `PRODUCTION_DOMAIN`
+- `PRODUCTION_API_DOMAIN`
+- `PRODUCTION_FE_CLERK_PUBLISHABLE_KEY`
+- `PRODUCTION_FE_CLERK_SIGN_IN_URL`
+- `PRODUCTION_FE_CLERK_DOMAIN`
+- `PRODUCTION_FE_CLERK_IS_SATELLITE`
+- `PRODUCTION_FE_SAS_PORTAL_URL`
+- `PRODUCTION_FE_SAS_SDM_URL`
 
-Variable tambahan seperti `CLERK_*`, `VITE_*`, database, Redis, dan credential lain mengikuti kebutuhan environment masing-masing.
+GitLab menyediakan `CI_REGISTRY`, `CI_REGISTRY_IMAGE`, dan `CI_JOB_TOKEN`; pipeline tidak memerlukan credential registry tambahan. Variable production bernilai `change this` harus diganti sebelum job manual dijalankan.
 
 ## Deployment Staging Manual
 
@@ -276,11 +285,11 @@ Jika perlu deploy manual di server:
 
 ```bash
 cd /opt/personalia-jkt
-export BACKEND_IMAGE='<registry>/personalia-jkt:backend-staging'
-export FRONTEND_IMAGE='<registry>/personalia-jkt:frontend-staging'
+export BACKEND_IMAGE='<registry>/personalia-jkt:backend-<commit-sha>'
+export FRONTEND_IMAGE='<registry>/personalia-jkt:frontend-staging-<commit-sha>'
 export BACKEND_ENV_FILE='.env.staging'
-docker compose -f deployment/compose/docker-compose.staging.yml pull
-docker compose -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans
+docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml pull
+docker compose --env-file backend/.env.staging -f deployment/compose/docker-compose.staging.yml up -d --remove-orphans
 ```
 
 Cek service:
@@ -310,20 +319,20 @@ SSL dijalankan manual di server, misalnya dengan Let's Encrypt.
 
 ## Useful Commands
 
-Update branch feature dengan perubahan terbaru dari `dev`:
+Update branch feature dengan perubahan terbaru dari `main`:
 
 ```bash
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git checkout feature/login
-git merge dev
+git merge main
 ```
 
 Hapus branch local setelah MR sudah merge:
 
 ```bash
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git branch -d feature/login
 ```
 
