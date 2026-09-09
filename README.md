@@ -283,6 +283,10 @@ Konfigurasi runtime backend dan build frontend disimpan sebagai File variable ya
 
 Production memakai `deployment/compose/docker-compose.production.yml`. PostgreSQL tidak dijalankan sebagai container karena backend terhubung langsung ke Alibaba RDS melalui `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, dan `DB_PASSWORD` dalam `PRODUCTION_ENV_FILE`. Compose production tetap menyediakan Redis pada network internal aplikasi. Contoh isi kedua File variable tersedia di `backend/.env.prod.example` dan `frontend/.env.production.example`; nilai kosong wajib dilengkapi sebelum job production dijalankan.
 
+Jika browser menampilkan Clerk `publishableKey is invalid`, periksa `VITE_CLERK_PUBLISHABLE_KEY` di GitLab CI/CD File variable `PRODUCTION_FRONTEND_ENV_FILE`. Gunakan Publishable Key dari instance Clerk production (`pk_live_...`), bukan placeholder atau secret key. Tulis nilai tanpa tanda kutip sesuai format file contoh. Loader CI memeriksa format dasar key; konfigurasi instance Clerk tetap perlu dipastikan benar.
+
+Nilai `VITE_*` tertanam saat build frontend. Setelah memperbaiki File variable, jalankan deployment dari commit baru di `main` agar menghasilkan tag image baru. Retry job pada commit yang sama dapat memakai ulang image ACR yang sudah ada, sehingga key lama tetap terpakai. Restart container saja tidak memperbarui key di bundle browser.
+
 Domain production:
 
 - Frontend: `https://personalia.bpkpenabur.or.id`

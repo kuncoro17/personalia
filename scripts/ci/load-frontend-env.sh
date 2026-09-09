@@ -51,6 +51,13 @@ for variable in \
   export "$variable=$value"
 done
 
+# Reject placeholders before they are embedded permanently in the Vite bundle.
+# This checks the key's format, not whether the Clerk instance is configured.
+if ! printf '%s\n' "$VITE_CLERK_PUBLISHABLE_KEY" | LC_ALL=C grep -Eq '^pk_(test|live)_[A-Za-z0-9+/]+={0,2}$'; then
+  echo "VITE_CLERK_PUBLISHABLE_KEY in $FRONTEND_ENV_LABEL must be a Clerk publishable key (pk_test_... or pk_live_...)"
+  return 1
+fi
+
 case "$FRONTEND_API_DOMAIN" in
   http://*|https://*) expected_api_url="${FRONTEND_API_DOMAIN%/}" ;;
   *) expected_api_url="https://${FRONTEND_API_DOMAIN%/}" ;;
