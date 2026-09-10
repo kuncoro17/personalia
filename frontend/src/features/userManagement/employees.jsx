@@ -118,9 +118,7 @@ export default function Employees({
             </Tooltip>
 
             <Badge variant="destructive" className="max-w-full">
-              <p className="truncate">
-                {item.status_karyawan}
-              </p>
+              <p className="truncate">{item.status_karyawan}</p>
             </Badge>
 
             <p className="w-full truncate text-center text-sm font-medium text-slate-600 dark:text-slate-300">

@@ -53,9 +53,7 @@ export default function NewEmployees({ limitPage }) {
 
           <Badge variant="warning" className="hidden gap-2 sm:inline-flex">
             <img src="/icon/cetakSurat.svg" alt="" className="h-4 w-4" />
-            <p>
-              Print Letter
-            </p>
+            <p>Print Letter</p>
           </Badge>
         </Card>
       ))}

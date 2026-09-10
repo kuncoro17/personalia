@@ -3,21 +3,45 @@ import { cn } from "../../lib/utils";
 export function Table({ className, ...props }) {
   return (
     <div className="w-full overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-      <table className={cn("w-full border-collapse text-sm", className)} {...props} />
+      <table
+        className={cn("w-full border-collapse text-sm", className)}
+        {...props}
+      />
     </div>
   );
 }
 
 export function TableHeader({ className, ...props }) {
-  return <thead className={cn("bg-slate-50 dark:bg-slate-900", className)} {...props} />;
+  return (
+    <thead
+      className={cn("bg-slate-50 dark:bg-slate-900", className)}
+      {...props}
+    />
+  );
 }
 
 export function TableBody({ className, ...props }) {
-  return <tbody className={cn("divide-y divide-slate-200 dark:divide-slate-800", className)} {...props} />;
+  return (
+    <tbody
+      className={cn(
+        "divide-y divide-slate-200 dark:divide-slate-800",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function TableRow({ className, ...props }) {
-  return <tr className={cn("transition-colors hover:bg-slate-50 dark:hover:bg-slate-900", className)} {...props} />;
+  return (
+    <tr
+      className={cn(
+        "transition-colors hover:bg-slate-50 dark:hover:bg-slate-900",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function TableHead({ className, ...props }) {

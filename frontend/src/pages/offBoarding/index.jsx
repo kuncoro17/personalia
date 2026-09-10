@@ -67,7 +67,7 @@ export default function OffBoardingPage() {
               <button
                 key={employee.id_karyawan}
                 type="button"
-            className="personalia-card flex min-w-0 flex-col gap-4 p-5 text-left transition hover:-translate-y-0"
+                className="personalia-card flex min-w-0 flex-col gap-4 p-5 text-left transition hover:-translate-y-0"
                 onClick={() =>
                   navigate(`/detailEmployee/${employee.id_karyawan}`)
                 }
@@ -81,24 +81,24 @@ export default function OffBoardingPage() {
                       NIK: {employee.nik || "-"}
                     </p>
                   </div>
-                  <Chip className="bg-red-50 font-semibold text-red-700 ring-1 ring-red-100" size="sm" variant="flat">
+                  <Chip
+                    className="bg-red-50 font-semibold text-red-700 ring-1 ring-red-100"
+                    size="sm"
+                    variant="flat"
+                  >
                     Resign
                   </Chip>
                 </div>
 
                 <div className="grid w-full grid-cols-1 gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs text-slate-400">
-                      Tanggal inactive
-                    </p>
+                    <p className="text-xs text-slate-400">Tanggal inactive</p>
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       {employee.tanggal_inactive || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400">
-                      Alasan berhenti
-                    </p>
+                    <p className="text-xs text-slate-400">Alasan berhenti</p>
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       {employee.alasan_berhenti_kerja || "Resign"}
                     </p>

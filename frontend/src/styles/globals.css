@@ -419,12 +419,7 @@ body {
 
 .personalia-page-shell .font-Poppins,
 .personalia-page-shell .font-DMSans {
-  font-family:
-    Inter,
-    Poppins,
-    ui-sans-serif,
-    system-ui,
-    sans-serif !important;
+  font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif !important;
 }
 
 .personalia-page-shell [class*="rounded-2xl"],

@@ -83,9 +83,7 @@ export const Navbar = ({ children, onOpenSidebar }) => {
   };
 
   return (
-    <div
-      className="flex min-w-0 flex-1 flex-col lg:pl-64"
-    >
+    <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
       <HeroUINavbar
         maxWidth="full"
         position="sticky"

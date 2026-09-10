@@ -15,7 +15,10 @@ export function Card({ as: Component = "div", className, ...props }) {
 export function CardHeader({ className, ...props }) {
   return (
     <div
-      className={cn("border-b border-slate-200 px-4 py-3 dark:border-slate-800", className)}
+      className={cn(
+        "border-b border-slate-200 px-4 py-3 dark:border-slate-800",
+        className,
+      )}
       {...props}
     />
   );
@@ -24,7 +27,10 @@ export function CardHeader({ className, ...props }) {
 export function CardTitle({ className, ...props }) {
   return (
     <h2
-      className={cn("text-base font-semibold leading-6 text-slate-950 dark:text-slate-100", className)}
+      className={cn(
+        "text-base font-semibold leading-6 text-slate-950 dark:text-slate-100",
+        className,
+      )}
       {...props}
     />
   );
@@ -33,7 +39,10 @@ export function CardTitle({ className, ...props }) {
 export function CardDescription({ className, ...props }) {
   return (
     <p
-      className={cn("mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400", className)}
+      className={cn(
+        "mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400",
+        className,
+      )}
       {...props}
     />
   );
@@ -46,7 +55,10 @@ export function CardContent({ className, ...props }) {
 export function CardFooter({ className, ...props }) {
   return (
     <div
-      className={cn("border-t border-slate-200 px-4 py-3 dark:border-slate-800", className)}
+      className={cn(
+        "border-t border-slate-200 px-4 py-3 dark:border-slate-800",
+        className,
+      )}
       {...props}
     />
   );

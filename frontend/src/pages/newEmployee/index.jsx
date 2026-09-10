@@ -65,11 +65,7 @@ export default function NewEmployeePage() {
 
             <Dropdown>
               <DropdownTrigger>
-                <Button
-                  variant="outline"
-                >
-                  {selectedLimit}
-                </Button>
+                <Button variant="outline">{selectedLimit}</Button>
               </DropdownTrigger>
               <DropdownMenu
                 disallowEmptySelection
