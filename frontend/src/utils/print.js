@@ -25,7 +25,7 @@ export default function PrintCardButton({ item }) {
         className="px-3 py-2 rounded bg-primary text-white shadow"
         onClick={handlePrint}
       >
-        Print Kartu
+        Cetak Kartu
       </button>
     </>
   );

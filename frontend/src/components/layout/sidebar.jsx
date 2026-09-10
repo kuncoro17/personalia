@@ -32,7 +32,7 @@ export const SideBar = ({ isOpen = false, onClose }) => {
           <p className="break-words text-sm font-bold uppercase leading-5 text-slate-950 dark:text-slate-100">
             Personalia
           </p>
-          <p className="mt-1 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">
+          <p className="mt-1 whitespace-nowrap text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">
             Dashboard Personalia
           </p>
         </div>

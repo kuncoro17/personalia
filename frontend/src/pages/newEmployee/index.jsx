@@ -38,10 +38,10 @@ export default function NewEmployeePage() {
       <section className="flex min-w-0 flex-1 flex-col gap-5">
         <Card className="personalia-hero-card flex min-h-28 w-full min-w-0 items-center overflow-hidden px-5 py-4 sm:px-6">
           <div className="z-10 flex min-w-0 max-w-full flex-col gap-2">
-            <p className="break-words text-xl font-semibold text-black sm:text-2xl">
+            <p className="break-words text-xl font-semibold text-slate-950 dark:text-white sm:text-2xl">
               Hi, {displayName}
             </p>
-            <p className="break-words text-sm leading-6 text-black/80">
+            <p className="break-words text-sm leading-6 text-slate-700 dark:text-white/80">
               Selamat datang di Dashboard Personalia SAS BPK PENABUR.
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function NewEmployeePage() {
         <div>
           <div className="flex items-center justify-between">
             <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-              New Employee
+              Karyawan Baru
             </p>
 
             <Dropdown>

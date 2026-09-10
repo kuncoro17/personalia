@@ -450,7 +450,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                   setLetterData(null);
                 }}
               >
-                Close
+                Tutup
               </Button>
               <Button
                 className="personalia-action-button personalia-action-button-light"
@@ -460,7 +460,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                 isLoading={isLoading.pdf}
                 isDisabled={!selectedKaryawan.length || !selectedLetterType}
               >
-                Preview PDF
+                Pratinjau PDF
               </Button>
               <Button
                 className="personalia-action-button personalia-action-button-primary"
@@ -469,7 +469,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                 isLoading={isLoading.pdf}
                 isDisabled={!selectedKaryawan.length || !selectedLetterType}
               >
-                Download PDF
+                Unduh PDF
               </Button>
               <Button
                 className="personalia-action-button border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
@@ -478,7 +478,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                 isLoading={isLoading.print}
                 isDisabled={!selectedKaryawan.length || !selectedLetterType}
               >
-                Print
+                Cetak
               </Button>
             </ModalFooter>
           </>

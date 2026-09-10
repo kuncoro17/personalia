@@ -79,7 +79,7 @@ export const PROPERTIES = {
       properties: "email_pribadi",
       form: "email",
     },
-    { title: "Employee ID", properties: "nik", form: "number" },
+    { title: "ID Karyawan", properties: "nik", form: "number" },
     {
       title: "Nomor KTP",
       properties: "no_ktp",

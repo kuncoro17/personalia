@@ -7,6 +7,7 @@ import {
 } from "@heroui/react";
 import { useLocation } from "react-router-dom";
 import moment from "moment";
+import "moment/locale/id";
 import { useEffect, useState } from "react";
 
 import { EMPLOYEEENDPOINT } from "../../constants/api";
@@ -22,12 +23,22 @@ import {
   THEME,
 } from "../../utils/theme";
 
-const DEFAULT_AVATAR = "/image/1.svg";
 const SAS_HOME_URL = "https://sas.bpkpenabur.or.id/halaman-utama";
+const PAGE_TITLE_TRANSLATIONS = {
+  "New Employee": "Karyawan Baru",
+  "All Employee": "Daftar Karyawan",
+  Offboarding: "Karyawan Keluar",
+  "Print Letter": "Cetak Surat",
+  Employee: "Karyawan",
+  "Detail Employee": "Detail Karyawan",
+};
+
+moment.locale("id");
 
 export const Navbar = ({ children, onOpenSidebar }) => {
   const location = useLocation();
-  const title = location.state?.title || "New Employee";
+  const rawTitle = location.state?.title || "Karyawan Baru";
+  const title = PAGE_TITLE_TRANSLATIONS[rawTitle] || rawTitle;
   let { pathname } = useLocation();
   const { user } = useUser();
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -44,9 +55,11 @@ export const Navbar = ({ children, onOpenSidebar }) => {
   );
   const avatarSrc = accessProfile?.foto
     ? resolveApiAssetUrl(accessProfile.foto)
-    : DEFAULT_AVATAR;
+    : "";
   const isDark = theme === THEME.DARK;
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isAvatarError, setIsAvatarError] = useState(false);
+  const hasProfilePhoto = Boolean(avatarSrc && !isAvatarError);
 
   const displayName = capitalizeWords(
     accessProfile?.nama_lengkap ||
@@ -76,6 +89,7 @@ export const Navbar = ({ children, onOpenSidebar }) => {
 
   useEffect(() => listenThemeChange(setTheme), []);
   useEffect(() => setIsUserMenuOpen(false), [pathname]);
+  useEffect(() => setIsAvatarError(false), [avatarSrc]);
 
   const handleToggleTheme = () => {
     const nextTheme = isDark ? THEME.LIGHT : THEME.DARK;
@@ -109,7 +123,7 @@ export const Navbar = ({ children, onOpenSidebar }) => {
               {title}
             </p>
             <p className="text-sm leading-5 text-slate-500 dark:text-slate-400">
-              {moment().format("dddd, MMMM DD YYYY")}
+              {moment().format("dddd, D MMMM YYYY")}
             </p>
           </NavbarItem>
           <NavbarItem className="flex flex-col sm:hidden">
@@ -157,15 +171,16 @@ export const Navbar = ({ children, onOpenSidebar }) => {
               aria-label="Buka menu user"
               aria-expanded={isUserMenuOpen}
             >
-              <img
-                src={avatarSrc}
-                alt={displayName}
-                className="h-full w-full rounded-full bg-white object-cover"
-                onError={(event) => {
-                  event.currentTarget.onerror = null;
-                  event.currentTarget.src = DEFAULT_AVATAR;
-                }}
-              />
+              {hasProfilePhoto ? (
+                <img
+                  src={avatarSrc}
+                  alt={displayName}
+                  className="h-full w-full rounded-full bg-white object-cover"
+                  onError={() => setIsAvatarError(true)}
+                />
+              ) : (
+                <i className="fi fi-rr-user text-base text-blue-700" />
+              )}
             </button>
 
             {isUserMenuOpen && (

@@ -157,7 +157,7 @@ export default function PrintLetterModalSingle({
     ).toBlob();
   };
 
-  // Download PDF
+  // Unduh PDF
   const handleDownload = async () => {
     if (!letterData) {
       alert("Data surat belum tersedia");
@@ -186,7 +186,7 @@ export default function PrintLetterModalSingle({
     }
   };
 
-  // Print PDF
+  // Cetak PDF
   const handlePrint = async () => {
     if (!letterData) {
       alert("Data surat belum tersedia");
@@ -304,7 +304,7 @@ export default function PrintLetterModalSingle({
                 isDisabled={!letterData || isLoading.pdf || isLoading.print}
                 isLoading={isLoading.pdf}
               >
-                Download PDF
+                Unduh PDF
               </Button>
               <Button
                 className="personalia-action-button personalia-action-button-primary"
@@ -313,7 +313,7 @@ export default function PrintLetterModalSingle({
                 isDisabled={!letterData || isLoading.pdf || isLoading.print}
                 isLoading={isLoading.print}
               >
-                Print
+                Cetak
               </Button>
             </ModalFooter>
           </>
