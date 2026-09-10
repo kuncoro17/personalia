@@ -9,16 +9,20 @@ export default function Detail({ employeeData }) {
   return (
     <div className="flex flex-1 flex-col gap-4">
       <div className="flex flex-1 flex-col">
-        <div className="h-14 flex gap-2 overflow-x-hidden scrollbar-hide w-full">
+        <div className="flex min-h-14 w-full gap-2 overflow-x-auto scrollbar-hide">
           {HEADER.map((item, index) => (
             <button
-              className="flex flex-1 h-full justify-center items-center"
+              className={`flex min-h-11 shrink-0 items-center justify-center rounded-md border px-3 text-sm transition ${
+                selectedHeader === index
+                  ? "border-blue-600 bg-blue-600 text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+              }`}
               key={item.title}
               onClick={() => setSelectedHeader(index)}
               disabled={item.disable}
             >
               <p
-                className={`font-Poppins ${item.disable ? "line-through opacity-20" : ""} ${selectedHeader === index ? "font-semibold text-primary" : "font-normal opacity-40 text-sm"}`}
+                className={`${item.disable ? "line-through opacity-20" : ""} ${selectedHeader === index ? "font-semibold" : "font-medium"}`}
               >
                 {item.title}
               </p>
@@ -26,7 +30,7 @@ export default function Detail({ employeeData }) {
           ))}
         </div>
 
-        <div className="flex flex-1 bg-white rounded-lg shadow-lg border-1 border-[#00000010] p-4">
+        <div className="personalia-card mt-3 flex flex-1 p-4">
           {HEADER[selectedHeader].content}
         </div>
       </div>

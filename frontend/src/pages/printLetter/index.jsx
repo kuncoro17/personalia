@@ -52,9 +52,9 @@ export default function PrintLetterPage() {
 
   return (
     <Layout>
-      <section className="container min-w-0 flex-1 flex-grow px-4 py-6 flex flex-col gap-4 md:py-10 lg:pr-16">
-        <div className="mt-4 grid min-h-28 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end overflow-hidden rounded-lg bg-primary px-5 py-4 md:mt-16 md:min-h-32">
-          <p className="z-10 max-w-full break-words font-Poppins text-xl font-[700] text-white sm:text-2xl lg:text-3xl">
+      <section className="flex min-w-0 flex-1 flex-col gap-5">
+        <div className="personalia-hero-card grid min-h-32 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end overflow-hidden px-5 py-4">
+          <p className="z-10 max-w-full break-words text-xl font-bold text-white sm:text-2xl lg:text-3xl">
             Pilih surat yang mau dicetak
           </p>
 
@@ -64,17 +64,17 @@ export default function PrintLetterPage() {
           />
         </div>
 
-        <div className="mt-10 flex flex-col gap-5">
+        <div className="personalia-card flex flex-col gap-5 p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-3 sm:gap-5">
-              <p className="font-Poppins text-xl font-[600] text-primary">
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 All Mail ({ALL_LETTERS.length} Surat)
               </p>
 
               <Dropdown>
                 <DropdownTrigger>
                   <Button
-                    className="font-Poppins border-primary border-1 rounded-md h-10"
+                    className="personalia-action-button personalia-action-button-light h-10"
                     variant="bordered"
                   >
                     {selectedLimit}

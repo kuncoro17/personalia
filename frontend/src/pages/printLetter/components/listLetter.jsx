@@ -19,21 +19,21 @@ export default function ListLetter({ data, isTable, setIsTable }) {
             key={item.key || index}
             isPressable
             onPress={() => handleSelectSurat(item)}
-            className="hover:scale-105 transition-transform cursor-pointer"
+            className="personalia-card cursor-pointer transition-transform"
           >
             <CardBody className="flex flex-col gap-3 p-5">
               <div className="flex items-start justify-between">
-                <p className="font-Poppins text-sm font-semibold text-primary line-clamp-2">
+                <p className="line-clamp-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {item.title}
                 </p>
 
                 {/* Badge untuk status endpoint */}
                 {item.hasEndpoint ? (
-                  <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full whitespace-nowrap ml-2">
+                  <span className="ml-2 whitespace-nowrap rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
                     API Ready
                   </span>
                 ) : (
-                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full whitespace-nowrap ml-2">
+                  <span className="ml-2 whitespace-nowrap rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
                     Coming Soon
                   </span>
                 )}
@@ -43,14 +43,14 @@ export default function ListLetter({ data, isTable, setIsTable }) {
               {item.allowedStatus && item.allowedStatus.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {item.allowedStatus.includes("ALL") ? (
-                    <span className="px-2 py-0.5 text-xs bg-blue-50 text-blue-600 rounded">
+                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
                       Semua Status
                     </span>
                   ) : (
                     item.allowedStatus.slice(0, 3).map((status, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 text-xs bg-gray-50 text-gray-600 rounded"
+                        className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200"
                       >
                         {status}
                       </span>
@@ -58,7 +58,7 @@ export default function ListLetter({ data, isTable, setIsTable }) {
                   )}
                   {item.allowedStatus.length > 3 &&
                     !item.allowedStatus.includes("ALL") && (
-                      <span className="px-2 py-0.5 text-xs bg-gray-50 text-gray-600 rounded">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
                         +{item.allowedStatus.length - 3}
                       </span>
                     )}

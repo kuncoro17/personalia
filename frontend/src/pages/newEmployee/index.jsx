@@ -3,12 +3,12 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Button,
 } from "@heroui/react";
 import { useUser } from "@clerk/clerk-react";
 import { useMemo, useState } from "react";
 
 import Layout from "../../components/layout";
+import { Button, Card } from "../../components/ui";
 import EmployeeStatus from "../../features/userManagement/employeeStatus";
 import NewEmployees from "./components/userManagement/newEmployees";
 import { LIMITPAGE } from "../../constants/ui";
@@ -35,14 +35,14 @@ export default function NewEmployeePage() {
       <head>
         <meta name="robots" content="noindex, nofollow" />
       </head>
-      <section className="container min-w-0 flex-1 flex-grow px-4 flex flex-col gap-4">
-        <div className="grid min-h-44 w-full min-w-0 grid-cols-1 overflow-hidden rounded-2xl bg-primary px-5 pt-6 sm:px-7 md:min-h-48 md:grid-cols-[minmax(0,1fr)_minmax(180px,28%)] md:items-center md:pt-0">
+      <section className="flex min-w-0 flex-1 flex-col gap-5">
+        <Card className="personalia-hero-card grid min-h-44 w-full min-w-0 grid-cols-1 overflow-hidden px-5 pt-6 sm:px-7 md:min-h-48 md:grid-cols-[minmax(0,1fr)_minmax(180px,28%)] md:items-center md:pt-0">
           <div className="z-10 flex min-w-0 max-w-full flex-col gap-3">
-            <p className="break-words font-Poppins text-2xl font-[600] text-white sm:text-3xl lg:text-[32px]">
+            <p className="break-words text-2xl font-semibold text-white sm:text-3xl lg:text-[32px]">
               Hi, {displayName}
             </p>
-            <p className="break-words font-Poppins text-sm text-white sm:text-base">
-              Ready to start your date with some pitch desk?
+            <p className="break-words text-sm text-white/80 sm:text-base">
+              Selamat datang di Dashboard Personalia SAS BPK PENABUR.
             </p>
           </div>
 
@@ -51,23 +51,22 @@ export default function NewEmployeePage() {
             alt="Home Illustrator"
             className="pointer-events-none mt-4 w-full max-w-[220px] justify-self-end self-end md:mt-0 md:max-w-[280px] lg:max-w-[320px]"
           />
-        </div>
+        </Card>
 
         <div>
           <EmployeeStatus />
         </div>
 
         <div>
-          <div className="flex justify-between items-center">
-            <p className="font-Poppins font-[600] text-xl text-primary">
+          <div className="flex items-center justify-between">
+            <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
               New Employee
             </p>
 
             <Dropdown>
               <DropdownTrigger>
                 <Button
-                  className="font-Poppins border-primary border-1 rounded-md"
-                  variant="bordered"
+                  variant="outline"
                 >
                   {selectedLimit}
                 </Button>

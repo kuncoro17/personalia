@@ -145,12 +145,14 @@ export default function Modals({
             aria-labelledby={labelId}
             type="file"
             accept={item.accept || "image/*"}
-            className="block w-full text-sm font-Poppins text-primary file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-white file:cursor-pointer cursor-pointer"
+            className="block w-full cursor-pointer rounded-md border border-slate-300 bg-white text-sm text-slate-700 shadow-sm file:mr-4 file:cursor-pointer file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
             onChange={(event) =>
               setFieldValue(key, event.target.files?.[0] || "")
             }
           />
-          <p className="text-xs font-Poppins opacity-60">{selectedFileName}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {selectedFileName}
+          </p>
         </div>
       );
     }
@@ -236,7 +238,7 @@ export default function Modals({
             <AutocompleteItem
               key={option.key}
               textValue={option.label}
-              className="font-Poppins text-primary"
+              className="text-slate-700 dark:text-slate-200"
             >
               {option.label}
             </AutocompleteItem>
@@ -267,8 +269,8 @@ export default function Modals({
           variant="bordered"
           radius="sm"
           classNames={{
-            inputWrapper: "h-10 border-black border-1",
-            input: "font-Poppins text-sm",
+            inputWrapper: "h-10 border-slate-300 border-1",
+            input: "text-sm",
           }}
           showMonthAndYearPickers
           value={calendarDate ?? undefined}
@@ -328,8 +330,8 @@ export default function Modals({
         placeholder={getPlaceholder(key)}
         maxLength={getMaxLength(key)}
         classNames={{
-          inputWrapper: "h-10 border-black border-1",
-          input: "font-Poppins text-sm",
+          inputWrapper: "h-10 border-slate-300 border-1",
+          input: "text-sm",
         }}
         validate={(value) => {
           if (value.trim() !== "") {
@@ -365,7 +367,7 @@ export default function Modals({
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      className="max-w-max min-h-max"
+      className="min-h-max max-w-max"
       backdrop="blur"
       onClose={handleClose}
       scrollBehavior="outside"
@@ -373,18 +375,18 @@ export default function Modals({
       <ModalContent>
         {(onClose) => (
           <Form
-            className="flex flex-col items-left w-full"
+            className="flex w-full flex-col items-start"
             onSubmit={(e) => handleUpdate(e, onClose)}
           >
-            <ModalHeader className="flex flex-col gap-1 items-center font-Poppins text-xl">
+            <ModalHeader className="flex w-full flex-col items-start gap-1 border-b border-slate-200 text-lg font-semibold text-slate-950 dark:border-slate-800 dark:text-slate-100">
               {title}
             </ModalHeader>
             {isLoading ? (
-              <div className="flex flex-1 items-center justify-center w-full">
+              <div className="flex w-full flex-1 items-center justify-center p-8">
                 <Spinner color="primary" size="md" />
               </div>
             ) : (
-              <ModalBody className="grid flex-1 gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              <ModalBody className="grid flex-1 grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {data.map((item, index) => {
                   if (item.title === "Id" || item.editable === false)
                     return null;
@@ -395,12 +397,12 @@ export default function Modals({
                   return (
                     <div
                       key={`${item.properties}-${index}`}
-                      className="flex flex-col gap-2 items-start flex-1"
+                      className="flex flex-1 flex-col items-start gap-2"
                     >
                       <label
                         id={labelId}
                         htmlFor={fieldId}
-                        className="font-Poppins font-normal opacity-50 text-sm"
+                        className="text-sm font-medium text-slate-500 dark:text-slate-400"
                       >
                         {item.title}
                         {item.required ? (
@@ -414,11 +416,21 @@ export default function Modals({
                 })}
               </ModalBody>
             )}
-            <ModalFooter>
-              <Button color="danger" variant="bordered" onPress={onClose}>
+            <ModalFooter className="w-full border-t border-slate-200 dark:border-slate-800">
+              <Button
+                className="personalia-action-button personalia-action-button-light"
+                color="danger"
+                variant="bordered"
+                onPress={onClose}
+              >
                 Close
               </Button>
-              <Button color="primary" type="submit" isLoading={loading}>
+              <Button
+                className="personalia-action-button personalia-action-button-primary"
+                color="primary"
+                type="submit"
+                isLoading={loading}
+              >
                 Submit
               </Button>
             </ModalFooter>

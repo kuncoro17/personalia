@@ -62,17 +62,25 @@ export default function SasVerify() {
   }, [api, navigate, verifyToken]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-white">
-      <section className="w-full max-w-md text-center flex flex-col items-center gap-4">
+    <main className="personalia-app flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <section className="personalia-card flex w-full max-w-md flex-col items-center gap-4 p-6 text-center">
+        <img
+          src="/assets/images/logo_penabur.png"
+          alt="Logo BPK PENABUR"
+          className="h-16 w-16 object-contain"
+        />
         {status === "loading" ? <Spinner size="lg" color="primary" /> : null}
 
-        <h1 className="font-Poppins text-xl font-semibold text-primary">
+        <h1 className="text-xl font-semibold text-slate-950 dark:text-slate-100">
           Verifikasi SAS
         </h1>
-        <p className="font-Poppins text-sm text-primary/70">{message}</p>
+        <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+          {message}
+        </p>
 
         {status === "error" ? (
           <Button
+            className="personalia-action-button personalia-action-button-primary"
             color="primary"
             radius="sm"
             onPress={() => {

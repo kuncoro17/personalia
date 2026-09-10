@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 
+import { Badge, Card } from "../../../../components/ui";
 import { apiClient } from "../../../../service/api";
 import Loading from "../../../../components/common/Loading";
 import NoData from "../../../../components/common/NoData";
@@ -28,40 +29,35 @@ export default function NewEmployees({ limitPage }) {
   if (!employees.length) return <NoData />;
 
   return (
-    <div className="flex flex-col gap-4 mt-4">
+    <div className="mt-4 flex flex-col gap-4">
       {employees.map((item) => (
-        <button
-          className="w-full border-2 flex border-primary rounded-lg h-28 gap-5 p-3 items-end"
+        <Card
+          as="button"
+          className="flex min-h-28 w-full items-center gap-4 p-4 text-left transition hover:border-blue-300 hover:bg-blue-50/40 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:hover:bg-slate-900"
           key={item.id_karyawan}
           type="button"
           onClick={() => navigate(`/detailEmployee/${item.id_karyawan}`)}
         >
-          <div
-            style={{
-              height: "100%",
-              aspectRatio: 1,
-              backgroundColor: "gray",
-              borderRadius: 5,
-              opacity: 0.5,
-            }}
-          />
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+            <i className="fi fi-rr-user text-xl" />
+          </div>
 
-          <div className="flex flex-col justify-between flex-1 h-full items-start">
-            <p className="font-Poppins font-medium text-primary text-lg">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <p className="truncate text-base font-semibold text-slate-950 dark:text-slate-100">
               {item.nama_lengkap}
             </p>
-            <p className="font-Poppins font-bold text-xl text-primary">
+            <p className="text-sm font-semibold uppercase leading-5 text-blue-700 dark:text-blue-300">
               {String(getNewEmployeeStatus(item)).replace(/-/g, " ")}
             </p>
           </div>
 
-          <div className="flex gap-2 bg-yellow p-1 rounded-md px-2">
-            <img src="/icon/cetakSurat.svg" />
-            <p className="font-Poppins font-semibold text-primary">
+          <Badge variant="warning" className="hidden gap-2 sm:inline-flex">
+            <img src="/icon/cetakSurat.svg" alt="" className="h-4 w-4" />
+            <p>
               Print Letter
             </p>
-          </div>
-        </button>
+          </Badge>
+        </Card>
       ))}
     </div>
   );

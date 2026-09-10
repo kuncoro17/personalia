@@ -126,27 +126,33 @@ export const CardViewer = ({ item }) => {
     <ModalContent>
       {(onClose) => (
         <>
-          <ModalHeader>Cetak Kartu</ModalHeader>
-          <ModalBody className="flex flex-row gap-10 items-center justify-center">
-            <div className="flex flex-col gap-2 items-center">
+          <ModalHeader className="border-b border-slate-200 text-base font-semibold text-slate-950 dark:border-slate-800 dark:text-slate-100">
+            Cetak Kartu
+          </ModalHeader>
+          <ModalBody className="flex flex-col items-center justify-center gap-6 md:flex-row md:gap-10">
+            <div className="flex flex-col items-center gap-2">
               <CardFront item={safeItem} />
 
-              <p className="font-Poppins opacity-50">Tampak Depan</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Tampak Depan
+              </p>
             </div>
 
-            <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-col items-center gap-2">
               <CardBack />
 
-              <p className="font-Poppins opacity-50">Tampak Belakang</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Tampak Belakang
+              </p>
             </div>
           </ModalBody>
-          <ModalFooter>
+          <ModalFooter className="border-t border-slate-200 dark:border-slate-800">
             <Button
               color="danger"
               variant="light"
               onPress={onClose}
               radius="sm"
-              className="font-Poppins"
+              className="personalia-action-button personalia-action-button-light"
             >
               Close
             </Button>
@@ -154,7 +160,7 @@ export const CardViewer = ({ item }) => {
               color="primary"
               onPress={handlePrint}
               radius="sm"
-              className="font-Poppins"
+              className="personalia-action-button personalia-action-button-primary"
             >
               Print
             </Button>

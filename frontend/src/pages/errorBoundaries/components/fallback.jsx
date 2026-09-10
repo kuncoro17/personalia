@@ -30,13 +30,13 @@ export function DefaultFallback() {
       }}
     >
       <ModalContent>
-        <div className="p-8 flex flex-col items-center gap-4 flex-1 h-full justify-center">
-          <h2 className="font-bold text-2xl text-primary">Oops!!</h2>
+        <div className="flex h-full flex-1 flex-col items-center justify-center gap-4 p-8">
+          <h2 className="text-2xl font-bold text-slate-900">Oops!!</h2>
           <img
             src="/assets/images/somethingWrong.png"
             className="w-56 object-contain"
           />
-          <p className="text-center font-semibold text-primary">
+          <p className="text-center font-semibold text-slate-600">
             Something went wrong - please try again!
           </p>
         </div>

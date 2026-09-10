@@ -609,17 +609,17 @@ export default function AllKaryawan() {
       <head>
         <meta name="robots" content="noindex, nofollow" />
       </head>
-      <section className="flex min-w-0 flex-1 flex-col gap-4 px-3 pb-6 sm:gap-6 sm:px-6">
+      <section className="flex min-w-0 flex-1 flex-col gap-5">
         <EmployeeStatus />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-5 rounded-2xl border border-slate-200 bg-[#FBFCFE] p-3 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900/60 sm:p-4">
+        <div className="personalia-card flex min-w-0 flex-1 flex-col gap-5 p-3 sm:p-4">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 flex-1 flex-col gap-3">
               <div>
-                <p className="font-Poppins text-xl font-semibold text-primary dark:text-slate-100">
+                <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   All Employee
                 </p>
-                <p className="font-Poppins text-sm text-primary/60 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   Kelola data karyawan berdasarkan kota dan status aktif.
                 </p>
               </div>
@@ -628,7 +628,7 @@ export default function AllKaryawan() {
                 <Dropdown>
                   <DropdownTrigger>
                     <Button
-                      className="w-full justify-center rounded-md border-1 border-primary font-Poppins md:w-auto md:min-w-[72px]"
+                      className="personalia-action-button personalia-action-button-light w-full justify-center md:w-auto md:min-w-[72px]"
                       variant="bordered"
                     >
                       {selectedLimit}
@@ -653,7 +653,7 @@ export default function AllKaryawan() {
                 <Dropdown>
                   <DropdownTrigger>
                     <Button
-                      className="w-full justify-center rounded-md border-1 border-primary font-Poppins md:w-auto md:min-w-[140px]"
+                      className="personalia-action-button personalia-action-button-light w-full justify-center md:w-auto md:min-w-[140px]"
                       variant="bordered"
                       isDisabled={
                         !isLoaded ||
@@ -711,7 +711,7 @@ export default function AllKaryawan() {
                 <Dropdown>
                   <DropdownTrigger>
                     <Button
-                      className="w-full justify-center rounded-md border-1 border-primary font-Poppins md:w-auto md:min-w-[112px]"
+                      className="personalia-action-button personalia-action-button-light w-full justify-center md:w-auto md:min-w-[112px]"
                       variant="bordered"
                     >
                       {selectedStatusAktifValue}
@@ -740,7 +740,7 @@ export default function AllKaryawan() {
                 >
                   <PopoverTrigger>
                     <Button
-                      className="col-span-2 w-full justify-between rounded-md border-1 border-primary bg-white font-Poppins dark:border-slate-600 dark:bg-slate-950 md:col-span-1 md:w-auto md:min-w-[220px]"
+                      className="personalia-action-button personalia-action-button-light col-span-2 w-full justify-between md:col-span-1 md:w-auto md:min-w-[220px]"
                       endContent={
                         <span className="text-xs text-default-500">▾</span>
                       }
@@ -852,7 +852,7 @@ export default function AllKaryawan() {
               />
 
               <Button
-                className="col-span-2 w-full whitespace-nowrap font-Poppins sm:col-span-1 sm:w-auto"
+                className="personalia-action-button personalia-action-button-primary col-span-2 w-full whitespace-nowrap sm:col-span-1 sm:w-auto"
                 color="primary"
                 isDisabled={!isLoaded || !isSignedIn || isImporting}
                 onPress={onOpen}
@@ -861,7 +861,7 @@ export default function AllKaryawan() {
               </Button>
 
               <Button
-                className="col-span-2 w-full whitespace-nowrap rounded-md border-1 border-primary font-Poppins sm:col-span-1 sm:w-auto"
+                className="personalia-action-button personalia-action-button-light col-span-2 w-full whitespace-nowrap sm:col-span-1 sm:w-auto"
                 variant="bordered"
                 isDisabled={!isLoaded || !isSignedIn || isImporting}
                 onPress={downloadTemplate}
@@ -870,7 +870,7 @@ export default function AllKaryawan() {
               </Button>
 
               <Button
-                className="col-span-2 w-full whitespace-nowrap rounded-md border-1 border-primary font-Poppins sm:col-span-1 sm:w-auto"
+                className="personalia-action-button personalia-action-button-light col-span-2 w-full whitespace-nowrap sm:col-span-1 sm:w-auto"
                 variant="bordered"
                 isDisabled={!isLoaded || !isSignedIn || isImporting}
                 isLoading={isImporting}
@@ -880,7 +880,7 @@ export default function AllKaryawan() {
               </Button>
 
               <button
-                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${!isTable ? "bg-primary" : "bg-white dark:bg-slate-950"}`}
+                className={`flex h-10 w-full items-center justify-center rounded-md border border-slate-200 shadow-sm transition sm:aspect-square sm:w-auto ${!isTable ? "bg-primary text-white" : "bg-white dark:bg-slate-950"}`}
                 onClick={() => setIsTable(false)}
                 type="button"
               >
@@ -890,7 +890,7 @@ export default function AllKaryawan() {
               </button>
 
               <button
-                className={`flex h-10 w-full items-center justify-center rounded-md shadow-sm transition sm:aspect-square sm:w-auto ${isTable ? "bg-primary" : "bg-white dark:bg-slate-950"}`}
+                className={`flex h-10 w-full items-center justify-center rounded-md border border-slate-200 shadow-sm transition sm:aspect-square sm:w-auto ${isTable ? "bg-primary text-white" : "bg-white dark:bg-slate-950"}`}
                 onClick={() => setIsTable(true)}
                 type="button"
               >
@@ -902,12 +902,12 @@ export default function AllKaryawan() {
           </div>
 
           {isFetching || searchFetching ? (
-            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white dark:bg-slate-950">
+            <div className="personalia-card flex min-h-48 w-full items-center justify-center p-4">
               <Spinner size="md" color="primary" />
             </div>
           ) : error || searchError || setempatAccessError ? (
-            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4 dark:bg-slate-950">
-              <p className="text-center font-Poppins text-primary opacity-70 dark:text-slate-300">
+            <div className="personalia-card flex min-h-48 w-full items-center justify-center px-4">
+              <p className="text-center text-sm leading-6 text-slate-500 dark:text-slate-400">
                 {setempatAccessError?.message ||
                   searchError?.message ||
                   error?.message ||
@@ -918,8 +918,8 @@ export default function AllKaryawan() {
             ((searchData?.data?.length ?? 0) === 0 &&
               search !== "" &&
               searchData) ? (
-            <div className="flex min-h-48 w-full items-center justify-center rounded-2xl bg-white px-4 dark:bg-slate-950">
-              <p className="font-Poppins text-primary opacity-70 dark:text-slate-300">
+            <div className="personalia-card flex min-h-48 w-full items-center justify-center px-4">
+              <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
                 Tidak ada data karyawan
               </p>
             </div>

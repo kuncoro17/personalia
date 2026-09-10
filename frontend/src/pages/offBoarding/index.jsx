@@ -32,19 +32,19 @@ export default function OffBoardingPage() {
       <head>
         <meta name="robots" content="noindex, nofollow" />
       </head>
-      <section className="container flex min-w-0 flex-1 flex-col gap-6 px-4 py-6">
-        <div className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex min-w-0 flex-1 flex-col gap-6">
+        <div className="personalia-hero-card flex flex-col gap-4 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-Poppins text-2xl font-semibold">Offboarding</p>
-            <p className="mt-1 font-Poppins text-sm text-white/75">
+            <p className="text-2xl font-semibold">Offboarding</p>
+            <p className="mt-1 text-sm text-white/75">
               Karyawan dengan tanggal resign {formatOffboardingDate(date)}
             </p>
           </div>
 
-          <div className="flex min-w-28 items-center justify-center rounded-xl bg-white/15 px-5 py-3">
+          <div className="flex min-w-28 items-center justify-center rounded-md bg-white/15 px-5 py-3">
             <div className="text-center">
-              <p className="font-Poppins text-3xl font-bold">{total}</p>
-              <p className="font-Poppins text-xs text-white/75">Karyawan</p>
+              <p className="text-3xl font-bold">{total}</p>
+              <p className="text-xs text-white/75">Karyawan</p>
             </div>
           </div>
         </div>
@@ -67,39 +67,39 @@ export default function OffBoardingPage() {
               <button
                 key={employee.id_karyawan}
                 type="button"
-                className="flex min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-950"
+            className="personalia-card flex min-w-0 flex-col gap-4 p-5 text-left transition hover:-translate-y-0"
                 onClick={() =>
                   navigate(`/detailEmployee/${employee.id_karyawan}`)
                 }
               >
                 <div className="flex w-full items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-Poppins text-lg font-semibold text-primary dark:text-slate-100">
+                    <p className="truncate text-lg font-semibold text-slate-900 dark:text-slate-100">
                       {employee.nama_lengkap || "Tanpa nama"}
                     </p>
-                    <p className="mt-1 font-Poppins text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       NIK: {employee.nik || "-"}
                     </p>
                   </div>
-                  <Chip color="danger" size="sm" variant="flat">
+                  <Chip className="bg-red-50 font-semibold text-red-700 ring-1 ring-red-100" size="sm" variant="flat">
                     Resign
                   </Chip>
                 </div>
 
                 <div className="grid w-full grid-cols-1 gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 sm:grid-cols-2">
                   <div>
-                    <p className="font-Poppins text-xs text-slate-400">
+                    <p className="text-xs text-slate-400">
                       Tanggal inactive
                     </p>
-                    <p className="font-Poppins text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       {employee.tanggal_inactive || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="font-Poppins text-xs text-slate-400">
+                    <p className="text-xs text-slate-400">
                       Alasan berhenti
                     </p>
-                    <p className="font-Poppins text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       {employee.alasan_berhenti_kerja || "Resign"}
                     </p>
                   </div>
