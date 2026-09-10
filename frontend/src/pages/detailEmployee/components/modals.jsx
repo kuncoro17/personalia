@@ -367,7 +367,7 @@ export default function Modals({
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      className="min-h-max max-w-max"
+      className="w-[calc(100vw-2rem)] min-h-max max-w-6xl"
       backdrop="blur"
       onClose={handleClose}
       scrollBehavior="outside"

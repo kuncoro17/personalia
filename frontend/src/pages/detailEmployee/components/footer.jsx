@@ -21,9 +21,9 @@ export default function Footer({ employeeId, employeeName, employeeStatus }) {
 
   return (
     <>
-      <div className="personalia-hero-card relative flex min-h-40 w-full overflow-hidden p-5">
+      <div className="personalia-hero-card relative flex min-h-28 w-full overflow-hidden p-4 sm:p-5">
         <div className="z-10 flex flex-1 flex-col justify-center gap-3">
-          <p className="text-2xl font-bold text-white sm:text-3xl">
+          <p className="text-lg font-semibold text-white sm:text-xl">
             Pilih surat yang mau dicetak
           </p>
 
@@ -48,25 +48,17 @@ export default function Footer({ employeeId, employeeName, employeeStatus }) {
 
           {/* Info jika tidak ada surat yang tersedia */}
           {availableLetters.length === 0 && employeeStatus && (
-            <p className="text-xs italic text-white">
+            <p className="text-xs italic leading-5 text-white/80">
               Tidak ada surat yang tersedia untuk status: {employeeStatus}
             </p>
           )}
 
           {/* Info jika employee status tidak ada */}
           {!employeeStatus && (
-            <p className="text-xs italic text-white">
+            <p className="text-xs italic leading-5 text-white/80">
               Status karyawan tidak tersedia
             </p>
           )}
-        </div>
-
-        <div className="absolute bottom-0 right-0 overflow-hidden rounded-md">
-          <img
-            src="/assets/images/printMail.png"
-            className="object-contain relative top-1 left-1"
-            alt="Print Mail"
-          />
         </div>
       </div>
 
