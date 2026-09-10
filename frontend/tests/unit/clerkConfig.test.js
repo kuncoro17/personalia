@@ -13,19 +13,19 @@ test("normalizeClerkDomain membuang protokol dan path", () => {
   );
 });
 
-test("runtime host menjadi sumber domain satellite", () => {
+test("configured domain menjadi sumber utama domain satellite", () => {
   assert.equal(
     resolveSatelliteDomain(
-      "domain-yang-salah.example.org",
+      "bpkpenabur.or.id",
       "localhost:3002",
     ),
-    "localhost:3002",
+    "bpkpenabur.or.id",
   );
 });
 
-test("configured domain digunakan ketika runtime host tidak tersedia", () => {
+test("runtime host digunakan ketika configured domain tidak tersedia", () => {
   assert.equal(
-    resolveSatelliteDomain("https://personalia.example.org", undefined),
+    resolveSatelliteDomain(undefined, "https://personalia.example.org"),
     "personalia.example.org",
   );
 });

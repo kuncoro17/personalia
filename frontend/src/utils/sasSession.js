@@ -47,7 +47,9 @@ export const getSasSdmUrl = () => {
 
   if (configuredUrl) return configuredUrl;
 
-  const portalUrl = import.meta.env.VITE_SAS_PORTAL_URL;
+  const portalUrl =
+    import.meta.env.VITE_SAS_PORTAL_URL ||
+    import.meta.env.VITE_CLERK_SIGN_IN_URL;
 
   if (portalUrl) {
     try {
