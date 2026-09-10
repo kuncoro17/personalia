@@ -282,6 +282,7 @@ build-frontend-staging-image:
     - |
       export FRONTEND_ENV_FILE="$STAGING_FRONTEND_ENV_FILE"
       export FRONTEND_API_DOMAIN="$STAGING_API_DOMAIN"
+      export FRONTEND_DOMAIN="$STAGING_DOMAIN"
       export FRONTEND_ENV_LABEL="STAGING_FRONTEND_ENV_FILE"
       . scripts/ci/load-frontend-env.sh
       docker build \
@@ -445,6 +446,7 @@ deploy-production:
     - |
       export FRONTEND_ENV_FILE="$PRODUCTION_FRONTEND_ENV_FILE"
       export FRONTEND_API_DOMAIN="$PRODUCTION_API_DOMAIN"
+      export FRONTEND_DOMAIN="$PRODUCTION_DOMAIN"
       export FRONTEND_ENV_LABEL="PRODUCTION_FRONTEND_ENV_FILE"
       if ! . scripts/ci/load-frontend-env.sh; then
         echo "APPLICATION_CONFIGURATION_ERROR: PRODUCTION_FRONTEND_ENV_FILE validation failed"

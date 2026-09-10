@@ -96,9 +96,21 @@ case "$FRONTEND_API_DOMAIN" in
   *) expected_api_url="https://${FRONTEND_API_DOMAIN%/}" ;;
 esac
 
-if [ "${VITE_API_URL%/}" != "$expected_api_url" ]; then
+allowed_api_urls="$expected_api_url"
+
+if [ -n "${FRONTEND_DOMAIN:-}" ]; then
+  case "$FRONTEND_DOMAIN" in
+    http://*|https://*) frontend_url="${FRONTEND_DOMAIN%/}" ;;
+    *) frontend_url="https://${FRONTEND_DOMAIN%/}" ;;
+  esac
+
+  allowed_api_urls="$allowed_api_urls
+$frontend_url/api"
+fi
+
+if ! printf '%s\n' "$allowed_api_urls" | grep -Fxq "${VITE_API_URL%/}"; then
   echo "VITE_API_URL in $FRONTEND_ENV_LABEL does not match its API domain"
   return 1
 fi
 
-unset invalid_key value variable expected_api_url
+unset invalid_key value variable expected_api_url allowed_api_urls frontend_url
