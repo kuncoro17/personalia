@@ -293,7 +293,6 @@ build-frontend-staging-image:
         --build-arg VITE_CLERK_SIGN_IN_URL="$VITE_CLERK_SIGN_IN_URL" \
         --build-arg VITE_CLERK_DOMAIN="$VITE_CLERK_DOMAIN" \
         --build-arg VITE_CLERK_IS_SATELLITE="$VITE_CLERK_IS_SATELLITE" \
-        --build-arg VITE_SAS_PORTAL_URL="$VITE_SAS_PORTAL_URL" \
         --build-arg VITE_SAS_SDM_URL="$VITE_SAS_SDM_URL" \
         -t "$STAGING_FRONTEND_BUILD_IMAGE" \
         -f frontend/Dockerfile.prod \
@@ -479,7 +478,6 @@ deploy-production:
           --build-arg VITE_CLERK_SIGN_IN_URL="$VITE_CLERK_SIGN_IN_URL" \
           --build-arg VITE_CLERK_DOMAIN="$VITE_CLERK_DOMAIN" \
           --build-arg VITE_CLERK_IS_SATELLITE="$VITE_CLERK_IS_SATELLITE" \
-          --build-arg VITE_SAS_PORTAL_URL="$VITE_SAS_PORTAL_URL" \
           --build-arg VITE_SAS_SDM_URL="$VITE_SAS_SDM_URL" \
           -t "$PRODUCTION_FRONTEND_IMAGE" \
           -f frontend/Dockerfile.prod \
