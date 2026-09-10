@@ -233,7 +233,7 @@ export default function MasterKotaSection({ api, isReady }) {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-3">
+      <div className="personalia-card p-3">
         {isFetching ? (
           <div className="w-full flex items-center justify-center min-h-20">
             <Spinner size="md" color="primary" />
@@ -267,7 +267,7 @@ export default function MasterKotaSection({ api, isReady }) {
                     {item.nama}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2 justify-center">
+                    <div className="flex flex-nowrap justify-center gap-1.5">
                       <Button
                         size="sm"
                         variant="bordered"

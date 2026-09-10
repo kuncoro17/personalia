@@ -21,14 +21,14 @@ export default function Footer({ employeeId, employeeName, employeeStatus }) {
 
   return (
     <>
-      <div className="bg-primary rounded-lg h-40 flex relative w-full">
-        <div className="flex flex-col flex-1 justify-center gap-3 pl-14">
-          <p className="font-Poppins text-white text-4xl font-bold">
+      <div className="personalia-hero-card relative flex min-h-40 w-full overflow-hidden p-5">
+        <div className="z-10 flex flex-1 flex-col justify-center gap-3">
+          <p className="text-2xl font-bold text-white sm:text-3xl">
             Pilih surat yang mau dicetak
           </p>
 
           <select
-            className="flex items-center bg-white rounded-md w-3/5 h-9 pl-2 font-Poppins text-primary text-sm font-medium cursor-pointer"
+            className="h-10 w-full max-w-xl cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900"
             onChange={(e) => {
               if (e.target.value) {
                 handleSelectSurat(e.target.value);
@@ -48,20 +48,20 @@ export default function Footer({ employeeId, employeeName, employeeStatus }) {
 
           {/* Info jika tidak ada surat yang tersedia */}
           {availableLetters.length === 0 && employeeStatus && (
-            <p className="font-Poppins text-white text-xs italic">
+            <p className="text-xs italic text-white">
               Tidak ada surat yang tersedia untuk status: {employeeStatus}
             </p>
           )}
 
           {/* Info jika employee status tidak ada */}
           {!employeeStatus && (
-            <p className="font-Poppins text-white text-xs italic">
+            <p className="text-xs italic text-white">
               Status karyawan tidak tersedia
             </p>
           )}
         </div>
 
-        <div className="absolute overflow-hidden rounded-lg bottom-0 right-0">
+        <div className="absolute bottom-0 right-0 overflow-hidden rounded-md">
           <img
             src="/assets/images/printMail.png"
             className="object-contain relative top-1 left-1"

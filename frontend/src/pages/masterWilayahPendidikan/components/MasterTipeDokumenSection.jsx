@@ -203,7 +203,7 @@ export default function MasterTipeDokumenSection({ api, isReady }) {
         </Button>
       </div>
 
-      <div className="rounded-lg bg-white p-3 shadow-sm dark:bg-slate-950">
+      <div className="personalia-card p-3">
         {isFetching ? (
           <div className="flex min-h-20 w-full items-center justify-center">
             <Spinner color="primary" size="md" />
@@ -233,7 +233,7 @@ export default function MasterTipeDokumenSection({ api, isReady }) {
                   <TableCell>{formatDate(item.createdAt)}</TableCell>
                   <TableCell>{formatDate(item.updatedAt)}</TableCell>
                   <TableCell>
-                    <div className="flex justify-center gap-2">
+                    <div className="flex flex-nowrap justify-center gap-1.5">
                       <Button
                         isDisabled={isMutating}
                         size="sm"

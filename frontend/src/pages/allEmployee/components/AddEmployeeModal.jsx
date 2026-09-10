@@ -229,17 +229,17 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
               });
             }}
           >
-            <ModalHeader className="flex flex-col gap-1 font-Poppins text-xl">
+            <ModalHeader className="flex flex-col gap-1 border-b border-slate-200 text-lg font-semibold text-slate-950 dark:border-slate-800 dark:text-slate-100">
               Tambah Karyawan
             </ModalHeader>
 
             <ModalBody>
               {isLoadingMaster ? (
-                <div className="flex items-center justify-center min-h-28">
+                <div className="flex min-h-28 items-center justify-center">
                   <Spinner color="primary" size="md" />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <Input
                     label="NIK *"
                     value={form.nik}
@@ -400,8 +400,9 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
               )}
             </ModalBody>
 
-            <ModalFooter>
+            <ModalFooter className="border-t border-slate-200 dark:border-slate-800">
               <Button
+                className="personalia-action-button personalia-action-button-light"
                 color="danger"
                 variant="bordered"
                 onPress={onClose}
@@ -410,6 +411,7 @@ export default function AddEmployeeModal({ api, isOpen, onOpenChange }) {
                 Batal
               </Button>
               <Button
+                className="personalia-action-button personalia-action-button-primary"
                 color="primary"
                 type="submit"
                 isDisabled={!canSubmit}

@@ -1,17 +1,16 @@
 import { useAuth, useUser } from "@clerk/clerk-react";
 import {
-  Button,
   Navbar as HeroUINavbar,
   NavbarContent,
   NavbarItem,
   Tooltip,
-  User,
 } from "@heroui/react";
 import { useLocation } from "react-router-dom";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
 import { EMPLOYEEENDPOINT } from "../../constants/api";
+import { Button } from "../ui/button";
 import { useMaster } from "../../hooks/useMaster";
 import { apiClient, resolveApiAssetUrl } from "../../service/api";
 import { capitalizeWords } from "../../utils/format";
@@ -25,11 +24,10 @@ import {
 
 const DEFAULT_AVATAR = "/image/1.svg";
 
-export const Navbar = ({ children }) => {
+export const Navbar = ({ children, onOpenSidebar }) => {
   const location = useLocation();
   const title = location.state?.title || "New Employee";
   let { pathname } = useLocation();
-  const isEmployeeDetail = pathname.startsWith("/detailEmployee/");
   const { user } = useUser();
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [theme, setTheme] = useState(getPreferredTheme);
@@ -47,8 +45,36 @@ export const Navbar = ({ children }) => {
     ? resolveApiAssetUrl(accessProfile.foto)
     : DEFAULT_AVATAR;
   const isDark = theme === THEME.DARK;
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const displayName = capitalizeWords(
+    accessProfile?.nama_lengkap ||
+      accessProfile?.nama ||
+      user?.fullName ||
+      user?.primaryEmailAddress?.emailAddress ||
+      "User Personalia",
+  );
+  const displayRole =
+    accessProfile?.role?.nama ||
+    accessProfile?.role ||
+    accessProfile?.jabatan ||
+    accessProfile?.akses ||
+    "Personalia";
+  const displayPlacement =
+    accessProfile?.kode_penempatan ||
+    accessProfile?.kode_setempat ||
+    accessProfile?.id_master_setempat ||
+    accessProfile?.setempat?.kota_setempat ||
+    accessProfile?.unit_kerja ||
+    "-";
+  const displayEmail =
+    accessProfile?.email_penabur ||
+    accessProfile?.email ||
+    user?.primaryEmailAddress?.emailAddress ||
+    "-";
 
   useEffect(() => listenThemeChange(setTheme), []);
+  useEffect(() => setIsUserMenuOpen(false), [pathname]);
 
   const handleToggleTheme = () => {
     const nextTheme = isDark ? THEME.LIGHT : THEME.DARK;
@@ -57,27 +83,36 @@ export const Navbar = ({ children }) => {
   };
 
   return (
-    <div
-      className={`flex min-w-0 flex-1 flex-col ${!isEmployeeDetail ? "lg:pl-72" : ""}`}
-    >
+    <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
       <HeroUINavbar
         maxWidth="full"
-        position="static"
-        height={"4rem"}
+        position="sticky"
+        height="76px"
         isBlurred={false}
-        className="border-b border-transparent bg-transparent px-2 dark:border-slate-800 sm:px-6"
+        className="personalia-navbar border-b border-slate-200 bg-white/90 px-2 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90 sm:px-6"
       >
         <NavbarContent className="basis-1/2 sm:flex sm:basis-full">
-          <NavbarItem className="hidden sm:flex flex-col">
-            <p className="font-Poppins text-xl font-[700] text-primary dark:text-slate-100">
+          <NavbarItem className="flex items-center lg:hidden">
+            <Button
+              aria-label="Buka sidebar"
+              className="personalia-icon-button shrink-0"
+              size="icon"
+              variant="outline"
+              onPress={onOpenSidebar}
+            >
+              <i className="fi fi-rr-menu-burger" />
+            </Button>
+          </NavbarItem>
+          <NavbarItem className="hidden flex-col sm:flex">
+            <p className="text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
               {title}
             </p>
-            <p className="font-Poppins text-primary/80 dark:text-slate-400">
+            <p className="text-sm leading-5 text-slate-500 dark:text-slate-400">
               {moment().format("dddd, MMMM DD YYYY")}
             </p>
           </NavbarItem>
           <NavbarItem className="flex flex-col sm:hidden">
-            <p className="max-w-[150px] truncate font-Poppins text-base font-[700] text-primary dark:text-slate-100">
+            <p className="max-w-[150px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
               {title}
             </p>
           </NavbarItem>
@@ -89,11 +124,9 @@ export const Navbar = ({ children }) => {
               as="a"
               href={getSasSdmUrl()}
               aria-label="Kembali ke halaman SDM SAS"
-              className="shrink-0 font-Poppins"
-              color="primary"
-              radius="sm"
+              className="hidden shrink-0 sm:inline-flex"
               size="sm"
-              variant="flat"
+              variant="outline"
             >
               <i className="fi fi-rr-arrow-left" />
               <span className="hidden sm:inline">Kembali ke SAS</span>
@@ -105,35 +138,76 @@ export const Navbar = ({ children }) => {
             showArrow
           >
             <Button
-              isIconOnly
               aria-label={isDark ? "Gunakan light mode" : "Gunakan dark mode"}
-              className="shrink-0 border border-default-200 bg-white text-primary shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-yellow"
-              radius="full"
-              size="sm"
-              variant="flat"
+              className="personalia-icon-button shrink-0"
+              size="icon"
+              variant="outline"
               onPress={handleToggleTheme}
             >
               <i className={`fi ${isDark ? "fi-rr-sun" : "fi-rr-moon"}`} />
             </Button>
           </Tooltip>
 
-          <User
-            avatarProps={{
-              src: avatarSrc,
-              imgProps: {
-                onError: (event) => {
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsUserMenuOpen((current) => !current)}
+              className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-blue-600 bg-white text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:bg-slate-950 dark:hover:bg-slate-900"
+              aria-label="Buka menu user"
+              aria-expanded={isUserMenuOpen}
+            >
+              <img
+                src={avatarSrc}
+                alt={displayName}
+                className="h-full w-full object-cover"
+                onError={(event) => {
                   event.currentTarget.onerror = null;
                   event.currentTarget.src = DEFAULT_AVATAR;
-                },
-              },
-            }}
-            name={capitalizeWords(user?.fullName || "")}
-            className="max-w-[170px] font-Poppins font-[600] sm:max-w-none"
-          />
+                }}
+              />
+            </button>
+
+            {isUserMenuOpen && (
+              <>
+                <button
+                  type="button"
+                  className="fixed inset-0 z-40 cursor-default"
+                  aria-label="Tutup menu user"
+                  onClick={() => setIsUserMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-lg border border-slate-200 border-t-4 border-t-blue-600 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950 sm:w-96">
+                  <div className="px-4 py-4">
+                    <p className="truncate text-sm font-bold uppercase leading-6 text-slate-950 dark:text-slate-100">
+                      {displayName} - {displayRole}
+                    </p>
+                    <p className="mt-1 truncate text-sm font-semibold leading-6 text-slate-500 dark:text-slate-400">
+                      {displayPlacement}
+                    </p>
+                    <p className="mt-1 truncate text-sm leading-6 text-slate-500 dark:text-slate-400">
+                      {displayEmail}
+                    </p>
+                  </div>
+                  {hasSasEntry() ? (
+                    <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+                      <a
+                        href={getSasSdmUrl()}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:text-slate-200 dark:hover:bg-slate-900"
+                      >
+                        <i className="fi fi-rr-arrow-left text-sm" />
+                        <span>Kembali Halaman SAS</span>
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            )}
+          </div>
         </NavbarContent>
       </HeroUINavbar>
 
-      <div className="mt-4 flex min-w-0 flex-1 sm:mt-5">{children}</div>
+      <main className="personalia-page-shell flex min-w-0 flex-1">
+        {children}
+      </main>
     </div>
   );
 };

@@ -502,7 +502,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     if (columnKey === "alamat") return item.alamat || "-";
     if (columnKey === "actions") {
       return (
-        <div className="flex gap-2 justify-center">
+        <div className="flex flex-nowrap justify-center gap-1.5">
           <Button
             size="sm"
             variant="bordered"
@@ -609,7 +609,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-3">
+      <div className="personalia-card p-3">
         {hasDataTableSearch && (
           <div className="mb-4 flex items-center justify-between gap-3">
             <Input

@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/clerk-react";
 
 import { apiClient } from "../../service/api";
+import { Badge, Card } from "../../components/ui";
 import Loading from "../../components/common/Loading";
 import NoData from "../../components/common/NoData";
 import { useMaster } from "../../hooks/useMaster";
@@ -37,8 +38,8 @@ export default function EmployeeStatus() {
   if (isFetching) return <Loading />;
   if (error)
     return (
-      <div className="w-full flex items-center justify-center min-h-20">
-        <p className="text-center font-Poppins text-primary opacity-70 dark:text-slate-300">
+      <div className="flex min-h-20 w-full items-center justify-center">
+        <p className="text-center text-sm text-slate-500 dark:text-slate-300">
           {error.message || "Gagal memuat status karyawan"}
         </p>
       </div>
@@ -48,22 +49,18 @@ export default function EmployeeStatus() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {Object.keys(statusSummary).map((key, index) => (
-        <div
+        <Card
           key={key}
-          className={`flex h-16 min-w-0 items-center gap-3 rounded-xl px-2 ${
-            index % 2 === 0 ? "bg-red" : "bg-primary"
-          }`}
+          className="flex min-h-16 min-w-0 items-center gap-3 p-3"
         >
-          <div className="flex h-11 min-w-11 items-center justify-center rounded-lg bg-white px-2 dark:bg-slate-950">
-            <p className="text-center font-Poppins text-sm font-[600] text-primary dark:text-slate-100">
-              {key}
-            </p>
-          </div>
+          <Badge variant={index % 2 === 0 ? "destructive" : "default"}>
+            {key}
+          </Badge>
 
-          <p className="truncate font-Poppins text-lg font-[600] text-white">
+          <p className="truncate text-lg font-semibold text-slate-950 dark:text-slate-100">
             {statusSummary[key]}
           </p>
-        </div>
+        </Card>
       ))}
     </div>
   );

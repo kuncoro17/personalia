@@ -23,7 +23,18 @@ body,
 body {
   margin: 0;
   background: #f8fafc;
+  font-family:
+    Inter,
+    Poppins,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
   transition:
     background-color 160ms ease,
     color 160ms ease;
@@ -57,4 +68,420 @@ body {
 
 :root.dark img[src$=".svg"] {
   color-scheme: light;
+}
+
+.personalia-app {
+  --standard-blue: #2563eb;
+  --standard-blue-dark: #1d4ed8;
+  --standard-slate: #0f172a;
+  --standard-muted: #64748b;
+  --standard-border: #dbe3ef;
+}
+
+.personalia-navbar {
+  left: 0;
+  top: 0;
+  z-index: 30;
+}
+
+@media (min-width: 1024px) {
+  .personalia-navbar {
+    left: 16rem;
+  }
+}
+
+.personalia-page-shell {
+  min-height: calc(100vh - 76px);
+  padding: 1.25rem;
+  background: #f8fafc;
+}
+
+@media (min-width: 640px) {
+  .personalia-page-shell {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .personalia-page-shell {
+    padding: 1.5rem 1.5rem 1.75rem;
+  }
+}
+
+:root.dark .personalia-page-shell {
+  background: #020617;
+}
+
+.personalia-page-shell > section {
+  width: 100%;
+  max-width: none;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.personalia-page-shell .container {
+  max-width: none !important;
+}
+
+.personalia-sidebar {
+  box-shadow: none;
+}
+
+.personalia-sidebar-item {
+  display: flex;
+  min-height: 2.5rem;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.625rem;
+  color: #334155;
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.personalia-sidebar-item:hover {
+  background: #f1f5f9;
+  color: #020617;
+}
+
+.personalia-sidebar-item-active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.2);
+}
+
+.personalia-sidebar-item-active:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.personalia-sidebar-item-active img {
+  filter: brightness(0) invert(1);
+}
+
+:root.dark .personalia-sidebar-item {
+  color: #cbd5e1;
+}
+
+:root.dark .personalia-sidebar-item:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+:root.dark .personalia-sidebar-item-active,
+:root.dark .personalia-sidebar-item-active:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.personalia-page-title,
+.personalia-page-shell h1,
+.personalia-page-shell h2 {
+  color: #0f172a;
+  letter-spacing: 0;
+}
+
+:root.dark .personalia-page-title,
+:root.dark .personalia-page-shell h1,
+:root.dark .personalia-page-shell h2 {
+  color: #f8fafc;
+}
+
+.personalia-card,
+.personalia-page-shell .bg-white,
+.personalia-page-shell [class*="rounded-2xl"][class*="bg-white"],
+.personalia-page-shell [class*="rounded-lg"][class*="bg-white"] {
+  border: 1px solid #dbe3ef !important;
+  border-top: 4px solid #2563eb !important;
+  border-radius: 0.5rem !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root.dark .personalia-card,
+:root.dark .personalia-page-shell .bg-white,
+:root.dark .personalia-page-shell [class*="rounded-2xl"][class*="bg-white"],
+:root.dark .personalia-page-shell [class*="rounded-lg"][class*="bg-white"] {
+  border-color: #1e293b !important;
+  border-top-color: #3b82f6 !important;
+  background: #0f172a !important;
+}
+
+.personalia-hero-card {
+  border-top: 0 !important;
+  border-radius: 0.5rem !important;
+  background: #0f3a63 !important;
+}
+
+.personalia-hero-card img {
+  align-self: end;
+  margin-bottom: 0 !important;
+  object-fit: contain;
+  object-position: bottom right;
+}
+
+.personalia-action-button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.personalia-action-button-primary,
+.personalia-page-shell [data-slot="base"][class*="bg-primary"],
+.personalia-page-shell button[class*="bg-primary"],
+.personalia-page-shell a[class*="bg-primary"] {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+.personalia-action-button-primary:hover,
+.personalia-page-shell button[class*="bg-primary"]:hover,
+.personalia-page-shell a[class*="bg-primary"]:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.personalia-action-button-light,
+.personalia-page-shell button[class*="border-primary"],
+.personalia-page-shell [data-slot="base"][class*="border-primary"] {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.personalia-action-button-light:hover,
+.personalia-page-shell button[class*="border-primary"]:hover {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+.personalia-icon-button {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  min-width: 2.5rem !important;
+  border: 1px solid #dbe3ef !important;
+  background: #ffffff !important;
+  color: #2563eb !important;
+  box-shadow: none !important;
+}
+
+:root.dark .personalia-icon-button,
+:root.dark .personalia-action-button-light {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+.personalia-page-shell [data-slot="input-wrapper"],
+.personalia-page-shell input,
+.personalia-page-shell select,
+.personalia-page-shell textarea {
+  border-color: #cbd5e1 !important;
+  border-radius: 0.375rem !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+  color: #0f172a !important;
+}
+
+.personalia-page-shell [data-slot="input-wrapper"]:focus-within,
+.personalia-page-shell input:focus,
+.personalia-page-shell select:focus,
+.personalia-page-shell textarea:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
+}
+
+:root.dark .personalia-page-shell [data-slot="input-wrapper"],
+:root.dark .personalia-page-shell input,
+:root.dark .personalia-page-shell select,
+:root.dark .personalia-page-shell textarea {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+.personalia-page-shell table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.personalia-page-shell thead tr {
+  background: #f8fafc;
+}
+
+.personalia-page-shell th {
+  border: 1px solid #dbe3ef !important;
+  padding: 0.75rem 1rem !important;
+  text-align: left !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  line-height: 1rem !important;
+  letter-spacing: 0.08em !important;
+  color: #64748b !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.personalia-page-shell td {
+  border: 1px solid #dbe3ef !important;
+  padding: 0.75rem 1rem !important;
+  color: #334155 !important;
+  vertical-align: top;
+}
+
+.personalia-page-shell tbody tr:hover {
+  background: #f8fafc;
+}
+
+:root.dark .personalia-page-shell thead tr,
+:root.dark .personalia-page-shell tbody tr:hover {
+  background: #111827;
+}
+
+:root.dark .personalia-page-shell th,
+:root.dark .personalia-page-shell td {
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+.personalia-page-shell [data-slot="wrapper"]:has(table) {
+  border: 1px solid #dbe3ef !important;
+  border-radius: 0.5rem !important;
+  box-shadow: none !important;
+  overflow-x: auto;
+}
+
+.personalia-page-shell [data-slot="cursor"] {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.personalia-page-shell [data-slot="item"] {
+  border-radius: 0.375rem !important;
+  font-weight: 600;
+}
+
+.personalia-page-shell [data-slot="base"][class*="bg-red"],
+.personalia-page-shell .bg-red {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.personalia-page-shell [data-slot="base"][class*="bg-primary"],
+.personalia-page-shell .bg-primary {
+  background: #2563eb !important;
+}
+
+.personalia-page-shell .text-primary {
+  color: #0f172a !important;
+}
+
+.personalia-page-shell .text-red {
+  color: #dc2626 !important;
+}
+
+.personalia-page-shell [data-slot="base"][class*="rounded-full"],
+.personalia-page-shell [class*="rounded-full"][class*="bg-red"],
+.personalia-page-shell [class*="rounded-full"][class*="bg-primary"] {
+  border-radius: 9999px !important;
+  padding-inline: 0.625rem !important;
+  min-height: 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.personalia-page-shell button,
+.personalia-page-shell a {
+  letter-spacing: 0;
+}
+
+.personalia-page-shell .font-Poppins,
+.personalia-page-shell .font-DMSans {
+  font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.personalia-page-shell [class*="rounded-2xl"],
+.personalia-page-shell [class*="rounded-xl"] {
+  border-radius: 0.5rem !important;
+}
+
+.personalia-page-shell [class*="shadow-lg"],
+.personalia-page-shell [class*="shadow-md"] {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+.personalia-page-shell [class*="border-[#00000010]"],
+.personalia-page-shell [class*="border-primary"] {
+  border-color: #dbe3ef !important;
+}
+
+.personalia-page-shell .bg-gray-100,
+.personalia-page-shell .bg-gray-200 {
+  background: #f1f5f9 !important;
+}
+
+.personalia-page-shell .text-gray-400,
+.personalia-page-shell .text-gray-500,
+.personalia-page-shell .text-gray-600 {
+  color: #64748b !important;
+}
+
+.personalia-page-shell [data-slot="base"][class*="bg-yellow"],
+.personalia-page-shell .bg-yellow {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.personalia-page-shell [data-slot="base"][class*="bg-danger"],
+.personalia-page-shell .bg-danger,
+.personalia-page-shell [class*="bg-danger"] {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.personalia-page-shell [data-slot="content"],
+.personalia-page-shell [data-slot="panel"] {
+  border-radius: 0.5rem !important;
+}
+
+.personalia-page-shell [data-slot="base"]:has([role="dialog"]),
+.personalia-page-shell [role="dialog"] {
+  border-radius: 0.5rem !important;
+}
+
+.personalia-page-shell [data-slot="header"] {
+  border-bottom: 1px solid #dbe3ef;
+  color: #0f172a;
+}
+
+.personalia-page-shell [data-slot="footer"] {
+  border-top: 1px solid #dbe3ef;
+}
+
+:root.dark .personalia-page-shell [data-slot="header"],
+:root.dark .personalia-page-shell [data-slot="footer"] {
+  border-color: #1e293b;
+  color: #f8fafc;
 }

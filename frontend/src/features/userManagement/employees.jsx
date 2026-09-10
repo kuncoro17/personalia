@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { resolveApiAssetUrl } from "../../service/api";
+import { Badge, Button, Card } from "../../components/ui";
 import { TableViewer } from "./components/tableViewer";
 import { CardViewer } from "./components/cardViewer";
 import {
@@ -53,7 +54,7 @@ export default function Employees({
 
   if (isTable)
     return (
-      <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-950">
+      <Card className="w-full min-w-0 overflow-x-auto p-2">
         <TableViewer
           dataTable={dataTable}
           isSelect={isSelect}
@@ -61,7 +62,7 @@ export default function Employees({
           onSelect={onSelect}
           header={isSelect ? EMPLOYEESELECTHEADER : EMPLOYEEHEADER}
         />
-      </div>
+      </Card>
     );
 
   return (
@@ -75,14 +76,15 @@ export default function Employees({
               });
 
         return (
-          <div
+          <Card
             key={item.id_karyawan}
+            as="div"
             role="button"
             tabIndex={0}
-            className={`group flex min-w-0 flex-col items-center justify-between gap-3 rounded-2xl bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md dark:bg-slate-950 dark:hover:bg-slate-900 ${
+            className={`group flex min-w-0 flex-col items-center justify-between gap-3 p-5 transition duration-200 ${
               isSelect && selected.includes(String(item.id_karyawan))
-                ? "border-2 border-primary dark:border-sky-400"
-                : "border-1 border-slate-200 dark:border-slate-800"
+                ? "ring-2 ring-blue-600"
+                : ""
             }`}
             onClick={handleActivate}
             onKeyDown={(event) => {
@@ -92,11 +94,11 @@ export default function Employees({
               }
             }}
           >
-            <div className="flex h-24 w-24 justify-center rounded-2xl bg-[#F5F7FA] p-1 dark:bg-slate-900">
+            <div className="flex h-24 w-24 justify-center rounded-md bg-slate-50 p-1 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
               <img
                 src={getEmployeeImageSrc(item)}
                 alt={item.nama_lengkap || "Foto karyawan"}
-                className="h-full w-full rounded-xl object-cover"
+                className="h-full w-full rounded-md object-cover"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
                   event.currentTarget.src = "/image/1.svg";
@@ -107,32 +109,31 @@ export default function Employees({
             <Tooltip
               content={item.nama_lengkap}
               showArrow={true}
-              className="font-Poppins text-xs"
+              className="text-xs"
               isDismissable={true}
             >
-              <p className="w-full truncate text-center font-Poppins font-[600] text-primary dark:text-slate-100">
+              <p className="w-full truncate text-center font-semibold text-slate-900 dark:text-slate-100">
                 {item.nama_lengkap}
               </p>
             </Tooltip>
 
-            <div className="flex h-8 max-w-full items-center justify-center rounded-full bg-red px-4">
-              <p className="truncate font-Poppins text-sm font-[600] text-white">
-                {item.status_karyawan}
-              </p>
-            </div>
+            <Badge variant="destructive" className="max-w-full">
+              <p className="truncate">{item.status_karyawan}</p>
+            </Badge>
 
-            <p className="w-full truncate text-center font-Poppins text-sm font-[500] text-[#0B345E]/80 dark:text-slate-300">
+            <p className="w-full truncate text-center text-sm font-medium text-slate-600 dark:text-slate-300">
               {item.jabatan}
             </p>
 
-            <p className="font-Poppins text-sm font-[500] text-[#0B345E]/60 dark:text-slate-400">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
               {item.nik}
             </p>
 
             {!isSelect && (
-              <button
-                className="z-10 flex items-center gap-2 rounded-full bg-primary px-5 py-2 transition group-hover:bg-[#092c4f]"
+              <Button
+                className="z-10"
                 type="button"
+                variant="default"
                 onClick={(event) => {
                   event.stopPropagation();
                   setSelectedPrint(item);
@@ -151,10 +152,10 @@ export default function Employees({
                   />
                 </svg>
 
-                <p className="font-Poppins text-xs text-white">Cetak Kartu</p>
-              </button>
+                <p className="text-xs text-white">Cetak Kartu</p>
+              </Button>
             )}
-          </div>
+          </Card>
         );
       })}
 

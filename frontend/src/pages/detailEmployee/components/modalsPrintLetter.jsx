@@ -241,14 +241,18 @@ export default function PrintLetterModalSingle({
       <ModalContent>
         {() => (
           <>
-            <ModalHeader>
-              <p className="font-Poppins font-medium">{title}</p>
+            <ModalHeader className="border-b border-slate-200 dark:border-slate-800">
+              <p className="text-base font-semibold text-slate-950 dark:text-slate-100">
+                {title}
+              </p>
             </ModalHeader>
             <ModalBody className="flex flex-col gap-5 py-6">
               {/* Info Karyawan */}
-              <div className="bg-gray-100 rounded-lg p-4">
-                <p className="font-Poppins text-sm text-gray-600">Karyawan:</p>
-                <p className="font-Poppins text-lg font-semibold text-primary">
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  Karyawan:
+                </p>
+                <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-100">
                   {employeeName || "Nama tidak tersedia"}
                 </p>
               </div>
@@ -257,7 +261,7 @@ export default function PrintLetterModalSingle({
               {isLoading.fetch && (
                 <div className="flex items-center justify-center py-10">
                   <Spinner size="lg" color="primary" />
-                  <p className="ml-3 font-Poppins text-primary">
+                  <p className="ml-3 text-sm font-medium text-slate-600 dark:text-slate-300">
                     Memuat data surat...
                   </p>
                 </div>
@@ -265,27 +269,27 @@ export default function PrintLetterModalSingle({
 
               {/* Preview or Message */}
               {!isLoading.fetch && !letterData && (
-                <div className="text-center py-10">
-                  <p className="font-Poppins text-gray-500">
+                <div className="py-10 text-center">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     Data surat tidak tersedia
                   </p>
                 </div>
               )}
 
               {!isLoading.fetch && letterData && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <p className="font-Poppins text-sm text-green-600">
-                    ✓ Data surat berhasil dimuat
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40">
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                    Data surat berhasil dimuat
                   </p>
-                  <p className="font-Poppins text-xs text-gray-500 mt-1">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Siap untuk di-download atau print
                   </p>
                 </div>
               )}
             </ModalBody>
-            <ModalFooter>
+            <ModalFooter className="border-t border-slate-200 dark:border-slate-800">
               <Button
-                className="font-Poppins"
+                className="personalia-action-button personalia-action-button-light"
                 color="danger"
                 variant="light"
                 onPress={handleClose}
@@ -293,7 +297,7 @@ export default function PrintLetterModalSingle({
                 Tutup
               </Button>
               <Button
-                className="font-Poppins"
+                className="personalia-action-button personalia-action-button-light"
                 color="primary"
                 variant="flat"
                 onPress={handleDownload}
@@ -303,7 +307,7 @@ export default function PrintLetterModalSingle({
                 Download PDF
               </Button>
               <Button
-                className="font-Poppins"
+                className="personalia-action-button personalia-action-button-primary"
                 color="primary"
                 onPress={handlePrint}
                 isDisabled={!letterData || isLoading.pdf || isLoading.print}

@@ -1,5 +1,4 @@
 import {
-  Button,
   Input,
   Spinner,
   Table,
@@ -21,6 +20,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import Layout from "../../components/layout";
+import { Button, Card } from "../../components/ui";
 import { apiClient, apiService } from "../../service/api";
 import { useMaster } from "../../hooks/useMaster";
 import { MASTERENDPOINT } from "../../constants/api";
@@ -160,12 +160,17 @@ export default function MasterSetempatPage() {
         <meta name="robots" content="noindex, nofollow" />
       </head>
 
-      <section className="flex flex-col gap-6 flex-1 px-6 pb-5">
-        <div className="flex items-center justify-between">
-          <p className="font-Poppins text-xl font-semibold text-primary"></p>
+      <section className="flex flex-1 flex-col gap-6">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Master Setempat
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Kelola data kota setempat untuk filter dan akses data karyawan.
+          </p>
         </div>
 
-        <div className="flex gap-3 items-end">
+        <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
           <Input
             label="Kota setempat"
             placeholder="Contoh: Jakarta Selatan"
@@ -174,15 +179,15 @@ export default function MasterSetempatPage() {
             className="max-w-md"
           />
           <Button
-            color="primary"
+            variant="default"
             isDisabled={!canSubmit || isMutating}
             onPress={() => createMutation.mutate()}
           >
             Tambah
           </Button>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-lg shadow-sm p-3">
+        <Card className="p-3">
           {isFetching ? (
             <div className="w-full flex items-center justify-center min-h-20">
               <Spinner size="md" color="primary" />
@@ -211,8 +216,9 @@ export default function MasterSetempatPage() {
                       {item.kota_setempat}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2 justify-center">
+                      <div className="flex flex-nowrap justify-center gap-1.5">
                         <Button
+                          className="personalia-action-button personalia-action-button-light min-h-8 px-2.5 py-1.5 text-xs"
                           size="sm"
                           variant="bordered"
                           isDisabled={isMutating}
@@ -225,6 +231,7 @@ export default function MasterSetempatPage() {
                           Edit
                         </Button>
                         <Button
+                          className="personalia-action-button min-h-8 border-red-200 bg-red-600 px-2.5 py-1.5 text-xs text-white"
                           size="sm"
                           color="danger"
                           variant="bordered"
@@ -240,7 +247,7 @@ export default function MasterSetempatPage() {
               </TableBody>
             </Table>
           )}
-        </div>
+        </Card>
       </section>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -259,14 +266,14 @@ export default function MasterSetempatPage() {
               </ModalBody>
               <ModalFooter>
                 <Button
-                  variant="light"
+                  variant="outline"
                   onPress={closeHandler}
                   isDisabled={isMutating}
                 >
                   Batal
                 </Button>
                 <Button
-                  color="primary"
+                  variant="default"
                   isDisabled={editingName.trim().length === 0 || isMutating}
                   onPress={() => updateMutation.mutate()}
                 >

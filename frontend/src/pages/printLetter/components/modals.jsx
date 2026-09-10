@@ -342,8 +342,10 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
       <ModalContent>
         {() => (
           <>
-            <ModalHeader>
-              <p className="font-Poppins font-medium">{title}</p>
+            <ModalHeader className="border-b border-slate-200 dark:border-slate-800">
+              <p className="text-base font-semibold text-slate-950 dark:text-slate-100">
+                {title}
+              </p>
             </ModalHeader>
             <ModalBody className="flex flex-col gap-5">
               <div className="w-full">
@@ -365,7 +367,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                   {LETTER_TYPES.map((type) => (
                     <SelectItem
                       key={type.value}
-                      className="font-Poppins text-primary"
+                      className="text-slate-700 dark:text-slate-200"
                     >
                       {type.label}
                     </SelectItem>
@@ -374,9 +376,9 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
               </div>
 
               {/* SECTION 2: Form Fields (jika ada) & Employee List */}
-              <div className="flex flex-row gap-10">
+              <div className="flex flex-col gap-5 lg:flex-row lg:gap-6">
                 {hasForm && (
-                  <div className="basis-1/3 shrink-0">
+                  <div className="shrink-0 lg:basis-1/3">
                     <Form className="flex flex-col gap-5 overflow-y-auto scrollbar-hide">
                       {formFields.map((item) => (
                         <FormRender key={item.properties} item={item} />
@@ -407,7 +409,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                     />
                     <Button
                       isIconOnly
-                      className={`${isTable ? "bg-primary text-white" : "bg-gray-200"}`}
+                      className={`personalia-icon-button shrink-0 ${isTable ? "bg-primary text-white" : ""}`}
                       onClick={() => setIsTable(!isTable)}
                     >
                       <i className="fi fi-rr-list" />
@@ -436,8 +438,9 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
               </div>
             </ModalBody>
 
-            <ModalFooter>
+            <ModalFooter className="border-t border-slate-200 dark:border-slate-800">
               <Button
+                className="personalia-action-button personalia-action-button-light"
                 color="danger"
                 variant="light"
                 onPress={() => {
@@ -450,6 +453,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                 Close
               </Button>
               <Button
+                className="personalia-action-button personalia-action-button-light"
                 color="primary"
                 variant="bordered"
                 onPress={handlePreviewPDF}
@@ -459,6 +463,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                 Preview PDF
               </Button>
               <Button
+                className="personalia-action-button personalia-action-button-primary"
                 color="primary"
                 onPress={handleExportPDF}
                 isLoading={isLoading.pdf}
@@ -467,6 +472,7 @@ export default function Modals({ isOpen, onOpenChange, selectedSurat }) {
                 Download PDF
               </Button>
               <Button
+                className="personalia-action-button border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
                 color="success"
                 onPress={handlePrint}
                 isLoading={isLoading.print}

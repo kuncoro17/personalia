@@ -20,27 +20,17 @@ const renderCell = (data, columnKey, isSelect, selected = []) => {
     case "action":
       return (
         <button
-          style={{
-            height: "1rem",
-            aspectRatio: 1,
-            borderRadius: "0.2rem",
-            border: "1px solid rgba(0, 0, 0, 0.5)",
-            padding: "0.1rem",
-          }}
+          className="inline-flex h-4 w-4 items-center justify-center rounded border border-slate-400 p-0.5"
+          type="button"
         >
           <div
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "0.1rem",
-              backgroundColor: isItemSelected ? "#0B345E" : "transparent",
-            }}
+            className={`h-full w-full rounded-[2px] ${isItemSelected ? "bg-blue-600" : "bg-transparent"}`}
           />
         </button>
       );
     default:
       return (
-        <p className="font-Poppins font-[500] text-primary dark:text-slate-200">
+        <p className="font-medium text-slate-700 dark:text-slate-200">
           {cellValue}
         </p>
       );
@@ -60,6 +50,11 @@ export const TableViewer = ({
     <Table
       aria-label="Example table with custom cells"
       className="w-full min-w-0"
+      classNames={{
+        wrapper: "border border-slate-200 shadow-none rounded-lg p-0",
+        th: "bg-slate-50 text-slate-500 uppercase tracking-wider font-bold",
+        td: "text-slate-700",
+      }}
       onRowAction={(item) => {
         isSelect
           ? onSelect(item)
@@ -70,7 +65,7 @@ export const TableViewer = ({
     >
       <TableHeader columns={header}>
         {(column) => (
-          <TableColumn key={column.uid} align="center">
+          <TableColumn key={column.uid} align="start">
             {column.name}
           </TableColumn>
         )}

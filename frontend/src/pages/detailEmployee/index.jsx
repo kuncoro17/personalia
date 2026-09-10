@@ -115,65 +115,66 @@ function EmployeeDetailContent({ employeeId }) {
 
   return (
     <Layout>
-      <section className="flex flex-1 justify-between pl-5 pr-16 pb-7 gap-4 w-screen">
-        <div className="rounded-lg shadow-lg h-full w-48 border-1 border-[#00000010] relative">
-          <div className="fixed w-48 p-5 flex flex-col gap-20">
+      <section className="grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[14rem_minmax(0,1fr)]">
+        <aside className="personalia-card h-full p-5">
+          <div className="flex h-full flex-col gap-8">
             <div className="flex flex-col flex-1 items-center gap-1">
               <img
                 src={
                   data?.foto ? resolveApiAssetUrl(data.foto) : "/image/1.svg"
                 }
                 alt="Foto karyawan"
-                className="rounded-md aspect-square w-full"
+                className="aspect-square w-full rounded-md object-cover ring-1 ring-slate-200 dark:ring-slate-800"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
                   event.currentTarget.src = "/image/1.svg";
                 }}
               />
 
-              <p className="font-Poppins font-semibold text-primary text-center">
+              <p className="text-center font-semibold text-slate-900 dark:text-slate-100">
                 {data?.nama_lengkap || "-"}
               </p>
-              <p className="font-Poppins font-semibold text-primary text-center">
+              <p className="text-center text-sm font-semibold text-slate-500 dark:text-slate-400">
                 {data?.nama || "-"}
               </p>
             </div>
 
             <div className="h-2/5 flex items-center justify-center">
-              <p className="font-Poppins font-semibold text-primary">
+              <p className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
                 {data?.status || "-"}
               </p>
             </div>
 
             <div className="flex flex-col flex-1 gap-5 justify-between">
               <div>
-                <p className="font-Poppins font-medium opacity-50 text-sm">
+                <p className="text-sm font-medium text-slate-400">
                   Employee ID
                 </p>
-                <p className="font-Poppins font-semibold text-primary">
+                <p className="font-semibold text-slate-900 dark:text-slate-100">
                   {data?.nik || "-"}
                 </p>
               </div>
 
               <div>
-                <p className="font-Poppins font-medium opacity-50 text-sm">
+                <p className="text-sm font-medium text-slate-400">
                   Request Date
                 </p>
-                <p className="font-Poppins font-semibold text-primary">
+                <p className="font-semibold text-slate-900 dark:text-slate-100">
                   August 8, 2025
                 </p>
               </div>
             </div>
           </div>
-        </div>
+        </aside>
 
         <div className="flex flex-1 flex-col gap-3">
           <div>
             <button
               type="button"
-              className="h-9 px-4 rounded-md bg-primary text-white font-Poppins text-sm font-medium"
+              className="personalia-action-button personalia-action-button-light"
               onClick={() => navigate("/employees")}
             >
+              <i className="fi fi-rr-arrow-left" />
               Kembali ke Employee
             </button>
           </div>

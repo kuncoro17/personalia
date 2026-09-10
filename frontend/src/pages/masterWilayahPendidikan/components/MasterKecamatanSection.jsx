@@ -281,7 +281,7 @@ export default function MasterKecamatanSection({ api, isReady }) {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-3">
+      <div className="personalia-card p-3">
         {!kotaId ? (
           <div className="w-full flex items-center justify-center min-h-20 text-sm text-gray-500">
             Pilih provinsi dan kota untuk menampilkan kecamatan.
@@ -319,7 +319,7 @@ export default function MasterKecamatanSection({ api, isReady }) {
                     {item.nama}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2 justify-center">
+                    <div className="flex flex-nowrap justify-center gap-1.5">
                       <Button
                         size="sm"
                         variant="bordered"
