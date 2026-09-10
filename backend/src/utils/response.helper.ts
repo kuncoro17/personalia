@@ -31,3 +31,11 @@ export const unauthorized = <T>(
 ) => {
   return c.json({ success: false, message, error } as const, { status: 401 });
 };
+
+export const forbidden = <T>(
+  c: Context,
+  message = 'Forbidden',
+  error?: T
+) => {
+  return c.json({ success: false, message, error } as const, { status: 403 });
+};

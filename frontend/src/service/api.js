@@ -18,6 +18,21 @@ const getResolvedApiUrl = () => {
 };
 
 const API_URL = getResolvedApiUrl();
+const AUTH_TOKEN_RETRY_DELAYS_MS = [0, 200, 500, 1000, 1500];
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const stripLeadingSlash = (path = "") => path.replace(/^\/+/, "");
+
+const isPublicEndpoint = (url = "") => {
+  const path = stripLeadingSlash(String(url).split("?")[0] || "");
+
+  return (
+    path === "auth/sas/auto-login" ||
+    path === "auth/sas/verify" ||
+    path === "health"
+  );
+};
 
 const isCloudflareChallengePayload = (payload) => {
   if (typeof payload !== "string") return false;
@@ -76,7 +91,27 @@ export const apiClient = (getToken) => {
     timeout: 15_000,
   });
 
+  const resolveClerkToken = async () => {
+    if (typeof getToken !== "function") return "";
+
+    for (const delay of AUTH_TOKEN_RETRY_DELAYS_MS) {
+      if (delay > 0) await sleep(delay);
+
+      try {
+        const token = (await getToken()) || "";
+
+        if (token) return token;
+      } catch {
+        // Clerk can still be hydrating immediately after cross-domain redirect.
+      }
+    }
+
+    return "";
+  };
+
   api.interceptors.request.use(async (config) => {
+    if (isPublicEndpoint(config.url)) return config;
+
     const sasToken = getSasSessionToken();
     let clerkToken = "";
 
@@ -84,17 +119,20 @@ export const apiClient = (getToken) => {
     // Jangan tetap meminta token Clerk untuk setiap request karena itu menambah
     // network call lintas origin dan membuat request API bergantung pada FAPI
     // Clerk/Cloudflare walaupun token SAS sudah cukup.
-    if (!sasToken && typeof getToken === "function") {
-      try {
-        clerkToken = (await getToken()) || "";
-      } catch {
-        clerkToken = "";
-      }
+    if (!sasToken) {
+      clerkToken = await resolveClerkToken();
     }
 
     const token = sasToken || clerkToken;
 
     if (token) config.headers.Authorization = `Bearer ${token}`;
+    else {
+      return Promise.reject({
+        type: "AUTH_TOKEN_NOT_READY",
+        message: "Session login belum siap. Mencoba ulang sebentar lagi.",
+        config,
+      });
+    }
 
     return config;
   });
@@ -125,21 +163,26 @@ export const apiClient = (getToken) => {
           });
         }
 
-        if (
-          status === 401 &&
-          typeof data?.message === "string" &&
-          /missing authorization/i.test(data.message)
-        ) {
+        if (status === 401) {
           showToastOnce("Authentication required", {
             title: "Unauthorized",
-            description:
-              "Request ditolak karena tidak ada header Authorization. Pastikan sudah login dan token berhasil dibuat.",
+            description: "Session tidak valid atau sudah kedaluwarsa.",
             color: "danger",
           });
         }
 
         if (status === 401 && getSasSessionToken()) {
           clearSasSession();
+        }
+
+        if (status === 403 || status === 404) {
+          showToastOnce("Access denied", {
+            title: "Akses ditolak",
+            description:
+              data?.message ||
+              "Token valid, tetapi user tidak terdaftar atau tidak punya akses.",
+            color: "warning",
+          });
         }
 
         const normalizedPayload = (() => {
@@ -206,6 +249,10 @@ export const apiClient = (getToken) => {
         });
       }
 
+      if (error?.type === "AUTH_TOKEN_NOT_READY") {
+        return Promise.reject(error);
+      }
+
       const msg = error?.message || "Unknown error";
 
       const normalizedMsg = toDisplayString(msg) || "Unknown error";
@@ -261,8 +308,6 @@ export const resolveApiAssetUrl = (assetPath) => {
 
   return normalizedBase ? `${normalizedBase}/${relativePath}` : normalizedPath;
 };
-
-const stripLeadingSlash = (path = "") => path.replace(/^\/+/, "");
 
 export const apiService = async (method, api, params, body = {}) => {
   const normalizedMethod = String(method || "").toLowerCase();

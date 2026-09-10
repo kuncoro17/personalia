@@ -8,7 +8,7 @@ import {
   extractEmailFromClerkPayload,
 } from '../middlewares/clerkAuth';
 import User from '../models/userModel';
-import { ok, unauthorized } from '../utils/response.helper';
+import { forbidden, ok, unauthorized } from '../utils/response.helper';
 import type { ClerkAuthPayload } from '../types/clerk';
 
 const responseSchema = z.object({
@@ -43,6 +43,7 @@ export const clerkAuthRoutes = (app: OpenAPIHono) => {
           },
         },
         401: { description: 'Unauthorized' },
+        403: { description: 'User tidak terdaftar' },
       },
     }),
     async c => {
@@ -89,7 +90,7 @@ export const clerkAuthRoutes = (app: OpenAPIHono) => {
 
       const user = await User.findOne({ where: { email } });
       if (!user) {
-        return unauthorized(c, 'User tidak terdaftar di sistem');
+        return forbidden(c, 'User tidak terdaftar di sistem');
       }
 
       return ok(

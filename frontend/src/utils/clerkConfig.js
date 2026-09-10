@@ -18,6 +18,7 @@ export const normalizeClerkDomain = (value) => {
 
 export const resolveSatelliteDomain = (configuredDomain, runtimeHost) => {
   const normalizedConfiguredDomain = normalizeClerkDomain(configuredDomain);
+
   if (normalizedConfiguredDomain) return normalizedConfiguredDomain;
 
   return normalizeClerkDomain(runtimeHost);
