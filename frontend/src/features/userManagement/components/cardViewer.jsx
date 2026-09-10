@@ -154,7 +154,7 @@ export const CardViewer = ({ item }) => {
               radius="sm"
               className="personalia-action-button personalia-action-button-light"
             >
-              Close
+              Tutup
             </Button>
             <Button
               color="primary"
@@ -162,7 +162,7 @@ export const CardViewer = ({ item }) => {
               radius="sm"
               className="personalia-action-button personalia-action-button-primary"
             >
-              Print
+              Cetak
             </Button>
           </ModalFooter>
 

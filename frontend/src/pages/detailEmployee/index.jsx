@@ -148,7 +148,7 @@ function EmployeeDetailContent({ employeeId }) {
             <div className="flex flex-col flex-1 gap-5 justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-400">
-                  Employee ID
+                  ID Karyawan
                 </p>
                 <p className="font-semibold text-slate-900 dark:text-slate-100">
                   {data?.nik || "-"}
@@ -157,7 +157,7 @@ function EmployeeDetailContent({ employeeId }) {
 
               <div>
                 <p className="text-sm font-medium text-slate-400">
-                  Request Date
+                  Tanggal Pengajuan
                 </p>
                 <p className="font-semibold text-slate-900 dark:text-slate-100">
                   August 8, 2025
@@ -175,7 +175,7 @@ function EmployeeDetailContent({ employeeId }) {
               onClick={() => navigate("/employees")}
             >
               <i className="fi fi-rr-arrow-left" />
-              Kembali ke Employee
+              Kembali ke Karyawan
             </button>
           </div>
 

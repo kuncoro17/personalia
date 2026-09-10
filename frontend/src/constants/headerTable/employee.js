@@ -4,15 +4,15 @@ export const EMPLOYEEHEADER = [
     uid: "no",
   },
   {
-    name: "Employee No",
+    name: "No. Karyawan",
     uid: "nik",
   },
   {
-    name: "Full Name",
+    name: "Nama Lengkap",
     uid: "nama_lengkap",
   },
   {
-    name: "Position",
+    name: "Jabatan",
     uid: "jabatan",
   },
   {
@@ -20,7 +20,7 @@ export const EMPLOYEEHEADER = [
     uid: "email_penabur",
   },
   {
-    name: "Status Kayawan",
+    name: "Status Karyawan",
     uid: "status_karyawan",
   },
 ];
@@ -35,11 +35,11 @@ export const EMPLOYEESELECTHEADER = [
     uid: "no",
   },
   {
-    name: "Full Name",
+    name: "Nama Lengkap",
     uid: "nama_lengkap",
   },
   {
-    name: "Position",
+    name: "Jabatan",
     uid: "jabatan",
   },
   {
@@ -47,7 +47,7 @@ export const EMPLOYEESELECTHEADER = [
     uid: "email_penabur",
   },
   {
-    name: "Status Kayawan",
+    name: "Status Karyawan",
     uid: "status_karyawan",
   },
 ];

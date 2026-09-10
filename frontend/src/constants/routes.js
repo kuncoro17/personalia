@@ -47,7 +47,11 @@ export const ROUTE = [
 
 export const SIDEBARMENU = [
   { name: "Karyawan Baru", icon: "/icon/dashboard.svg", path: "/" },
-  { name: "Offboarding", icon: "/icon/offBoarding.svg", path: "/offboarding" },
+  {
+    name: "Karyawan Keluar",
+    icon: "/icon/offBoarding.svg",
+    path: "/offboarding",
+  },
   { name: "Daftar Karyawan", icon: "/icon/karyawan.svg", path: "/employees" },
   {
     name: "Master Setempat",

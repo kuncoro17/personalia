@@ -617,7 +617,7 @@ export default function AllKaryawan() {
             <div className="flex min-w-0 flex-1 flex-col gap-3">
               <div>
                 <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  All Employee
+                  Daftar Karyawan
                 </p>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Kelola data karyawan berdasarkan kota dan status aktif.

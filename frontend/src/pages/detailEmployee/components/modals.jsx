@@ -423,7 +423,7 @@ export default function Modals({
                 variant="bordered"
                 onPress={onClose}
               >
-                Close
+                Tutup
               </Button>
               <Button
                 className="personalia-action-button personalia-action-button-primary"
@@ -431,7 +431,7 @@ export default function Modals({
                 type="submit"
                 isLoading={loading}
               >
-                Submit
+                Simpan
               </Button>
             </ModalFooter>
           </Form>

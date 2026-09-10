@@ -53,22 +53,17 @@ export default function PrintLetterPage() {
   return (
     <Layout>
       <section className="flex min-w-0 flex-1 flex-col gap-5">
-        <div className="personalia-hero-card grid min-h-32 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end overflow-hidden px-5 py-4">
-          <p className="z-10 max-w-full break-words text-xl font-bold text-white sm:text-2xl lg:text-3xl">
+        <div className="personalia-hero-card flex min-h-24 min-w-0 items-center overflow-hidden px-5 py-4">
+          <p className="z-10 max-w-full break-words text-lg font-semibold text-white sm:text-xl">
             Pilih surat yang mau dicetak
           </p>
-
-          <img
-            src="/cetakSurat.svg"
-            className="pointer-events-none -mb-5 w-24 sm:w-32 md:-mb-8 md:w-44"
-          />
         </div>
 
         <div className="personalia-card flex flex-col gap-5 p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-3 sm:gap-5">
               <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                All Mail ({ALL_LETTERS.length} Surat)
+                Daftar Surat ({ALL_LETTERS.length} Surat)
               </p>
 
               <Dropdown>

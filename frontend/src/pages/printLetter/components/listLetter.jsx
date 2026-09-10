@@ -30,11 +30,11 @@ export default function ListLetter({ data, isTable, setIsTable }) {
                 {/* Badge untuk status endpoint */}
                 {item.hasEndpoint ? (
                   <span className="ml-2 whitespace-nowrap rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
-                    API Ready
+                    API Siap
                   </span>
                 ) : (
                   <span className="ml-2 whitespace-nowrap rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
-                    Coming Soon
+                    Segera Hadir
                   </span>
                 )}
               </div>
@@ -69,7 +69,7 @@ export default function ListLetter({ data, isTable, setIsTable }) {
         ))}
       </div>
 
-      {/* Modal for printing */}
+      {/* Modal cetak surat */}
       <Modals
         isOpen={isOpen}
         onOpenChange={onOpenChange}

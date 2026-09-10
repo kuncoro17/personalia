@@ -35,7 +35,7 @@ export default function OffBoardingPage() {
       <section className="flex min-w-0 flex-1 flex-col gap-6">
         <div className="personalia-hero-card flex flex-col gap-4 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-2xl font-semibold">Offboarding</p>
+            <p className="text-2xl font-semibold">Karyawan Keluar</p>
             <p className="mt-1 text-sm text-white/75">
               Karyawan dengan tanggal resign {formatOffboardingDate(date)}
             </p>
