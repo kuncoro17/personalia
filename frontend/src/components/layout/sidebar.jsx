@@ -27,7 +27,7 @@ export const SideBar = ({ isOpen = false, onClose }) => {
         />
         <div className="min-w-0 flex-1">
           <p className="break-words text-sm font-bold uppercase leading-5 text-slate-950 dark:text-slate-100">
-            SAS BPK PENABUR
+            SDM
           </p>
           <p className="break-words text-sm font-bold uppercase leading-5 text-slate-950 dark:text-slate-100">
             Personalia
@@ -38,7 +38,7 @@ export const SideBar = ({ isOpen = false, onClose }) => {
         </div>
         <button
           type="button"
-          className="personalia-icon-button hidden h-8 w-8 lg:inline-flex"
+          className="hidden h-8 w-8 items-center justify-center text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 lg:inline-flex"
           aria-label="Sidebar aktif"
         >
           <i className="fi fi-rr-sidebar-flip text-sm" />

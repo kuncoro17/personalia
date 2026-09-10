@@ -23,6 +23,7 @@ import {
 } from "../../utils/theme";
 
 const DEFAULT_AVATAR = "/image/1.svg";
+const SAS_HOME_URL = "https://sas.bpkpenabur.or.id/halaman-utama";
 
 export const Navbar = ({ children, onOpenSidebar }) => {
   const location = useLocation();
@@ -152,14 +153,14 @@ export const Navbar = ({ children, onOpenSidebar }) => {
             <button
               type="button"
               onClick={() => setIsUserMenuOpen((current) => !current)}
-              className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-blue-600 bg-white text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:bg-slate-950 dark:hover:bg-slate-900"
+              className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-blue-600 bg-white p-0.5 text-blue-700 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:bg-white dark:hover:bg-white"
               aria-label="Buka menu user"
               aria-expanded={isUserMenuOpen}
             >
               <img
                 src={avatarSrc}
                 alt={displayName}
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-full bg-white object-cover"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
                   event.currentTarget.src = DEFAULT_AVATAR;
@@ -175,7 +176,7 @@ export const Navbar = ({ children, onOpenSidebar }) => {
                   aria-label="Tutup menu user"
                   onClick={() => setIsUserMenuOpen(false)}
                 />
-                <div className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-lg border border-slate-200 border-t-4 border-t-blue-600 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950 sm:w-96">
+                <div className="personalia-user-dropdown absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-lg border border-slate-200 border-t-4 border-t-blue-600 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950 sm:w-96">
                   <div className="px-4 py-4">
                     <p className="truncate text-sm font-bold uppercase leading-6 text-slate-950 dark:text-slate-100">
                       {displayName} - {displayRole}
@@ -187,17 +188,15 @@ export const Navbar = ({ children, onOpenSidebar }) => {
                       {displayEmail}
                     </p>
                   </div>
-                  {hasSasEntry() ? (
-                    <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-                      <a
-                        href={getSasSdmUrl()}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:text-slate-200 dark:hover:bg-slate-900"
-                      >
-                        <i className="fi fi-rr-arrow-left text-sm" />
-                        <span>Kembali Halaman SAS</span>
-                      </a>
-                    </div>
-                  ) : null}
+                  <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+                    <a
+                      href={SAS_HOME_URL}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+                    >
+                      <i className="fi fi-rr-arrow-left text-sm" />
+                      <span>Kembali Halaman SAS</span>
+                    </a>
+                  </div>
                 </div>
               </>
             )}
