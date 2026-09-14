@@ -22,8 +22,19 @@ npm run migrate
 
 Runner menjalankan setiap migration dalam transaksi. Tabel dibuat dengan
 `IF NOT EXISTS`, sehingga tabel dan data lama tetap dipertahankan. Migration ini
-tidak menyelaraskan kolom atau constraint tabel yang sudah ada. Routine dipasang
-dengan `CREATE OR REPLACE` menggunakan signature dan body asli dari snapshot.
+tidak menyelaraskan kolom atau constraint tabel yang sudah ada. Routine diperiksa
+dengan `to_regprocedure` menggunakan schema, nama, dan tipe parameter lengkap
+(termasuk `INOUT`). Routine yang sudah ada dilewati dan dicatat di log; definisi,
+return type, owner, dan grants tetap dipertahankan. Routine yang belum ada dibuat
+menggunakan signature dan body asli dari snapshot. Overload `text` dan `varchar`
+diperiksa secara terpisah.
+
+Jika deployment sebelumnya gagal dengan `cannot change return type of existing
+function` (`42P13`), gunakan image dari commit perbaikan ini lalu jalankan ulang
+deployment. Migration routine yang gagal sudah di-rollback oleh transaksi runner
+dan belum dicatat selesai. Dua migration tabel yang berhasil akan dilewati
+otomatis. Tidak perlu menghapus function atau mengubah `schema_migrations`.
+Database yang sudah menyelesaikan baseline ini tidak akan menjalankannya ulang.
 
 `sdm_checkinout.id` tetap `integer` tanpa sequence, default, maupun primary key,
 sesuai database sumber. Timestamp tetap `timestamp without time zone`.
