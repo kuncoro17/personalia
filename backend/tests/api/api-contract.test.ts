@@ -161,6 +161,39 @@ describe('kontrak seluruh API', () => {
 });
 
 describe('endpoint sistem tanpa dependency eksternal', () => {
+  it.each(['', '/api'])(
+    'Swagger memuat spec dan mengirim request dengan prefix "%s"',
+    async prefix => {
+      // Simulate the proxy stripping the public prefix before forwarding to Hono.
+      const publicDocsUrl = `https://personalia.example${prefix}/dok`;
+      const response = await app.request('/dok');
+      expect(response.status).toBe(200);
+      const html = await response.text();
+      const specReference = html.match(/\burl:\s*'([^']+)'/)?.[1];
+      expect(specReference).toBe('./openapi.json');
+
+      const specUrl = new URL(specReference!, publicDocsUrl);
+      expect(specUrl.pathname).toBe(`${prefix}/openapi.json`);
+
+      const specResponse = await app.request(
+        specUrl.pathname.slice(prefix.length)
+      );
+      expect(specResponse.status).toBe(200);
+      expect(specResponse.headers.get('content-type')).toContain(
+        'application/json'
+      );
+      const spec = await specResponse.json();
+      expect(spec.openapi).toBe('3.0.0');
+      expect(Object.keys(spec.paths).length).toBeGreaterThan(0);
+      const serverUrl = new URL(spec.servers[0].url, specUrl);
+      expect(serverUrl.pathname).toBe(`${prefix}/`);
+      const operationPath = Object.keys(spec.paths)[0];
+      expect(new URL(operationPath.slice(1), serverUrl).pathname).toBe(
+        `${prefix}${operationPath}`
+      );
+    }
+  );
+
   it('GET /health mengembalikan status sehat', async () => {
     const response = await app.request('/health');
     const body = (await response.json()) as Record<string, unknown>;
