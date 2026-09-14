@@ -127,6 +127,8 @@ app.openAPIRegistry.registerComponent('securitySchemes', 'apiKeyAuth', {
 // Endpoint OpenAPI JSON dengan argumen yang wajib
 app.doc('/openapi.json', {
   openapi: '3.0.0',
+  // Resolve against the spec URL, preserving reverse-proxy prefixes like /api/.
+  servers: [{ url: '.' }],
   info: {
     title: 'Personalia API',
     version: '1.0.0',
@@ -156,7 +158,7 @@ app.use(
   })
 );
 
-app.get('/dok', swaggerUI({ url: '/openapi.json' }));
+app.get('/dok', swaggerUI({ url: './openapi.json' }));
 
 app.use('*', requestLogger);
 
