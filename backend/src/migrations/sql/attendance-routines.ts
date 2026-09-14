@@ -1,6 +1,8 @@
 // Snapshot pg_get_functiondef dari PostgreSQL; pertahankan signature dan body asli.
 export const attendanceRoutines = [
-  String.raw`CREATE OR REPLACE FUNCTION public.get_absensi_pivot(p_start date, p_end date)
+  {
+    signature: 'public.get_absensi_pivot(date, date)',
+    sql: String.raw`CREATE OR REPLACE FUNCTION public.get_absensi_pivot(p_start date, p_end date)
  RETURNS SETOF record
  LANGUAGE plpgsql
 AS $function$
@@ -86,8 +88,11 @@ BEGIN
     RETURN QUERY EXECUTE v_sql;
 END;
 $function$`,
+  },
 
-  String.raw`CREATE OR REPLACE PROCEDURE public.get_absensi_pivot_1(IN p_start date, IN p_end date)
+  {
+    signature: 'public.get_absensi_pivot_1(date, date)',
+    sql: String.raw`CREATE OR REPLACE PROCEDURE public.get_absensi_pivot_1(IN p_start date, IN p_end date)
  LANGUAGE plpgsql
 AS $procedure$
 DECLARE
@@ -226,8 +231,12 @@ BEGIN
 
 END;
 $procedure$`,
+  },
 
-  String.raw`CREATE OR REPLACE PROCEDURE public.get_absensi_pivot_bagian(IN p_start date, IN p_end date, IN p_unit_type character varying, IN p_unit_kode character varying, INOUT ref refcursor DEFAULT 'absensi_cursor'::refcursor)
+  {
+    signature:
+      'public.get_absensi_pivot_bagian(date, date, character varying, character varying, refcursor)',
+    sql: String.raw`CREATE OR REPLACE PROCEDURE public.get_absensi_pivot_bagian(IN p_start date, IN p_end date, IN p_unit_type character varying, IN p_unit_kode character varying, INOUT ref refcursor DEFAULT 'absensi_cursor'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
 DECLARE
@@ -553,8 +562,12 @@ BEGIN
 
 END;
 $procedure$`,
+  },
 
-  String.raw`CREATE OR REPLACE PROCEDURE public.get_absensi_pivot_bagian(IN p_start date, IN p_end date, IN p_unit_type text DEFAULT 'BAGIAN'::text, IN p_unit_kode text DEFAULT NULL::text, INOUT ref refcursor DEFAULT 'absensi_cursor'::refcursor)
+  {
+    signature:
+      'public.get_absensi_pivot_bagian(date, date, text, text, refcursor)',
+    sql: String.raw`CREATE OR REPLACE PROCEDURE public.get_absensi_pivot_bagian(IN p_start date, IN p_end date, IN p_unit_type text DEFAULT 'BAGIAN'::text, IN p_unit_kode text DEFAULT NULL::text, INOUT ref refcursor DEFAULT 'absensi_cursor'::refcursor)
  LANGUAGE plpgsql
 AS $procedure$
 DECLARE
@@ -688,8 +701,11 @@ BEGIN
     OPEN ref FOR EXECUTE v_sql;
 END;
 $procedure$`,
+  },
 
-  String.raw`CREATE OR REPLACE PROCEDURE public.test_cursor(INOUT ref refcursor)
+  {
+    signature: 'public.test_cursor(refcursor)',
+    sql: String.raw`CREATE OR REPLACE PROCEDURE public.test_cursor(INOUT ref refcursor)
  LANGUAGE plpgsql
 AS $procedure$
 BEGIN
@@ -697,4 +713,5 @@ BEGIN
         SELECT 1 AS id, 'Hello' AS nama;
 END;
 $procedure$`,
+  },
 ];
