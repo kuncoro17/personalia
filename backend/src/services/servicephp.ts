@@ -9,7 +9,6 @@ export interface PresensiRecord {
   jamMasuk: string;
   jamPulang: string;
 }
-
 export interface PresensiResponse {
   success: true;
   data: PresensiRecord[];
