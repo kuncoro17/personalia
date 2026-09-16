@@ -308,6 +308,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
   const invalidateLists = async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["master-unit-kerja"] }),
       queryClient.invalidateQueries({
         queryKey: [config.queryKey],
         exact: false,
