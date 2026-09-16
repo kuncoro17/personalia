@@ -72,12 +72,12 @@ test("invalid and conflicting resign dates are rejected", () => {
   );
 });
 
-test("downloaded Excel template includes resign_date", async () => {
+test("downloaded Excel template includes tanggal_inactive", async () => {
   const template = await buildEmployeeImportTemplateXlsx();
   const zip = await JSZip.loadAsync(await template.arrayBuffer());
   const sheet = await zip.file("xl/worksheets/sheet1.xml").async("text");
 
-  assert.match(sheet, /<t>resign_date<\/t>/);
+  assert.match(sheet, /<t>tanggal_inactive<\/t>/);
   assert.match(sheet, /<t>nik<\/t>/);
   assert.equal((sheet.match(/<c /g) || []).length, 25);
 });
