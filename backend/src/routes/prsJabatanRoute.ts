@@ -33,15 +33,15 @@ export const prsJabatanRoutes = (app: OpenAPIHono) => {
    * SCHEMA
    * ======================= */
   const jabatanSchema = z.object({
-    id: z.number(),
-    kode_jabatan: z.string(),
-    nama_jabatan: z.string(),
+    jab_id: z.string().uuid(),
+    kode_jab: z.string().trim().min(1).max(255),
+    jabatan: z.string().trim().min(1).max(255),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
   });
 
   const createSchema = jabatanSchema.omit({
-    id: true,
+    jab_id: true,
     created_at: true,
     updated_at: true,
   });
