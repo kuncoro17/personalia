@@ -107,6 +107,17 @@ cache:
     - ssh-keygen -y -P '' -f ~/.ssh/id_rsa >/dev/null
     - awk '{ sub(/\r$/, ""); print }' "$STAGING_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 600 ~/.ssh/known_hosts
+    - &configure-deployment-ssh |
+      cat > ~/.ssh/config <<'EOF'
+      Host *
+        BatchMode yes
+        ConnectTimeout 15
+        ConnectionAttempts 1
+        ServerAliveInterval 15
+        ServerAliveCountMax 3
+        StrictHostKeyChecking yes
+      EOF
+      chmod 600 ~/.ssh/config
 
 # -------------------- Validate --------------------
 
@@ -348,13 +359,15 @@ deploy-staging:
     - export STAGING_TMP_DIR="/tmp/$APP_NAME-$CI_PIPELINE_ID-staging"
     - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "mkdir -p '$STAGING_TMP_DIR'"
     - |
-      ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" \
-        "sudo mkdir -p '/opt/$APP_NAME/deployment' '/opt/$APP_NAME/backend/uploads/karyawan' '/opt/$APP_NAME/backend/uploads/docs' && \
-         sudo chown -R '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME' && \
-         sudo chown -R 1001:1001 '/opt/$APP_NAME/backend/uploads'"
+      timeout 210 ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" \
+        "timeout 180 sh -s -- '$APP_NAME' '$STAGING_SERVER_USER'" \
+        < scripts/ci/prepare-deploy-directories.sh || {
+        echo "INFRASTRUCTURE_ERROR: staging directory preparation failed or timed out; check the last PREPARE step, sudo permissions, and server disk I/O"
+        exit 1
+      }
     - rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $STAGING_SSH_PORT" deployment/ "$STAGING_TARGET:/opt/$APP_NAME/deployment/"
     - scp -P "$STAGING_SSH_PORT" "$STAGING_ENV_FILE" "$STAGING_TARGET:$STAGING_TMP_DIR/.env.staging"
-    - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "sudo install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging' && sudo chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging' && rm -rf '$STAGING_TMP_DIR'"
+    - ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "sudo -n install -m 600 '$STAGING_TMP_DIR/.env.staging' '/opt/$APP_NAME/backend/.env.staging' && sudo -n chown '$STAGING_SERVER_USER:$STAGING_SERVER_USER' '/opt/$APP_NAME/backend/.env.staging' && rm -rf '$STAGING_TMP_DIR'"
     - printf '%s' "$ACR_PASSWORD" | ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "docker login -u '$ACR_USERNAME' --password-stdin '$ACR_INTERNET_REGISTRY'"
     - |
       ssh -p "$STAGING_SSH_PORT" "$STAGING_TARGET" "
@@ -443,6 +456,7 @@ deploy-production:
     - ssh-keygen -y -P '' -f ~/.ssh/id_rsa >/dev/null
     - awk '{ sub(/\r$/, ""); print }' "$PRODUCTION_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 600 ~/.ssh/known_hosts
+    - *configure-deployment-ssh
     - |
       export FRONTEND_ENV_FILE="$PRODUCTION_FRONTEND_ENV_FILE"
       export FRONTEND_API_DOMAIN="$PRODUCTION_API_DOMAIN"
@@ -506,11 +520,12 @@ deploy-production:
         exit 1
       }
     - |
-      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" \
-        "sudo mkdir -p '/opt/$APP_NAME/deployment' '/opt/$APP_NAME/backend/uploads/karyawan' '/opt/$APP_NAME/backend/uploads/docs' && \
-         sudo chown -R '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME' && \
-         sudo chown -R 1001:1001 '/opt/$APP_NAME/backend/uploads'" || \
-        { echo "INFRASTRUCTURE_ERROR: unable to prepare production directories"; exit 1; }
+      timeout 210 ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" \
+        "timeout 180 sh -s -- '$APP_NAME' '$PRODUCTION_SERVER_USER'" \
+        < scripts/ci/prepare-deploy-directories.sh || {
+        echo "INFRASTRUCTURE_ERROR: production directory preparation failed or timed out; check the last PREPARE step, sudo permissions, and server disk I/O"
+        exit 1
+      }
     - |
       rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $PRODUCTION_SSH_PORT" deployment/ "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/" || {
         echo "INFRASTRUCTURE_ERROR: unable to synchronize deployment files"
@@ -522,7 +537,7 @@ deploy-production:
         exit 1
       }
     - |
-      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "sudo install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production' && sudo chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production' && rm -rf '$PRODUCTION_TMP_DIR'" || {
+      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "sudo -n install -m 600 '$PRODUCTION_TMP_DIR/.env.production' '/opt/$APP_NAME/backend/.env.production' && sudo -n chown '$PRODUCTION_SERVER_USER:$PRODUCTION_SERVER_USER' '/opt/$APP_NAME/backend/.env.production' && rm -rf '$PRODUCTION_TMP_DIR'" || {
         echo "INFRASTRUCTURE_ERROR: unable to install the production environment file"
         exit 1
       }
