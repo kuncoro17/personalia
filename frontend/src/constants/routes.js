@@ -9,6 +9,7 @@ const MasterSetempatPage = lazy(() => import("../pages/masterSetempat"));
 const MasterWilayahPendidikanPage = lazy(
   () => import("../pages/masterWilayahPendidikan"),
 );
+const CheckAttendancePage = lazy(() => import("../pages/checkAttendance"));
 
 export const ROUTE = [
   {
@@ -30,6 +31,10 @@ export const ROUTE = [
   {
     path: "/master-wilayah-pendidikan",
     element: createElement(MasterWilayahPendidikanPage),
+  },
+  {
+    path: "/check-absensi",
+    element: createElement(CheckAttendancePage),
   },
   {
     path: "/printLetter",
@@ -62,6 +67,11 @@ export const SIDEBARMENU = [
     name: "Master Wilayah & Pendidikan",
     icon: "/icon/setting.svg",
     path: "/master-wilayah-pendidikan",
+  },
+  {
+    name: "Check Data Absen",
+    icon: "/icon/karyawan.svg",
+    path: "/check-absensi",
   },
   { name: "Cetak Surat", icon: "/icon/cetakSurat.svg", path: "/printLetter" },
 ];
