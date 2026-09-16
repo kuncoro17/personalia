@@ -1,44 +1,74 @@
-import { Modal, ModalContent, useDisclosure } from "@heroui/react";
-import { useEffect, useMemo } from "react";
+import { Button, Modal, ModalContent } from "@heroui/react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-export function DefaultFallback() {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+import { canAutoRefresh, claimAutoRefresh } from "../../../utils/errorRefresh";
 
-  useEffect(() => onOpen(), []);
+export function DefaultFallback() {
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    let storage;
+
+    try {
+      storage = window.sessionStorage;
+    } catch {
+      return undefined;
+    }
+
+    if (!canAutoRefresh(storage)) return undefined;
+
+    setRefreshing(true);
+    const timer = window.setTimeout(() => {
+      // Claim only when the timer fires so StrictMode cleanup cannot consume it.
+      if (claimAutoRefresh(storage)) {
+        window.location.reload();
+      } else {
+        setRefreshing(false);
+      }
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const modal = (
     <Modal
+      hideCloseButton
+      isKeyboardDismissDisabled
+      isOpen
       backdrop="blur"
-      isOpen={isOpen}
-      placement="center"
-      onClose={() => {
-        onOpenChange(false);
-        window.location.href = `/${user?.role.toLowerCase()}`;
-      }}
-      onOpenChange={onOpenChange}
       className="max-w-lg h-96"
       classNames={{
         wrapper: "overflow-hidden",
         closeButton: "hidden",
       }}
+      isDismissable={false}
       motionProps={{
         variants: {
           enter: { y: 0, transition: { duration: 0.25 } },
           exit: { y: 400, transition: { duration: 0.15 } },
         },
       }}
+      placement="center"
     >
       <ModalContent>
         <div className="flex h-full flex-1 flex-col items-center justify-center gap-4 p-8">
           <h2 className="text-2xl font-bold text-slate-900">Oops!!</h2>
           <img
-            src="/assets/images/somethingWrong.png"
+            alt="Terjadi kesalahan"
             className="w-56 object-contain"
+            src="/assets/images/somethingWrong.png"
           />
           <p className="text-center font-semibold text-slate-600">
-            Something went wrong - please try again!
+            {refreshing
+              ? "Terjadi kesalahan. Halaman akan dimuat ulang otomatis..."
+              : "Masih terjadi kesalahan. Silakan muat ulang halaman."}
           </p>
+          {!refreshing && (
+            <Button color="primary" onPress={() => window.location.reload()}>
+              Muat Ulang
+            </Button>
+          )}
         </div>
       </ModalContent>
     </Modal>
@@ -48,6 +78,7 @@ export function DefaultFallback() {
     if (typeof document === "undefined") return null;
 
     let container = document.getElementById("error-modal-root");
+
     if (!container) {
       container = document.createElement("div");
       container.id = "error-modal-root";
