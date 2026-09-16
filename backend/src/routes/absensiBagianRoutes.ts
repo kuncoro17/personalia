@@ -2,9 +2,11 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { AbsensiController } from '../controllers/AbsensiBagianController';
 import { apiKeyMiddleware } from '../middlewares/checkApiKey';
+import { clerkAuthMiddleware } from '../middlewares/clerkAuth';
 
 export const absensiBagianRoutes = (app: OpenAPIHono) => {
   app.use('/personalia/pivotBagian', apiKeyMiddleware);
+  app.use('/personalia/absensi/pivot', clerkAuthMiddleware);
 
   const pivotQuerySchema = z.object({
     tanggal_mulai: z.string().optional().openapi({
@@ -87,6 +89,30 @@ export const absensiBagianRoutes = (app: OpenAPIHono) => {
         400: {
           description: 'Header x-api-key atau parameter periode tidak lengkap',
         },
+      },
+    }),
+    AbsensiController.getPivot
+  );
+
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/personalia/absensi/pivot',
+      summary: 'Get pivot data absensi untuk aplikasi Personalia',
+      description:
+        'Mengambil data pivot absensi yang dapat ditampilkan pada menu Check Data Absen.',
+      tags: ['Absensi'],
+      security: [{ bearerAuth: [] }],
+      request: { query: pivotQuerySchema },
+      responses: {
+        200: {
+          description: 'Berhasil mengambil pivot',
+          content: {
+            'application/json': { schema: z.object({}).passthrough() },
+          },
+        },
+        400: { description: 'Parameter periode tidak valid' },
+        401: { description: 'Unauthorized' },
       },
     }),
     AbsensiController.getPivot
