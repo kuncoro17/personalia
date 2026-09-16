@@ -90,26 +90,15 @@ const DEFAULT_EMPLOYEE_HEADERS = [
   "status_aktif",
   "nama_lengkap",
   "nama_panggilan",
+  "tlp_pribadi",
+  "tlp_kantor",
   "email_pribadi",
   "email_penabur",
   "tgl_join_penabur",
-  "tgl_join_penabur_jkt",
   "agama",
-  "status_nikah",
-  "tanggal_pernikahan",
-  "tipe_sekolah",
-  "kode_status_karyawan",
-  "tempat_lahir",
-  "birth_date",
-  "gender",
-  "gol_darah",
-  "tinggi_badan",
-  "berat_badan",
-  "kewarganegaraan",
-  "npwp",
-  "rekening",
+  "status_karyawan",
   "id_master_setempat",
-  "tanggal_inactive",
+  "resign_date",
 ];
 
 export const normalizeResignDate = (value, date1904 = false) => {
@@ -168,9 +157,22 @@ export const normalizeResignDate = (value, date1904 = false) => {
 };
 
 export const mapEmployeeImportDates = (record, date1904 = false) => {
-  const { resign_date, tanggal_inactive, ...payload } = record;
+  const {
+    resign_date,
+    tanggal_inactive,
+    tlp_pribadi,
+    tlp_kantor,
+    status_karyawan,
+    ...payload
+  } = record;
   const resignDate = normalizeResignDate(resign_date, date1904);
   const inactiveDate = normalizeResignDate(tanggal_inactive, date1904);
+
+  if (tlp_pribadi != null) payload.telp_pribadi = tlp_pribadi;
+  if (tlp_kantor != null) payload.telp_kantor = tlp_kantor;
+  if (status_karyawan != null) {
+    payload.kode_status_karyawan = status_karyawan;
+  }
 
   if (resignDate && inactiveDate && resignDate !== inactiveDate) {
     throw new Error("resign_date berbeda dengan tanggal_inactive");

@@ -30,6 +30,21 @@ test("resign_date maps to the existing backend field without changing employee s
   });
 });
 
+test("legacy import headers map to the backend employee fields", () => {
+  assert.deepEqual(
+    mapEmployeeImportDates({
+      tlp_pribadi: "08123456789",
+      tlp_kantor: "021123456",
+      status_karyawan: "TETAP",
+    }),
+    {
+      telp_pribadi: "08123456789",
+      telp_kantor: "021123456",
+      kode_status_karyawan: "TETAP",
+    },
+  );
+});
+
 test("supports ISO dates, Indonesian dates, and both Excel date systems", () => {
   const date = "2026-09-16";
   const serial = (Date.UTC(2026, 8, 16) - Date.UTC(1899, 11, 30)) / 86_400_000;
@@ -72,12 +87,15 @@ test("invalid and conflicting resign dates are rejected", () => {
   );
 });
 
-test("downloaded Excel template includes tanggal_inactive", async () => {
+test("downloaded Excel template uses the agreed import headers", async () => {
   const template = await buildEmployeeImportTemplateXlsx();
   const zip = await JSZip.loadAsync(await template.arrayBuffer());
   const sheet = await zip.file("xl/worksheets/sheet1.xml").async("text");
 
-  assert.match(sheet, /<t>tanggal_inactive<\/t>/);
+  assert.match(sheet, /<t>tlp_pribadi<\/t>/);
+  assert.match(sheet, /<t>tlp_kantor<\/t>/);
+  assert.match(sheet, /<t>status_karyawan<\/t>/);
+  assert.match(sheet, /<t>resign_date<\/t>/);
   assert.match(sheet, /<t>nik<\/t>/);
-  assert.equal((sheet.match(/<c /g) || []).length, 25);
+  assert.equal((sheet.match(/<c /g) || []).length, 14);
 });
