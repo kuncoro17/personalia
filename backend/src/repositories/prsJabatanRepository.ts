@@ -1,11 +1,8 @@
 import { PrsJabatan, PrsJabatanCreationAttributes } from '../models/prsJabatan';
 
 export class PrsJabatanRepository {
-  async findAll(page = 1, limit = 50) {
-    const offset = (page - 1) * limit;
+  async findAll() {
     return await PrsJabatan.findAll({
-      limit,
-      offset,
       order: [['created_at', 'DESC']], // optional, urut terbaru
     });
   }
