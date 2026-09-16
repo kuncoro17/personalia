@@ -1,0 +1,114 @@
+PANDUAN BRANCH, COMMIT, PUSH, DAN MERGE REQUEST
+Repository: personalia-jkt
+
+1. LANJUTKAN PERUBAHAN UNIT KERJA SAAT INI
+
+Branch feature/master-unit-kerja sudah dibuat oleh Codex.
+Jalankan dari folder repository, satu command setiap langkah:
+
+git switch feature/master-unit-kerja
+git status
+git diff
+
+Masukkan file fitur dan panduan ini ke commit:
+
+git add frontend/src/pages/masterWilayahPendidikan/index.jsx frontend/src/pages/masterWilayahPendidikan/components/MasterOrganisasiSection.jsx frontend/src/pages/masterWilayahPendidikan/components/MasterUnitKerjaSection.jsx PANDUAN-GIT.txt
+git diff --cached --stat
+git diff --cached
+git commit -m "feat: tambah master unit kerja"
+git push -u origin feature/master-unit-kerja
+
+File backend/docs/diagnose-pivot-sad.sql merupakan hasil diagnosis sebelumnya.
+File tersebut sengaja tidak dimasukkan dalam commit fitur Unit Kerja di atas.
+Jika git diff --cached menampilkan file lain yang tidak ingin disertakan:
+
+git restore --staged path/file-tersebut
+
+Command ini hanya membatalkan staging, bukan menghapus perubahan file.
+
+Setelah push, buka link Merge Request yang ditampilkan GitLab.
+Pilih source: feature/master-unit-kerja dan target: main.
+Periksa perubahan dan pipeline sebelum melakukan merge.
+Push branch saja belum menggabungkan perubahan ke main.
+
+2. MEMULAI FITUR BARU DARI MAIN
+
+Pastikan pekerjaan sebelumnya sudah di-commit. Periksa git status dahulu.
+Jika ada perubahan yang belum siap di-commit, simpan sementara:
+
+git stash push -u -m "pekerjaan sementara"
+
+Flag -u juga menyimpan file baru yang belum dilacak Git.
+Gunakan stash hanya jika ada perubahan yang perlu disimpan.
+
+Kemudian:
+
+git switch main
+git fetch origin
+git pull --ff-only origin main
+git switch -c feature/nama-fitur-baru
+
+Ganti feature/nama-fitur-baru dengan nama unik, misalnya:
+feature/perbaikan-presensi
+
+Jika git pull --ff-only gagal, berhenti dan periksa:
+
+git status
+git log --oneline --left-right main...origin/main
+
+Jangan menjalankan reset --hard untuk memaksa penyamaan branch.
+Jika sebelumnya memakai stash dan perubahan itu memang untuk fitur baru ini:
+
+git stash list
+git stash pop
+
+Jika muncul konflik, selesaikan dahulu sebelum commit.
+
+3. MENYIMPAN DAN PUSH PERUBAHAN BERIKUTNYA
+
+git branch --show-current
+git status
+git diff
+git add path/file-yang-diubah
+git diff --cached
+git commit -m "feat: jelaskan perubahan"
+git push
+
+Ganti path/file-yang-diubah dan pesan commit sesuai pekerjaan.
+Untuk push pertama branch yang belum punya upstream, gunakan:
+
+git push -u origin NAMA_BRANCH
+
+Ganti NAMA_BRANCH dengan hasil git branch --show-current.
+Perubahan baru harus di-commit sebelum push. Git push tidak mengirim perubahan
+yang masih berada di working tree atau staging area.
+
+4. JIKA TELANJUR MENGEDIT DI MAIN
+
+Jika perubahan belum di-commit, langsung buat branch baru:
+
+git switch -c feature/nama-fitur-baru
+
+Perubahan yang belum di-commit ikut berada pada branch baru.
+Lanjutkan git add, git commit, dan git push -u seperti langkah sebelumnya.
+
+Jika perubahan sudah terlanjur di-commit di main, membuat branch baru pada
+posisi itu juga mempertahankan commit tersebut. Push branch fitur terlebih
+dahulu dan periksa riwayat main sebelum melakukan tindakan lebih lanjut.
+
+5. SETELAH MERGE REQUEST DIGABUNGKAN
+
+Pastikan working tree bersih atau simpan perubahan dahulu, lalu:
+
+git switch main
+git pull --ff-only origin main
+
+Buat branch baru dari main untuk pekerjaan berikutnya.
+
+CATATAN
+
+- Hindari git reset --hard: perubahan yang belum di-commit dapat hilang.
+- Hindari git push --force untuk alur kerja biasa ini.
+- Periksa git diff --cached agar credential, file .env, dan perubahan lain
+  yang tidak terkait tidak ikut di-commit.
+- Perintah yang memakai nama contoh atau path contoh perlu disesuaikan.
