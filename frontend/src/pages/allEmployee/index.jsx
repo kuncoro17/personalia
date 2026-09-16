@@ -409,18 +409,8 @@ export default function AllKaryawan() {
 
   const downloadTemplate = async () => {
     try {
-      const templatePath = "/assets/FORMAT IMPORT.xlsx";
-      const res = await fetch(encodeURI(templatePath));
-      const blob = res.ok ? await res.blob() : null;
-
-      // Fallback: generate template dynamically when the static file isn't available.
-      const resolvedBlob =
-        blob ??
-        (await buildEmployeeImportTemplateXlsx().catch(() => {
-          throw new Error(
-            `Template tidak ditemukan di "${templatePath}". Tambahkan file "FORMAT IMPORT.xlsx" ke frontend/public/assets.`,
-          );
-        }));
+      // Generate from the import headers so downloaded columns stay up to date.
+      const resolvedBlob = await buildEmployeeImportTemplateXlsx();
 
       const url = URL.createObjectURL(resolvedBlob);
       const a = document.createElement("a");

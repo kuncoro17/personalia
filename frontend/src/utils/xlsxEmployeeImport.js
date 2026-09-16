@@ -109,7 +109,81 @@ const DEFAULT_EMPLOYEE_HEADERS = [
   "npwp",
   "rekening",
   "id_master_setempat",
+  "resign_date",
 ];
+
+export const normalizeResignDate = (value, date1904 = false) => {
+  const text = String(value ?? "").trim();
+
+  if (!text) return undefined;
+
+  if (/^\d+(?:\.\d+)?$/.test(text)) {
+    const serial = Math.floor(Number(text));
+
+    if ((!date1904 && (serial < 1 || serial === 60)) || serial > 2_958_465) {
+      throw new Error("resign_date berisi tanggal Excel yang tidak valid");
+    }
+
+    const epoch = date1904
+      ? Date.UTC(1904, 0, 1)
+      : Date.UTC(1899, 11, serial < 60 ? 31 : 30);
+    const date = new Date(epoch + serial * 86_400_000);
+
+    if (date.getUTCFullYear() > 9999) {
+      throw new Error("resign_date berada di luar rentang tanggal");
+    }
+
+    return date.toISOString().slice(0, 10);
+  }
+
+  const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const local = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const parts = iso
+    ? [iso[1], iso[2], iso[3]]
+    : local
+      ? [local[3], local[2], local[1]]
+      : null;
+
+  if (!parts) {
+    throw new Error(
+      "resign_date harus berupa YYYY-MM-DD, DD/MM/YYYY, atau tanggal Excel",
+    );
+  }
+
+  const [year, month, day] = parts.map(Number);
+  const date = new Date(0);
+
+  date.setUTCFullYear(year, month - 1, day);
+
+  if (
+    year < 1 ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    throw new Error("resign_date berisi tanggal yang tidak valid");
+  }
+
+  return date.toISOString().slice(0, 10);
+};
+
+export const mapEmployeeImportDates = (record, date1904 = false) => {
+  const { resign_date, ...payload } = record;
+  const resignDate = normalizeResignDate(resign_date, date1904);
+
+  if (resignDate) {
+    if (
+      payload.tanggal_inactive &&
+      normalizeResignDate(payload.tanggal_inactive, date1904) !== resignDate
+    ) {
+      throw new Error("resign_date berbeda dengan tanggal_inactive");
+    }
+
+    payload.tanggal_inactive = resignDate;
+  }
+
+  return payload;
+};
 
 export const buildEmployeeImportTemplateXlsx = async (
   headers = DEFAULT_EMPLOYEE_HEADERS,
@@ -175,6 +249,14 @@ export const buildEmployeeImportTemplateXlsx = async (
 export const parseEmployeeXlsxFile = async (file) => {
   const arrayBuffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(arrayBuffer);
+  const workbookXml = await zip.file("xl/workbook.xml")?.async("text");
+  const dateSystem = workbookXml
+    ? new DOMParser()
+        .parseFromString(workbookXml, "application/xml")
+        .querySelector("workbookPr")
+        ?.getAttribute("date1904")
+    : null;
+  const date1904 = dateSystem === "1" || dateSystem === "true";
 
   const sheetFile = zip.file("xl/worksheets/sheet1.xml");
 
@@ -217,7 +299,13 @@ export const parseEmployeeXlsxFile = async (file) => {
       if (value === "") continue;
       obj[key] = value;
     }
-    if (Object.keys(obj).length > 0) records.push(obj);
+    if (Object.keys(obj).length > 0) {
+      try {
+        records.push(mapEmployeeImportDates(obj, date1904));
+      } catch (error) {
+        throw new Error(`Baris ${i + 1}: ${error.message}`);
+      }
+    }
   }
 
   return records;
