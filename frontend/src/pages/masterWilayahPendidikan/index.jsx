@@ -11,6 +11,7 @@ import MasterRiwPendidikanSection from "./components/MasterRiwPendidikanSection"
 import MasterOrganisasiSection from "./components/MasterOrganisasiSection";
 import MasterTipeDokumenSection from "./components/MasterTipeDokumenSection";
 import MasterJabatanSection from "./components/MasterJabatanSection";
+import MasterStatusKaryawanSection from "./components/MasterStatusKaryawanSection";
 
 const TABS = [
   { key: "provinsi", label: "Provinsi" },
@@ -24,6 +25,7 @@ const TABS = [
   { key: "bagian", label: "Bagian" },
   { key: "seksi", label: "Seksi" },
   { key: "jabatan", label: "Jabatan" },
+  { key: "status-karyawan", label: "Status Karyawan" },
 ];
 
 const ORGANISASI_CONFIG = {
@@ -151,6 +153,9 @@ export default function MasterWilayahPendidikanPage() {
           )}
           {active === "jabatan" && (
             <MasterJabatanSection api={api} isReady={isReady} />
+          )}
+          {active === "status-karyawan" && (
+            <MasterStatusKaryawanSection api={api} isReady={isReady} />
           )}
           {ORGANISASI_CONFIG[active] && (
             <MasterOrganisasiSection
