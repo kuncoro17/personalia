@@ -40,11 +40,13 @@ export const prsStatusKaryawanRoutes = (app: OpenAPIHono) => {
   // 🔹 SCHEMA
   // ============================
   const StatusKaryawanSchema = z.object({
-    id: z.number(),
-    nama_status: z.string(),
+    stat_id: z.string().uuid(),
+    kode: z.string().min(2).max(5),
+    stat_karyawan: z.string().min(1),
+    stat_karyawan_gp: z.string().max(5).nullable().optional(),
   });
 
-  const CreateSchema = StatusKaryawanSchema.omit({ id: true });
+  const CreateSchema = StatusKaryawanSchema.omit({ stat_id: true });
   const UpdateSchema = CreateSchema.partial();
 
   const ResponseListSchema = z.object({
