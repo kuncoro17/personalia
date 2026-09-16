@@ -62,6 +62,8 @@ Jika sebelumnya memakai stash dan perubahan itu memang untuk fitur baru ini:
 git stash list
 git stash pop
 
+
+
 Jika muncul konflik, selesaikan dahulu sebelum commit.
 
 3. MENYIMPAN DAN PUSH PERUBAHAN BERIKUTNYA
