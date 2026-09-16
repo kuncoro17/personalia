@@ -109,7 +109,7 @@ const DEFAULT_EMPLOYEE_HEADERS = [
   "npwp",
   "rekening",
   "id_master_setempat",
-  "resign_date",
+  "tanggal_inactive",
 ];
 
 export const normalizeResignDate = (value, date1904 = false) => {
@@ -168,18 +168,17 @@ export const normalizeResignDate = (value, date1904 = false) => {
 };
 
 export const mapEmployeeImportDates = (record, date1904 = false) => {
-  const { resign_date, ...payload } = record;
+  const { resign_date, tanggal_inactive, ...payload } = record;
   const resignDate = normalizeResignDate(resign_date, date1904);
+  const inactiveDate = normalizeResignDate(tanggal_inactive, date1904);
 
-  if (resignDate) {
-    if (
-      payload.tanggal_inactive &&
-      normalizeResignDate(payload.tanggal_inactive, date1904) !== resignDate
-    ) {
-      throw new Error("resign_date berbeda dengan tanggal_inactive");
-    }
+  if (resignDate && inactiveDate && resignDate !== inactiveDate) {
+    throw new Error("resign_date berbeda dengan tanggal_inactive");
+  }
 
-    payload.tanggal_inactive = resignDate;
+  const resolvedInactiveDate = inactiveDate ?? resignDate;
+  if (resolvedInactiveDate) {
+    payload.tanggal_inactive = resolvedInactiveDate;
   }
 
   return payload;

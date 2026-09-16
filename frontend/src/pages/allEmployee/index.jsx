@@ -85,6 +85,24 @@ const getDeepestUnitFilterOption = (unit) => {
 const getEmptyUnitFilters = () =>
   Object.fromEntries(UNIT_FILTER_FIELDS.map((field) => [field.key, "all"]));
 
+const getImportErrorMessage = (err) => {
+  const payload = err?.payload ?? err?.response?.data;
+  const issues = Array.isArray(payload?.error) ? payload.error : [];
+
+  if (issues.length > 0) {
+    return issues
+      .map((issue) => {
+        const field = Array.isArray(issue?.path) ? issue.path.join(".") : "";
+        const message = String(issue?.message ?? "Data tidak valid").trim();
+
+        return field ? `${field}: ${message}` : message;
+      })
+      .join("; ");
+  }
+
+  return payload?.message || err?.message || "Gagal insert";
+};
+
 export default function AllKaryawan() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const api = apiClient(getToken);
@@ -555,19 +573,20 @@ export default function AllKaryawan() {
           await api.post(EMPLOYEEENDPOINT.create(), toFormData(payload));
           success += 1;
         } catch (err) {
-          const message =
-            err?.payload?.message ||
-            err?.message ||
-            err?.response?.data?.message ||
-            "Gagal insert";
-          errors.push({ row: i + 2, message });
+          errors.push({ row: i + 2, message: getImportErrorMessage(err) });
         }
       }
 
       if (success > 0) {
         addToast({
           title: "Import selesai",
-          description: `Berhasil: ${success}. Gagal: ${errors.length}.`,
+          description:
+            errors.length > 0
+              ? `Berhasil: ${success}. Gagal: ${errors.length}. ${errors
+                  .slice(0, 2)
+                  .map((item) => `Baris ${item.row}: ${item.message}`)
+                  .join(" | ")}`
+              : `Berhasil: ${success}. Gagal: 0.`,
           color: errors.length > 0 ? "warning" : "success",
         });
         await queryClient.invalidateQueries({ queryKey: ["allKaryawan"] });
@@ -575,7 +594,13 @@ export default function AllKaryawan() {
       } else {
         addToast({
           title: "Import gagal",
-          description: `Tidak ada data yang berhasil diinsert. Gagal: ${errors.length}.`,
+          description:
+            errors.length > 0
+              ? errors
+                  .slice(0, 2)
+                  .map((item) => `Baris ${item.row}: ${item.message}`)
+                  .join(" | ")
+              : "Tidak ada data yang berhasil diinsert.",
           color: "danger",
         });
       }
