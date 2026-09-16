@@ -171,6 +171,8 @@ app.route('/redis', redisRoutes);
 
 sasAuthRoutes(app);
 absensiBagianRoutes(app);
+// API-key routes must precede the global Clerk middleware on master routes.
+presensiRoutes(app);
 attendanceSyncRoutes(app);
 leaveSyncRoutes(app);
 
@@ -208,7 +210,6 @@ prsSeksiRoutes(app);
 prsUnitKerjaRoutes(app);
 LetterRoutes(app);
 historyRoutes(app);
-presensiRoutes(app);
 keuCgSlipRoutes(app);
 masterGroupBankRoutes(app);
 masterBankGiroRoutes(app);
