@@ -12,12 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
+import { addToast } from "@heroui/toast";
 import { useAuth } from "@clerk/clerk-react";
 import { useMemo, useState } from "react";
 
 import Layout from "../../components/layout";
 import { apiClient } from "../../service/api";
 import { useMaster } from "../../hooks/useMaster";
+import { buildAttendanceExportXlsx } from "../../utils/xlsxAttendanceExport";
 
 const ROWS_PER_PAGE = 20;
 const toDateInput = (date) => date.toISOString().slice(0, 10);
@@ -55,6 +57,7 @@ export default function CheckAttendancePage() {
   const [appliedPeriod, setAppliedPeriod] = useState(initialPeriod);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
   const endpoint = useMemo(
     () =>
@@ -127,6 +130,28 @@ export default function CheckAttendancePage() {
     { key: "total_cuti_tahunan(CTH)", label: "CUTI" },
     { key: "total_semua", label: "TOTAL" },
   ];
+  const exportToXlsx = async () => {
+    if (filteredRows.length === 0) return;
+
+    setIsExporting(true);
+    try {
+      const blob = await buildAttendanceExportXlsx(columns, filteredRows);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `DATA-ABSENSI-${appliedPeriod.start}-${appliedPeriod.end}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      addToast({
+        title: "Gagal export Excel",
+        description: err?.message || "File Excel tidak dapat dibuat.",
+        color: "danger",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <Layout>
@@ -216,9 +241,20 @@ export default function CheckAttendancePage() {
               <p className="text-sm text-default-500">
                 {filteredRows.length} data karyawan
               </p>
-              <p className="text-xs text-default-400">
-                Geser tabel ke samping untuk melihat absensi per tanggal.
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-default-400">
+                  Geser tabel ke samping untuk melihat absensi per tanggal.
+                </p>
+                <Button
+                  color="primary"
+                  isDisabled={filteredRows.length === 0 || isExporting}
+                  isLoading={isExporting}
+                  size="sm"
+                  onPress={exportToXlsx}
+                >
+                  Export Excel
+                </Button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <Table aria-label="Data pivot absensi" className="min-w-max">
