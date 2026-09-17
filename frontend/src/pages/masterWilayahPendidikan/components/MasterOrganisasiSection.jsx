@@ -465,13 +465,13 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     updateMutation.isPending ||
     deleteMutation.isPending;
   const canSubmit = Boolean(
-      form.kode.trim() &&
+    form.kode.trim() &&
       form.nama.trim() &&
       (!needsDivisi || form.divisi) &&
       (!isBagianRequired || form.bagian),
   );
   const canUpdate = Boolean(
-      editingForm.kode.trim() &&
+    editingForm.kode.trim() &&
       editingForm.nama.trim() &&
       (!needsDivisi || editingForm.divisi) &&
       (!isBagianRequired || editingForm.bagian),
