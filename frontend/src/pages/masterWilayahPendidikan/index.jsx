@@ -83,6 +83,7 @@ const ORGANISASI_CONFIG = {
     codeField: "kode",
     nameField: "nama_sek",
     example: "Administrasi",
+    requireBagian: false,
   },
 };
 

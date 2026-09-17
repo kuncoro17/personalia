@@ -84,6 +84,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
   const needsDivisi = config.level === "bagian" || config.level === "seksi";
   const needsBagian = config.level === "seksi";
+  const isBagianRequired = needsBagian && config.requireBagian !== false;
   const hasDataTableSearch = ["divisi", "bagian", "seksi"].includes(
     config.level,
   );
@@ -349,7 +350,9 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
           }
         : {
             kode_divisi: data.divisi,
-            kode_bagian: data.bagian,
+            // Kolom database tidak menerima NULL; `nnn` berarti Seksi tidak
+            // terhubung ke Bagian/Biro/Sekolah mana pun.
+            kode_bagian: data.bagian || "nnn",
             kode_seksi: kode,
           };
 
@@ -462,16 +465,16 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     updateMutation.isPending ||
     deleteMutation.isPending;
   const canSubmit = Boolean(
-    form.kode.trim() &&
+      form.kode.trim() &&
       form.nama.trim() &&
       (!needsDivisi || form.divisi) &&
-      (!needsBagian || form.bagian),
+      (!isBagianRequired || form.bagian),
   );
   const canUpdate = Boolean(
-    editingForm.kode.trim() &&
+      editingForm.kode.trim() &&
       editingForm.nama.trim() &&
       (!needsDivisi || editingForm.divisi) &&
-      (!needsBagian || editingForm.bagian),
+      (!isBagianRequired || editingForm.bagian),
   );
 
   const updateForm = (field, value) =>
@@ -557,9 +560,13 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
       )}
       {needsBagian && (
         <Select
-          label="Bagian/Biro/Sekolah"
+          label={`Bagian/Biro/Sekolah${isBagianRequired ? "" : " (Opsional)"}`}
           placeholder={
-            value.divisi ? "Pilih bagian/biro/sekolah" : "Pilih divisi dahulu"
+            value.divisi
+              ? isBagianRequired
+                ? "Pilih bagian/biro/sekolah"
+                : "Pilih bagian/biro/sekolah (opsional)"
+              : "Pilih divisi dahulu"
           }
           selectedKeys={
             value.bagian ? new Set([String(value.bagian)]) : new Set()
