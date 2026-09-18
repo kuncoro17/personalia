@@ -31,7 +31,7 @@ export const PrsKaryawanSchema = z.object({
   atasan_tidak_langsung: z.string().nullable().optional(),
   alamat_ktp: z.string().uuid().nullable().optional(),
   alamat_tempat_tinggal: z.string().uuid().nullable().optional(),
-  tempat_lahir: z.string().uuid().nullable().optional(),
+  tempat_lahir: z.string().nullable().optional(),
   birth_date: z.string().nullable().optional(),
   gender: z.string().nullable().optional(),
   gol_darah: z.string().nullable().optional(),
