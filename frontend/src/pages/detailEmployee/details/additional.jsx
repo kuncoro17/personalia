@@ -72,28 +72,6 @@ export default function Additional() {
     },
   );
 
-  const { data: masterKota = [] } = useMaster(
-    api,
-    ["master-kota"],
-    MASTERENDPOINT.allKota,
-    {
-      select: (response) => {
-        const list = Array.isArray(response?.data)
-          ? response.data
-          : Array.isArray(response)
-            ? response
-            : [];
-
-        return list
-          .map((item) => ({
-            id: item?.id ?? null,
-            name: String(item?.nama_kota ?? item?.nama ?? "").trim(),
-          }))
-          .filter((item) => item.id && item.name);
-      },
-    },
-  );
-
   const onUpdate = async (value, onClose) => {
     try {
       if (Object.keys(value).length === 0) {
@@ -235,15 +213,7 @@ export default function Additional() {
   const additionalFields = tambahan?.fields ?? [];
   const modalFields = useMemo(
     () => [
-      ...additionalFields.map((item) =>
-        item.properties === "tempat_lahir"
-          ? {
-              ...item,
-              listSelect: masterKota,
-              valueMode: "key",
-            }
-          : item,
-      ),
+      ...additionalFields,
       {
         title: "Foto",
         properties: "foto",
@@ -268,7 +238,7 @@ export default function Additional() {
         value: "",
       },
     ],
-    [additionalFields, tambahan?.foto, masterKota, tipeDokumenRaw],
+    [additionalFields, tambahan?.foto, tipeDokumenRaw],
   );
   const imagePreview =
     (tambahan?.foto ? resolveApiAssetUrl(tambahan.foto) : "") ||

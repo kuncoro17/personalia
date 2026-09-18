@@ -161,7 +161,7 @@ PrsKaryawan.init(
     atasan_tidak_langsung: DataTypes.STRING(255),
     alamat_ktp: DataTypes.UUID,
     alamat_tempat_tinggal: DataTypes.UUID,
-    tempat_lahir: DataTypes.UUID,
+    tempat_lahir: DataTypes.STRING(255),
     birth_date: DataTypes.DATEONLY,
     gender: DataTypes.STRING,
     gol_darah: DataTypes.STRING(3),

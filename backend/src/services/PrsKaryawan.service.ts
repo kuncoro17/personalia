@@ -902,10 +902,6 @@ export class PrsKaryawanService {
 
       if (!tempatLahir) {
         delete sanitizedPayload.tempat_lahir;
-      } else if (!isValidUUID(tempatLahir)) {
-        throw new BadRequestException(
-          'Tempat lahir harus berupa ID kota yang valid'
-        );
       } else {
         sanitizedPayload.tempat_lahir = tempatLahir;
       }
