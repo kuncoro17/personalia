@@ -325,7 +325,12 @@ export const PROPERTIES = {
   ],
 
   tambahan: [
-    { title: "Tempat Lahir", properties: "tempat_lahir" },
+    {
+      title: "Tempat Lahir",
+      properties: "tempat_lahir",
+      form: "select",
+      master: "masterKota",
+    },
     { title: "Tanggal Lahir", properties: "birth_date", form: "date" },
     {
       title: "Gol Darah",
