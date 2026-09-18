@@ -33,15 +33,18 @@ export default function Family() {
     {
       enabled: Boolean(employeeId),
       select: (res) => {
-        const d = res.data || "-";
+        const d = res?.data ?? {};
+        const keluargaKaryawan = Array.isArray(d.keluarga_karyawan)
+          ? d.keluarga_karyawan
+          : [];
 
         return {
           nik: d.nik ?? "-",
           nama_lengkap: d.nama_lengkap ?? "-",
           status_dalam_keluarga: d.status_dalam_keluarga ?? "-",
           status_nikah: d.status_nikah ?? "-",
-          raw_data: d.keluarga_karyawan,
-          data_keluarga: d.keluarga_karyawan.map((k) =>
+          raw_data: keluargaKaryawan,
+          data_keluarga: keluargaKaryawan.map((k) =>
             formatDataDetail("keluarga", k),
           ),
         };
