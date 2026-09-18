@@ -896,6 +896,25 @@ export class PrsKaryawanService {
     if (Object.keys(sanitizedPayload).length === 0) {
       throw new BadRequestException('Tidak ada field yang bisa diupdate');
     }
+
+    if (sanitizedPayload.tempat_lahir !== undefined) {
+      const tempatLahir = String(sanitizedPayload.tempat_lahir).trim();
+
+      if (!tempatLahir) {
+        delete sanitizedPayload.tempat_lahir;
+      } else if (!isValidUUID(tempatLahir)) {
+        throw new BadRequestException(
+          'Tempat lahir harus berupa ID kota yang valid'
+        );
+      } else {
+        sanitizedPayload.tempat_lahir = tempatLahir;
+      }
+    }
+
+    if (Object.keys(sanitizedPayload).length === 0) {
+      throw new BadRequestException('Tidak ada field yang bisa diupdate');
+    }
+
     const updatePayload = mapAdditionalDtoToKaryawanPayload(sanitizedPayload);
 
     // UPDATE
