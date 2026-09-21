@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 import {
   getAllKaryawan,
+  exportKaryawanProfiles,
   getCurrentKaryawanAccess,
   getAllKaryawanBySetempat,
   getKaryawanById,
@@ -303,6 +304,32 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
   );
 
   // GET ALL KARYAWAN
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: `${basePath}/employee/export`,
+      tags: ['Karyawan'],
+      summary: 'Export all employee profile data',
+      request: {
+        query: z.object({
+          status_aktif: z.enum(['Aktif', 'Tidak Aktif']).optional(),
+          id_master_setempat: z.string().optional(),
+          kode_direktur: z.string().optional(),
+          kode_deputi: z.string().optional(),
+          kode_divisi: z.string().optional(),
+          kode_bagian: z.string().optional(),
+          kode_seksi: z.string().optional(),
+        }),
+      },
+      responses: {
+        200: { description: 'Data profil karyawan untuk ekspor' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+      },
+    }),
+    exportKaryawanProfiles
+  );
+
   app.openapi(
     createRoute({
       method: 'get',

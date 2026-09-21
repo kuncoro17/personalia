@@ -168,6 +168,104 @@ const buildUnitKerjaKaryawanInclude = () => {
 };
 
 export class PrsKaryawanRepository {
+  async findAllForProfileExport(
+    idMasterSetempat?: number,
+    statusAktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
+  ) {
+    const setempatWhere = idMasterSetempat
+      ? {
+          [Op.or]: [
+            { id_master_setempat: idMasterSetempat },
+            ...(idMasterSetempat === 1 ? [{ id_master_setempat: null }] : []),
+          ],
+        }
+      : {};
+
+    return PrsKaryawan.findAll({
+      where: buildKaryawanWhere(
+        {
+          ...setempatWhere,
+          ...(statusAktif ? { status_aktif: statusAktif } : {}),
+        },
+        unitKerjaFilter
+      ),
+      order: [['nama_lengkap', 'ASC']],
+      include: [
+        {
+          model: PrsMasterAgama,
+          as: 'agama_detail',
+          attributes: ['agama'],
+          required: false,
+        },
+        {
+          model: PrsStatusKaryawan,
+          as: 'status_karyawan',
+          attributes: ['stat_karyawan_gp'],
+          required: false,
+        },
+        {
+          model: PrsMasterSetempat,
+          as: 'master_setempat',
+          attributes: ['kota_setempat'],
+          required: false,
+        },
+        {
+          model: PrsUnitKerjaKaryawan,
+          as: 'unit_kerja_karyawan',
+          attributes: ['ukk_id'],
+          required: false,
+          include: [
+            {
+              model: PrsJabatan,
+              as: 'jabatan',
+              attributes: ['jabatan'],
+              required: false,
+            },
+            {
+              model: PrsUnitKerja,
+              as: 'unit_kerja_detail',
+              attributes: [],
+              required: false,
+              include: [
+                {
+                  model: PrsMasterDirektur,
+                  as: 'direktur',
+                  attributes: ['nama_dir'],
+                  required: false,
+                },
+                {
+                  model: PrsMasterDeputi,
+                  as: 'deputi',
+                  attributes: ['nama_dep'],
+                  required: false,
+                },
+                {
+                  model: PrsDivisi,
+                  as: 'divisi',
+                  attributes: ['nama_div'],
+                  required: false,
+                },
+                {
+                  model: PrsBagian,
+                  as: 'bagian',
+                  attributes: ['nama_bag'],
+                  required: false,
+                },
+                {
+                  model: PrsSeksi,
+                  as: 'seksi',
+                  attributes: ['nama_sek'],
+                  required: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  }
+
   async findAllWithPagination(
     limit: number,
     offset: number,

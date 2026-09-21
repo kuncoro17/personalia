@@ -306,6 +306,40 @@ export const getAllKaryawan = async (c: Context): Promise<Response> => {
   }
 };
 
+export const exportKaryawanProfiles = async (c: Context): Promise<Response> => {
+  const authenticatedSetempatId = await getAuthenticatedSetempatId(c);
+  if (!authenticatedSetempatId) {
+    return responseError(
+      c,
+      'Akses ditolak: id_master_setempat user tidak ditemukan',
+      403
+    );
+  }
+
+  const requestedSetempatId = toPositiveInteger(
+    c.req.query('id_master_setempat')
+  );
+  const statusAktif = normalizeStatusAktifFilter(c.req.query('status_aktif'));
+  if (statusAktif === null) {
+    return badRequest(
+      c,
+      'Query parameter status_aktif hanya boleh Aktif atau Tidak Aktif'
+    );
+  }
+
+  const setempatId =
+    authenticatedSetempatId === YAYASAN_SETEMPAT_ID
+      ? (requestedSetempatId ?? undefined)
+      : authenticatedSetempatId;
+  const data = await service.getAllForProfileExport(
+    setempatId,
+    statusAktif,
+    getUnitKerjaFilterFromQuery(c)
+  );
+
+  return ok(c, data, 'Berhasil mengambil data profil karyawan untuk ekspor');
+};
+
 export const getCurrentKaryawanAccess = async (
   c: Context
 ): Promise<Response> => {

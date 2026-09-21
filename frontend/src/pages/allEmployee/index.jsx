@@ -18,7 +18,7 @@ import { useAuth } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import Layout from "../../components/layout";
-import { apiClient } from "../../service/api";
+import { apiClient, apiService } from "../../service/api";
 import Employees from "../../features/userManagement/employees";
 import EmployeeStatus from "../../features/userManagement/employeeStatus";
 import { capitalizeWords } from "../../utils/format";
@@ -29,6 +29,7 @@ import {
   buildEmployeeImportTemplateXlsx,
   parseEmployeeXlsxFile,
 } from "../../utils/xlsxEmployeeImport";
+import { buildEmployeeProfileExportXlsx } from "../../utils/xlsxEmployeeProfileExport";
 import AddEmployeeModal from "./components/AddEmployeeModal";
 
 const STATUS_AKTIF_OPTIONS = [
@@ -122,6 +123,7 @@ export default function AllKaryawan() {
   const [page, setPage] = useState({ initial: 1, total: 1 });
   const [search, setSearch] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const selectedLimit = useMemo(
     () => Array.from(limitPage).join(", ").replace(/_/g, ""),
@@ -442,6 +444,38 @@ export default function AllKaryawan() {
         description: err?.message || "Gagal membuat template Excel",
         color: "danger",
       });
+    }
+  };
+
+  const downloadProfileExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await apiService(
+        "get",
+        api,
+        EMPLOYEEENDPOINT.exportProfiles(
+          undefined,
+          selectedUnitFilterValues,
+          canViewAllSetempat ? selectedSetempatId : undefined,
+        ),
+      );
+      const employees = response?.data ?? [];
+      const blob = await buildEmployeeProfileExportXlsx(employees);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "Profil Seluruh Karyawan.xlsx";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      addToast({
+        title: "Gagal",
+        description:
+          err?.response?.data?.message || "Gagal mengunduh profil karyawan",
+        color: "danger",
+      });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -882,6 +916,16 @@ export default function AllKaryawan() {
                 onPress={downloadTemplate}
               >
                 Download Template Excel
+              </Button>
+
+              <Button
+                className="personalia-action-button personalia-action-button-light col-span-2 w-full whitespace-nowrap sm:col-span-1 sm:w-auto"
+                variant="bordered"
+                isDisabled={!isLoaded || !isSignedIn || isImporting}
+                isLoading={isExporting}
+                onPress={downloadProfileExport}
+              >
+                Download Profil Excel
               </Button>
 
               <Button
