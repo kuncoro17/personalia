@@ -218,6 +218,18 @@ export class PrsKaryawanService {
     };
   }
 
+  async getAllForProfileExport(
+    idMasterSetempat?: number,
+    statusAktif?: string,
+    unitKerjaFilter?: KaryawanUnitKerjaFilter
+  ) {
+    return this.repository.findAllForProfileExport(
+      idMasterSetempat,
+      statusAktif,
+      unitKerjaFilter
+    );
+  }
+
   async getById(id: string) {
     const sanitized = xss(id || '').trim();
     if (!sanitized) throw new BadRequestException('Parameter wajib diisi');
