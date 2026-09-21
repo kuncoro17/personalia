@@ -2,6 +2,10 @@ import JSZip from "jszip";
 
 const escapeXml = (value) =>
   String(value ?? "")
+    // XML 1.0 rejects control characters other than tab, line-feed, and carriage-return.
+    // Employee data may contain these through legacy imports or copied text.
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -70,7 +74,7 @@ export const buildEmployeeProfileExportXlsx = async (employees = []) => {
         `<row r="${rowIndex + 1}">${row
           .map(
             (value, colIndex) =>
-              `<c r="${columnName(colIndex)}${rowIndex + 1}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`,
+              `<c r="${columnName(colIndex)}${rowIndex + 1}" t="inlineStr"><is><t xml:space="preserve">${escapeXml(value)}</t></is></c>`,
           )
           .join("")}</row>`,
     )
@@ -108,7 +112,7 @@ export const buildEmployeeProfileExportXlsx = async (employees = []) => {
     .folder("worksheets")
     .file(
       "sheet1.xml",
-      `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>${widths}</cols><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetData>${sheetRows}</sheetData><autoFilter ref="A1:${columnName(PROFILE_COLUMNS.length - 1)}${rows.length}"/></worksheet>`,
+      `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>${widths}</cols><sheetData>${sheetRows}</sheetData></worksheet>`,
     );
   return zip.generateAsync({ type: "blob" });
 };
