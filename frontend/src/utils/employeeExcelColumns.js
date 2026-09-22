@@ -3,7 +3,7 @@
 export const EMPLOYEE_EXCEL_COLUMNS = [
   { key: "nik", label: "ID Karyawan" },
   { key: "nama_lengkap", label: "Nama Lengkap" },
- 
+
   { key: "kode_status_karyawan", label: "Status Karyawan" },
   { key: "status_aktif", label: "Status Aktif" },
 
