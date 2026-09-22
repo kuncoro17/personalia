@@ -2,7 +2,7 @@ import JSZip from "jszip";
 import {
   EMPLOYEE_EXCEL_COLUMNS,
   EMPLOYEE_EXCEL_HEADER_TO_KEY,
-} from "./employeeExcelColumns";
+} from "./employeeExcelColumns.js";
 
 const toColumnIndex = (colLetters = "") => {
   let result = 0;
@@ -16,6 +16,19 @@ const toColumnIndex = (colLetters = "") => {
   }
 
   return result - 1;
+};
+
+const toColumnName = (index) => {
+  let value = index + 1;
+  let result = "";
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return result;
 };
 
 const normalizeHeaderKey = (value = "") =>
@@ -210,7 +223,7 @@ export const buildEmployeeImportTemplateXlsx = async (
 
   const cells = headers
     .map((h, i) => {
-      const col = String.fromCharCode(65 + i); // supports up to Z columns for our template
+      const col = toColumnName(i);
       const safe = String(h)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

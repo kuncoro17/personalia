@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { EMPLOYEE_EXCEL_COLUMNS } from "./employeeExcelColumns";
+import { EMPLOYEE_EXCEL_COLUMNS } from "./employeeExcelColumns.js";
 
 const escapeXml = (value) =>
   String(value ?? "")

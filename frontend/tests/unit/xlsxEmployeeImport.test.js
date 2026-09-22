@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import JSZip from "jszip";
+import { EMPLOYEE_EXCEL_COLUMNS } from "../../src/utils/employeeExcelColumns.js";
 
 import {
   buildEmployeeImportTemplateXlsx,
@@ -87,15 +88,19 @@ test("invalid and conflicting resign dates are rejected", () => {
   );
 });
 
-test("downloaded Excel template uses the agreed import headers", async () => {
+test("downloaded Excel template uses the agreed employee profile headers", async () => {
   const template = await buildEmployeeImportTemplateXlsx();
   const zip = await JSZip.loadAsync(await template.arrayBuffer());
   const sheet = await zip.file("xl/worksheets/sheet1.xml").async("text");
 
-  assert.match(sheet, /<t>tlp_pribadi<\/t>/);
-  assert.match(sheet, /<t>tlp_kantor<\/t>/);
-  assert.match(sheet, /<t>status_karyawan<\/t>/);
-  assert.match(sheet, /<t>resign_date<\/t>/);
-  assert.match(sheet, /<t>nik<\/t>/);
-  assert.equal((sheet.match(/<c /g) || []).length, 14);
+  assert.match(sheet, /<t>ID Karyawan<\/t>/);
+  assert.match(sheet, /<t>Telepon Pribadi<\/t>/);
+  assert.match(sheet, /<t>Status Karyawan<\/t>/);
+  assert.match(sheet, /<t>Tanggal Inactive<\/t>/);
+  assert.match(sheet, /<t>No TABITA<\/t>/);
+  assert.match(sheet, /r="AA1"/);
+  assert.equal(
+    (sheet.match(/<c /g) || []).length,
+    EMPLOYEE_EXCEL_COLUMNS.length,
+  );
 });
