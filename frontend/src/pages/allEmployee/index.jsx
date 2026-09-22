@@ -665,6 +665,10 @@ export default function AllKaryawan() {
           continue;
         }
 
+        if (!emailPribadi) {
+          delete payload.email_pribadi;
+        }
+
         try {
           await api.post(EMPLOYEEENDPOINT.create(), toFormData(payload));
           success += 1;
