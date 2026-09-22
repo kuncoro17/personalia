@@ -64,6 +64,7 @@ const extractCellValue = (cell, sharedStrings) => {
 
 const parseSharedStrings = (xml) => {
   if (!xml) return [];
+
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, "application/xml");
   const items = Array.from(doc.querySelectorAll("sst si"));
@@ -92,6 +93,7 @@ const parseWorksheetRows = (sheetXml, sharedStrings) => {
       const colIndex = match ? toColumnIndex(match[1]) : -1;
 
       if (colIndex < 0) continue;
+
       record[colIndex] = extractCellValue(cell, sharedStrings);
     }
 
@@ -113,13 +115,17 @@ export const normalizeResignDate = (value, date1904 = false) => {
   if (/^\d+(?:\.\d+)?$/.test(text)) {
     const serial = Math.floor(Number(text));
 
-    if ((!date1904 && (serial < 1 || serial === 60)) || serial > 2_958_465) {
+    if (
+      (!date1904 && (serial < 1 || serial === 60)) ||
+      serial > 2_958_465
+    ) {
       throw new Error("resign_date berisi tanggal Excel yang tidak valid");
     }
 
     const epoch = date1904
       ? Date.UTC(1904, 0, 1)
       : Date.UTC(1899, 11, serial < 60 ? 31 : 30);
+
     const date = new Date(epoch + serial * 86_400_000);
 
     if (date.getUTCFullYear() > 9999) {
@@ -131,6 +137,7 @@ export const normalizeResignDate = (value, date1904 = false) => {
 
   const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const local = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
   const parts = iso
     ? [iso[1], iso[2], iso[3]]
     : local
@@ -169,11 +176,18 @@ export const mapEmployeeImportDates = (record, date1904 = false) => {
     status_karyawan,
     ...payload
   } = record;
+
   const resignDate = normalizeResignDate(resign_date, date1904);
   const inactiveDate = normalizeResignDate(tanggal_inactive, date1904);
 
-  if (tlp_pribadi != null) payload.telp_pribadi = tlp_pribadi;
-  if (tlp_kantor != null) payload.telp_kantor = tlp_kantor;
+  if (tlp_pribadi != null) {
+    payload.telp_pribadi = tlp_pribadi;
+  }
+
+  if (tlp_kantor != null) {
+    payload.telp_kantor = tlp_kantor;
+  }
+
   if (status_karyawan != null) {
     payload.kode_status_karyawan = status_karyawan;
   }
@@ -183,6 +197,7 @@ export const mapEmployeeImportDates = (record, date1904 = false) => {
   }
 
   const resolvedInactiveDate = inactiveDate ?? resignDate;
+
   if (resolvedInactiveDate) {
     payload.tanggal_inactive = resolvedInactiveDate;
   }
@@ -224,6 +239,7 @@ export const buildEmployeeImportTemplateXlsx = async (
   const cells = headers
     .map((h, i) => {
       const col = toColumnName(i);
+
       const safe = String(h)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -254,13 +270,16 @@ export const buildEmployeeImportTemplateXlsx = async (
 export const parseEmployeeXlsxFile = async (file) => {
   const arrayBuffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(arrayBuffer);
+
   const workbookXml = await zip.file("xl/workbook.xml")?.async("text");
+
   const dateSystem = workbookXml
     ? new DOMParser()
         .parseFromString(workbookXml, "application/xml")
         .querySelector("workbookPr")
         ?.getAttribute("date1904")
     : null;
+
   const date1904 = dateSystem === "1" || dateSystem === "true";
 
   const sheetFile = zip.file("xl/worksheets/sheet1.xml");
@@ -273,24 +292,44 @@ export const parseEmployeeXlsxFile = async (file) => {
     .file("xl/sharedStrings.xml")
     ?.async("text")
     .catch(() => null);
+
   const sharedStrings = parseSharedStrings(sharedStringsXml);
 
   const sheetXml = await sheetFile.async("text");
   const table = parseWorksheetRows(sheetXml, sharedStrings);
 
-  if (table.length === 0) return [];
+  if (table.length === 0) {
+    return [];
+  }
 
   const headerRow = table[0] || {};
+
   const headers = Object.keys(headerRow)
     .map((k) => Number(k))
     .filter((n) => Number.isInteger(n) && n >= 0)
     .sort((a, b) => a - b)
     .map((idx) => {
       const original = String(headerRow[idx] ?? "").trim();
+
       return (
-        EMPLOYEE_EXCEL_HEADER_TO_KEY[original] || normalizeHeaderKey(original)
+        EMPLOYEE_EXCEL_HEADER_TO_KEY[original] ||
+        normalizeHeaderKey(original)
       );
     });
+
+  /*
+   * Field yang boleh kosong.
+   *
+   * Jika cell Excel kosong, field tetap dimasukkan
+   * ke object dengan nilai string kosong.
+   *
+   * Ini berbeda dengan field lainnya yang tetap
+   * diabaikan apabila kosong.
+   */
+  const ALLOW_EMPTY_FIELDS = new Set([
+    "nama_panggilan",
+    "email_pribadi",
+  ]);
 
   const records = [];
 
@@ -303,12 +342,25 @@ export const parseEmployeeXlsxFile = async (file) => {
       const key = headers[colIndex];
 
       if (!key) continue;
+
       const value =
         typeof cellValue === "string" ? cellValue.trim() : cellValue;
 
-      if (value === "") continue;
+      /*
+       * Untuk nama_panggilan dan email_pribadi:
+       * cell kosong tetap dimasukkan sebagai "".
+       */
+      if (value === "") {
+        if (ALLOW_EMPTY_FIELDS.has(key)) {
+          obj[key] = "";
+        }
+
+        continue;
+      }
+
       obj[key] = value;
     }
+
     if (Object.keys(obj).length > 0) {
       try {
         records.push(mapEmployeeImportDates(obj, date1904));
