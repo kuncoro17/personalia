@@ -3,10 +3,10 @@
 export const EMPLOYEE_EXCEL_COLUMNS = [
   { key: "nik", label: "ID Karyawan" },
   { key: "nama_lengkap", label: "Nama Lengkap" },
-  { key: "nama_panggilan", label: "Nama Panggilan" },
+ 
   { key: "kode_status_karyawan", label: "Status Karyawan" },
   { key: "status_aktif", label: "Status Aktif" },
-  { key: "email_penabur", label: "Email PENABUR" },
+
   { key: "email_pribadi", label: "Email Pribadi" },
   { key: "no_ktp", label: "Nomor KTP" },
   { key: "no_pasport", label: "No Passport" },
