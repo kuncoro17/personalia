@@ -1,4 +1,8 @@
 import JSZip from "jszip";
+import {
+  EMPLOYEE_EXCEL_COLUMNS,
+  EMPLOYEE_EXCEL_HEADER_TO_KEY,
+} from "./employeeExcelColumns.js";
 
 const toColumnIndex = (colLetters = "") => {
   let result = 0;
@@ -12,6 +16,19 @@ const toColumnIndex = (colLetters = "") => {
   }
 
   return result - 1;
+};
+
+const toColumnName = (index) => {
+  let value = index + 1;
+  let result = "";
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return result;
 };
 
 const normalizeHeaderKey = (value = "") =>
@@ -84,22 +101,9 @@ const parseWorksheetRows = (sheetXml, sharedStrings) => {
   return table;
 };
 
-const DEFAULT_EMPLOYEE_HEADERS = [
-  "nik",
-  "no_ktp",
-  "status_aktif",
-  "nama_lengkap",
-  "nama_panggilan",
-  "tlp_pribadi",
-  "tlp_kantor",
-  "email_pribadi",
-  "email_penabur",
-  "tgl_join_penabur",
-  "agama",
-  "status_karyawan",
-  "id_master_setempat",
-  "resign_date",
-];
+const DEFAULT_EMPLOYEE_HEADERS = EMPLOYEE_EXCEL_COLUMNS.map(
+  ({ label }) => label,
+);
 
 export const normalizeResignDate = (value, date1904 = false) => {
   const text = String(value ?? "").trim();
@@ -219,7 +223,7 @@ export const buildEmployeeImportTemplateXlsx = async (
 
   const cells = headers
     .map((h, i) => {
-      const col = String.fromCharCode(65 + i); // supports up to Z columns for our template
+      const col = toColumnName(i);
       const safe = String(h)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -281,7 +285,12 @@ export const parseEmployeeXlsxFile = async (file) => {
     .map((k) => Number(k))
     .filter((n) => Number.isInteger(n) && n >= 0)
     .sort((a, b) => a - b)
-    .map((idx) => normalizeHeaderKey(headerRow[idx]));
+    .map((idx) => {
+      const original = String(headerRow[idx] ?? "").trim();
+      return (
+        EMPLOYEE_EXCEL_HEADER_TO_KEY[original] || normalizeHeaderKey(original)
+      );
+    });
 
   const records = [];
 
