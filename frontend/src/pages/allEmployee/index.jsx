@@ -644,12 +644,7 @@ export default function AllKaryawan() {
           continue;
         }
 
-        if (!emailPribadi) {
-          errors.push({ row: i + 2, message: "Email pribadi wajib diisi" });
-          continue;
-        }
-
-        if (!isValidEmail(emailPribadi)) {
+        if (emailPribadi && !isValidEmail(emailPribadi)) {
           errors.push({
             row: i + 2,
             message: "Format email pribadi tidak valid",
