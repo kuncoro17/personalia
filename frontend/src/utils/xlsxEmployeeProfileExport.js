@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { EMPLOYEE_EXCEL_COLUMNS } from "./employeeExcelColumns";
 
 const escapeXml = (value) =>
   String(value ?? "")
@@ -30,48 +31,33 @@ const columnName = (index) => {
 };
 
 const dateValue = (value) => (value ? String(value).slice(0, 10) : "");
-const firstUnit = (employee) => employee.unit_kerja_karyawan?.[0] ?? {};
-const unitDetail = (employee) => firstUnit(employee).unit_kerja_detail ?? {};
 
-const PROFILE_COLUMNS = [
-  ["ID Karyawan", (e) => e.nik],
-  ["Nama Lengkap", (e) => e.nama_lengkap],
-  ["Nama Panggilan", (e) => e.nama_panggilan],
-  [
-    "Status Karyawan",
-    (e) => e.status_karyawan?.stat_karyawan_gp || e.status_aktif,
-  ],
-  ["Status Aktif", (e) => e.status_aktif],
-  ["Email PENABUR", (e) => e.email_penabur],
-  ["Email Pribadi", (e) => e.email_pribadi],
-  ["Nomor KTP", (e) => e.no_ktp],
-  ["No Passport", (e) => e.no_pasport],
-  ["Telepon Pribadi", (e) => e.telp_pribadi],
-  ["Telepon Kantor", (e) => e.telp_kantor],
-  ["Direktur", (e) => unitDetail(e).direktur?.nama_dir],
-  ["Deputi", (e) => unitDetail(e).deputi?.nama_dep],
-  ["Divisi", (e) => unitDetail(e).divisi?.nama_div],
-  ["Bagian/Biro/Sekolah", (e) => unitDetail(e).bagian?.nama_bag],
-  ["Seksi", (e) => unitDetail(e).seksi?.nama_sek],
-  ["Jabatan", (e) => firstUnit(e).jabatan?.jabatan],
-  ["Tipe Sekolah", (e) => e.tipe_sekolah],
-  ["Kota Setempat", (e) => e.master_setempat?.kota_setempat],
-  ["Tanggal Join PENABUR", (e) => dateValue(e.tgl_join_penabur)],
-  ["Tanggal Join PENABUR Jakarta", (e) => dateValue(e.tgl_join_penabur_jkt)],
-  ["Tanggal Status Tetap", (e) => dateValue(e.tgl_status_permanen)],
-  ["Tanggal Penuh Waktu", (e) => dateValue(e.tgl_penuh_waktu)],
-  ["Agama", (e) => e.agama_detail?.agama],
-  ["Status Nikah", (e) => e.status_nikah],
-  ["Tanggal Pernikahan", (e) => dateValue(e.tanggal_pernikahan)],
-  ["Alasan Berhenti Kerja", (e) => e.alasan_berhenti_kerja],
-  ["Tanggal Inactive", (e) => dateValue(e.tanggal_inactive)],
-];
+const getColumnValue = (employee, key) => {
+  if (key === "kode_status_karyawan") {
+    return employee.status_karyawan?.stat_karyawan_gp || employee[key];
+  }
+  if (key === "agama") return employee.agama_detail?.agama || employee[key];
+  if (key === "id_master_setempat") {
+    return employee.master_setempat?.kota_setempat || employee[key];
+  }
+  if (
+    key.startsWith("tgl_") ||
+    key === "tanggal_pernikahan" ||
+    key === "tanggal_inactive" ||
+    key === "birth_date"
+  ) {
+    return dateValue(employee[key]);
+  }
+  return employee[key];
+};
 
 export const buildEmployeeProfileExportXlsx = async (employees = []) => {
   const rows = [
-    PROFILE_COLUMNS.map(([header]) => header),
+    EMPLOYEE_EXCEL_COLUMNS.map(({ label }) => label),
     ...employees.map((employee) =>
-      PROFILE_COLUMNS.map(([, getValue]) => getValue(employee) ?? ""),
+      EMPLOYEE_EXCEL_COLUMNS.map(
+        ({ key }) => getColumnValue(employee, key) ?? "",
+      ),
     ),
   ];
   const sheetRows = rows
@@ -85,7 +71,7 @@ export const buildEmployeeProfileExportXlsx = async (employees = []) => {
           .join("")}</row>`,
     )
     .join("");
-  const widths = PROFILE_COLUMNS.map(
+  const widths = EMPLOYEE_EXCEL_COLUMNS.map(
     (_, index) =>
       `<col min="${index + 1}" max="${index + 1}" width="22" customWidth="1"/>`,
   ).join("");

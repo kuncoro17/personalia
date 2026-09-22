@@ -1,4 +1,8 @@
 import JSZip from "jszip";
+import {
+  EMPLOYEE_EXCEL_COLUMNS,
+  EMPLOYEE_EXCEL_HEADER_TO_KEY,
+} from "./employeeExcelColumns";
 
 const toColumnIndex = (colLetters = "") => {
   let result = 0;
@@ -84,22 +88,9 @@ const parseWorksheetRows = (sheetXml, sharedStrings) => {
   return table;
 };
 
-const DEFAULT_EMPLOYEE_HEADERS = [
-  "nik",
-  "no_ktp",
-  "status_aktif",
-  "nama_lengkap",
-  "nama_panggilan",
-  "tlp_pribadi",
-  "tlp_kantor",
-  "email_pribadi",
-  "email_penabur",
-  "tgl_join_penabur",
-  "agama",
-  "status_karyawan",
-  "id_master_setempat",
-  "resign_date",
-];
+const DEFAULT_EMPLOYEE_HEADERS = EMPLOYEE_EXCEL_COLUMNS.map(
+  ({ label }) => label,
+);
 
 export const normalizeResignDate = (value, date1904 = false) => {
   const text = String(value ?? "").trim();
@@ -281,7 +272,12 @@ export const parseEmployeeXlsxFile = async (file) => {
     .map((k) => Number(k))
     .filter((n) => Number.isInteger(n) && n >= 0)
     .sort((a, b) => a - b)
-    .map((idx) => normalizeHeaderKey(headerRow[idx]));
+    .map((idx) => {
+      const original = String(headerRow[idx] ?? "").trim();
+      return (
+        EMPLOYEE_EXCEL_HEADER_TO_KEY[original] || normalizeHeaderKey(original)
+      );
+    });
 
   const records = [];
 

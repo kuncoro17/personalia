@@ -429,10 +429,9 @@ export default function AllKaryawan() {
 
   const downloadTemplate = async () => {
     try {
-      // Generate from the import headers so downloaded columns stay up to date.
-      const resolvedBlob = await buildEmployeeImportTemplateXlsx();
-
-      const url = URL.createObjectURL(resolvedBlob);
+      // Dibuat dinamis agar template selalu identik dengan format ekspor/import.
+      const blob = await buildEmployeeImportTemplateXlsx();
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "FORMAT IMPORT.xlsx";
@@ -502,6 +501,50 @@ export default function AllKaryawan() {
     return payload;
   };
 
+  const normalizeLookupValue = (value) =>
+    String(value ?? "")
+      .trim()
+      .toLocaleLowerCase("id-ID");
+
+  const getLookupId = (items, value, labelKeys) => {
+    const normalizedValue = normalizeLookupValue(value);
+    if (!normalizedValue) return null;
+
+    const found = (Array.isArray(items) ? items : []).find((item) =>
+      labelKeys.some(
+        (key) => normalizeLookupValue(item?.[key]) === normalizedValue,
+      ),
+    );
+
+    return found?.id ?? found?.kode ?? found?.kode_status_karyawan ?? null;
+  };
+
+  const resolveImportMasterValues = (payload, masterData) => {
+    const normalized = { ...payload };
+
+    const agamaId = getLookupId(masterData.agama, normalized.agama, [
+      "agama",
+      "nama",
+    ]);
+    if (agamaId != null) normalized.agama = agamaId;
+
+    const setempatId = getLookupId(
+      masterData.setempat,
+      normalized.id_master_setempat,
+      ["kota_setempat", "nama"],
+    );
+    if (setempatId != null) normalized.id_master_setempat = setempatId;
+
+    const statusCode = getLookupId(
+      masterData.status,
+      normalized.kode_status_karyawan,
+      ["stat_karyawan_gp", "status_karyawan", "nama"],
+    );
+    if (statusCode != null) normalized.kode_status_karyawan = statusCode;
+
+    return normalized;
+  };
+
   const toFormData = (payload) => {
     const formData = new FormData();
     Object.entries(payload || {}).forEach(([key, value]) => {
@@ -543,8 +586,32 @@ export default function AllKaryawan() {
       const isValidEmail = (value) =>
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? "").trim());
 
-      for (let i = 0; i < records.length; i += 1) {
-        const row = records[i];
+      let masterData;
+      try {
+        const [agamaResponse, setempatResponse, statusResponse] =
+          await Promise.all([
+            apiService("get", api, MASTERENDPOINT.agama),
+            apiService("get", api, MASTERENDPOINT.setempat),
+            apiService("get", api, MASTERENDPOINT.statusKaryawan),
+          ]);
+        masterData = {
+          agama: agamaResponse?.data ?? [],
+          setempat: setempatResponse?.data ?? [],
+          status: statusResponse?.data ?? [],
+        };
+      } catch (err) {
+        throw new Error(
+          err?.message ||
+            "Gagal memuat master agama, status, atau kota setempat.",
+        );
+      }
+
+      const masterResolvedRecords = records.map((record) =>
+        resolveImportMasterValues(record, masterData),
+      );
+
+      for (let i = 0; i < masterResolvedRecords.length; i += 1) {
+        const row = masterResolvedRecords[i];
         const payload = normalizeImportPayload(row);
         const nik = String(payload?.nik ?? "").trim();
         const noKtp = String(payload?.no_ktp ?? "").trim();
