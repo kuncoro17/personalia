@@ -10,7 +10,6 @@ const autoLoginSchema = z.object({
   signature: z.string().regex(/^[a-f0-9]{64}$/i),
 });
 
-
 const verifySchema = z.object({
   verify_token: z.string().min(32).max(256),
 });
