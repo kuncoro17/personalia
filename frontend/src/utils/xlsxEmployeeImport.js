@@ -115,10 +115,7 @@ export const normalizeResignDate = (value, date1904 = false) => {
   if (/^\d+(?:\.\d+)?$/.test(text)) {
     const serial = Math.floor(Number(text));
 
-    if (
-      (!date1904 && (serial < 1 || serial === 60)) ||
-      serial > 2_958_465
-    ) {
+    if ((!date1904 && (serial < 1 || serial === 60)) || serial > 2_958_465) {
       throw new Error("resign_date berisi tanggal Excel yang tidak valid");
     }
 
@@ -312,8 +309,7 @@ export const parseEmployeeXlsxFile = async (file) => {
       const original = String(headerRow[idx] ?? "").trim();
 
       return (
-        EMPLOYEE_EXCEL_HEADER_TO_KEY[original] ||
-        normalizeHeaderKey(original)
+        EMPLOYEE_EXCEL_HEADER_TO_KEY[original] || normalizeHeaderKey(original)
       );
     });
 
@@ -326,10 +322,7 @@ export const parseEmployeeXlsxFile = async (file) => {
    * Ini berbeda dengan field lainnya yang tetap
    * diabaikan apabila kosong.
    */
-  const ALLOW_EMPTY_FIELDS = new Set([
-    "nama_panggilan",
-    "email_pribadi",
-  ]);
+  const ALLOW_EMPTY_FIELDS = new Set(["nama_panggilan", "email_pribadi"]);
 
   const records = [];
 
