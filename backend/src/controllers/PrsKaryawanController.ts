@@ -27,6 +27,9 @@ import User from '../models/userModel';
 import HistoryService from '../services/HistoryServices';
 import { getJakartaDateOnly } from '../utils/dateOnly';
 import { normalizeInactiveStatus } from '../utils/normalizeInactiveStatus';
+import PrsUnitKerja from '../models/PrsUnitKerja';
+import PrsUnitKerjaKaryawan from '../models/PrsUnitKerjaKaryawan';
+import PrsJabatan from '../models/prsJabatan';
 // import { PrsKeluargaKaryawanAttributes } from '../types/prsKeluargaKaryawan.types';
 
 // import { PrsJabatanService } from '../services/prsJabatanService';
@@ -40,6 +43,24 @@ const getErrorMessage = (err: unknown): string =>
   err instanceof Error ? err.message : 'Unknown error';
 
 const YAYASAN_SETEMPAT_ID = 13;
+
+const getImportOrganizationCode = (
+  body: Record<string, string>,
+  key: 'kode_divisi' | 'kode_bagian' | 'kode_seksi' | 'kode_jabatan'
+) => body[key]?.trim() ?? '';
+
+const removeImportOrganizationFields = (body: Record<string, string>) => {
+  [
+    'kode_divisi',
+    'nama_divisi',
+    'kode_bagian',
+    'nama_bagian',
+    'kode_seksi',
+    'nama_seksi',
+    'kode_jabatan',
+    'jabatan',
+  ].forEach(key => delete body[key]);
+};
 
 const normalizeStatusAktifFilter = (
   value: string | undefined
@@ -799,6 +820,56 @@ export const createKaryawan = async (c: Context): Promise<Response> => {
       }
     });
 
+    const organizationCodes = {
+      kode_divisi: getImportOrganizationCode(parsedBody, 'kode_divisi'),
+      kode_bagian: getImportOrganizationCode(parsedBody, 'kode_bagian'),
+      kode_seksi: getImportOrganizationCode(parsedBody, 'kode_seksi'),
+      kode_jabatan: getImportOrganizationCode(parsedBody, 'kode_jabatan'),
+    };
+    const organizationCodeValues = Object.values(organizationCodes);
+    const hasOrganizationCodes = organizationCodeValues.some(Boolean);
+
+    if (hasOrganizationCodes && organizationCodeValues.some(code => !code)) {
+      return badRequest(
+        c,
+        'Kode divisi, bagian, seksi, dan jabatan harus diisi seluruhnya untuk membuat unit kerja karyawan'
+      );
+    }
+
+    let unitKerja: PrsUnitKerja | null = null;
+    let jabatan: PrsJabatan | null = null;
+
+    if (hasOrganizationCodes) {
+      [unitKerja, jabatan] = await Promise.all([
+        PrsUnitKerja.findOne({
+          where: {
+            kode_divisi: organizationCodes.kode_divisi,
+            kode_bagian: organizationCodes.kode_bagian,
+            kode_seksi: organizationCodes.kode_seksi,
+          },
+        }),
+        PrsJabatan.findOne({
+          where: { kode_jab: organizationCodes.kode_jabatan },
+        }),
+      ]);
+
+      if (!unitKerja) {
+        return badRequest(
+          c,
+          'Kombinasi kode divisi, bagian, dan seksi tidak ditemukan pada master unit kerja'
+        );
+      }
+
+      if (!jabatan) {
+        return badRequest(
+          c,
+          'Kode jabatan tidak ditemukan pada master jabatan'
+        );
+      }
+    }
+
+    removeImportOrganizationFields(parsedBody);
+
     if (!parsedBody.id_karyawan) {
       parsedBody.id_karyawan = uuidv4();
     }
@@ -830,6 +901,16 @@ export const createKaryawan = async (c: Context): Promise<Response> => {
     const validated: PrsKaryawanDTO = prsKaryawanSchema.parse(parsedBody);
 
     const createdData = await service.create(validated);
+
+    if (unitKerja && jabatan) {
+      await PrsUnitKerjaKaryawan.create({
+        ukk_id: uuidv4(),
+        karyawan_id: createdData.id_karyawan,
+        unit_kerja: unitKerja.uk_id,
+        jab_id: jabatan.kode_jab,
+        lokasi_penggajian: '',
+      });
+    }
 
     await logInfo(`Karyawan berhasil dibuat dengan ID: ${createdData}`);
     return created(c, createdData);
