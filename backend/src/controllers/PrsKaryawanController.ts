@@ -805,7 +805,10 @@ export const getKaryawanByIdOrNik = async (c: Context): Promise<Response> => {
 };
 
 // ✅ Create karyawan
-export const createKaryawan = async (c: Context): Promise<Response> => {
+const createKaryawanInternal = async (
+  c: Context,
+  isImport = false
+): Promise<Response> => {
   const service = new PrsKaryawanService();
   try {
     await logInfo('Memulai proses create karyawan');
@@ -820,48 +823,50 @@ export const createKaryawan = async (c: Context): Promise<Response> => {
       }
     });
 
-    const organizationCodes = {
-      kode_divisi: getImportOrganizationCode(parsedBody, 'kode_divisi'),
-      kode_bagian: getImportOrganizationCode(parsedBody, 'kode_bagian'),
-      kode_seksi: getImportOrganizationCode(parsedBody, 'kode_seksi'),
-      kode_jabatan: getImportOrganizationCode(parsedBody, 'kode_jabatan'),
-    };
-    const organizationCodeValues = Object.values(organizationCodes);
-    const hasCompleteOrganizationCodes = organizationCodeValues.every(Boolean);
-
     let unitKerja: PrsUnitKerja | null = null;
     let jabatan: PrsJabatan | null = null;
 
-    if (hasCompleteOrganizationCodes) {
-      [unitKerja, jabatan] = await Promise.all([
-        PrsUnitKerja.findOne({
-          where: {
-            kode_divisi: organizationCodes.kode_divisi,
-            kode_bagian: organizationCodes.kode_bagian,
-            kode_seksi: organizationCodes.kode_seksi,
-          },
-        }),
-        PrsJabatan.findOne({
-          where: { kode_jab: organizationCodes.kode_jabatan },
-        }),
-      ]);
+    if (isImport) {
+      const organizationCodes = {
+        kode_divisi: getImportOrganizationCode(parsedBody, 'kode_divisi'),
+        kode_bagian: getImportOrganizationCode(parsedBody, 'kode_bagian'),
+        kode_seksi: getImportOrganizationCode(parsedBody, 'kode_seksi'),
+        kode_jabatan: getImportOrganizationCode(parsedBody, 'kode_jabatan'),
+      };
+      const hasCompleteOrganizationCodes =
+        Object.values(organizationCodes).every(Boolean);
 
-      if (!unitKerja) {
-        return badRequest(
-          c,
-          'Kombinasi kode divisi, bagian, dan seksi tidak ditemukan pada master unit kerja'
-        );
+      if (hasCompleteOrganizationCodes) {
+        [unitKerja, jabatan] = await Promise.all([
+          PrsUnitKerja.findOne({
+            where: {
+              kode_divisi: organizationCodes.kode_divisi,
+              kode_bagian: organizationCodes.kode_bagian,
+              kode_seksi: organizationCodes.kode_seksi,
+            },
+          }),
+          PrsJabatan.findOne({
+            where: { kode_jab: organizationCodes.kode_jabatan },
+          }),
+        ]);
+
+        if (!unitKerja) {
+          return badRequest(
+            c,
+            'Kombinasi kode divisi, bagian, dan seksi tidak ditemukan pada master unit kerja'
+          );
+        }
+
+        if (!jabatan) {
+          return badRequest(
+            c,
+            'Kode jabatan tidak ditemukan pada master jabatan'
+          );
+        }
       }
 
-      if (!jabatan) {
-        return badRequest(
-          c,
-          'Kode jabatan tidak ditemukan pada master jabatan'
-        );
-      }
+      removeImportOrganizationFields(parsedBody);
     }
-
-    removeImportOrganizationFields(parsedBody);
 
     if (!parsedBody.id_karyawan) {
       parsedBody.id_karyawan = uuidv4();
@@ -918,6 +923,12 @@ export const createKaryawan = async (c: Context): Promise<Response> => {
     });
   }
 };
+
+export const createKaryawan = async (c: Context): Promise<Response> =>
+  createKaryawanInternal(c);
+
+export const importKaryawan = async (c: Context): Promise<Response> =>
+  createKaryawanInternal(c, true);
 
 //update
 

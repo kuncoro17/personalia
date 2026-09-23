@@ -676,7 +676,7 @@ export default function AllKaryawan() {
         }
 
         try {
-          await api.post(EMPLOYEEENDPOINT.create(), toFormData(payload));
+          await api.post(EMPLOYEEENDPOINT.import(), toFormData(payload));
           success += 1;
         } catch (err) {
           errors.push({ row: i + 2, message: getImportErrorMessage(err) });

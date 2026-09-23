@@ -8,6 +8,7 @@ import {
   getKaryawanById,
   getKaryawanByIdOrNik,
   createKaryawan,
+  importKaryawan,
   updateStatusTidakAktif,
   getKaryawanBirthdayToday,
   getKaryawanByJoinDate,
@@ -272,6 +273,26 @@ export const registerPrsKaryawanRoutes = (app: OpenAPIHono) => {
   // ---------------------------
   // ROUTES
   // ---------------------------
+
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: `${basePath}/import`,
+      tags: ['Karyawan'],
+      summary: 'Import Karyawan dari Excel',
+      request: {
+        body: {
+          content: { 'application/json': { schema: CreateKaryawanSchema } },
+        },
+      },
+      responses: {
+        201: { description: 'Karyawan berhasil diimpor' },
+        400: { description: 'Validasi gagal' },
+        401: { description: 'Unauthorized' },
+      },
+    }),
+    importKaryawan
+  );
 
   app.openapi(
     createRoute({

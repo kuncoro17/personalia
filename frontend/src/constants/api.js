@@ -115,6 +115,7 @@ export const EMPLOYEEENDPOINT = {
     }${buildUnitKerjaFilterQuery(unitFilters)}`,
   access: "personalia/karyawan/access",
   create: () => "personalia/karyawan/created",
+  import: () => "personalia/karyawan/import",
   search: (search, page, idMasterSetempat, statusAktif, unitFilters) =>
     `personalia/karyawan/search?nama_lengkap=${encodeURIComponent(search)}${page ? `&${page}` : ""}${
       idMasterSetempat ? `&id_master_setempat=${idMasterSetempat}` : ""
