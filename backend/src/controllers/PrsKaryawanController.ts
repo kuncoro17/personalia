@@ -32,6 +32,7 @@ import PrsUnitKerjaKaryawan from '../models/PrsUnitKerjaKaryawan';
 import PrsJabatan from '../models/prsJabatan';
 import PrsMasterAgama from '../models/PrsMasterAgama';
 import PrsMasterSetempat from '../models/PrsMasterSetempat';
+import PrsDivisi from '../models/PrsDivisi';
 // import { PrsKeluargaKaryawanAttributes } from '../types/prsKeluargaKaryawan.types';
 
 // import { PrsJabatanService } from '../services/prsJabatanService';
@@ -911,10 +912,37 @@ const createKaryawanInternal = async (
         ]);
 
         if (!unitKerja) {
-          return badRequest(
-            c,
-            'Kombinasi kode divisi, bagian, dan seksi tidak ditemukan pada master unit kerja'
-          );
+          const isDivisionLevel =
+            normalizedOrganizationCodes.kode_bagian === 'nnn' &&
+            normalizedOrganizationCodes.kode_seksi === 'nnn';
+
+          if (!isDivisionLevel) {
+            return badRequest(
+              c,
+              'Kombinasi kode divisi, bagian, dan seksi tidak ditemukan pada master unit kerja'
+            );
+          }
+
+          const divisi = await PrsDivisi.findOne({
+            where: { kode: normalizedOrganizationCodes.kode_divisi },
+          });
+
+          if (!divisi) {
+            return badRequest(
+              c,
+              'Kode divisi tidak ditemukan pada master divisi'
+            );
+          }
+
+          // Master unit kerja level Divisi belum tentu terbentuk dari data
+          // lama. Buat relasi `Divisi | nnn | nnn` agar Kepala Divisi dan
+          // staf level Divisi dapat diimpor tanpa Bagian maupun Seksi.
+          unitKerja = await PrsUnitKerja.create({
+            uk_id: uuidv4(),
+            kode_divisi: normalizedOrganizationCodes.kode_divisi,
+            kode_bagian: 'nnn',
+            kode_seksi: 'nnn',
+          });
         }
 
         if (!jabatan) {
