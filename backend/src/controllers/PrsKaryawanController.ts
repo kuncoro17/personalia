@@ -878,20 +878,35 @@ const createKaryawanInternal = async (
         kode_seksi: getImportOrganizationCode(parsedBody, 'kode_seksi'),
         kode_jabatan: getImportOrganizationCode(parsedBody, 'kode_jabatan'),
       };
-      const hasCompleteOrganizationCodes =
-        Object.values(organizationCodes).every(Boolean);
+      const hasOrganizationData =
+        Object.values(organizationCodes).some(Boolean);
 
-      if (hasCompleteOrganizationCodes) {
+      if (hasOrganizationData) {
+        if (!organizationCodes.kode_divisi || !organizationCodes.kode_jabatan) {
+          return badRequest(
+            c,
+            'Kode divisi dan kode jabatan wajib diisi untuk membuat unit kerja karyawan'
+          );
+        }
+
+        // Unit kerja tingkat divisi/bagian menyimpan level yang tidak berlaku
+        // sebagai `nnn`. Excel cukup mengosongkan kolom Bagian/Seksi tersebut.
+        const normalizedOrganizationCodes = {
+          ...organizationCodes,
+          kode_bagian: organizationCodes.kode_bagian || 'nnn',
+          kode_seksi: organizationCodes.kode_seksi || 'nnn',
+        };
+
         [unitKerja, jabatan] = await Promise.all([
           PrsUnitKerja.findOne({
             where: {
-              kode_divisi: organizationCodes.kode_divisi,
-              kode_bagian: organizationCodes.kode_bagian,
-              kode_seksi: organizationCodes.kode_seksi,
+              kode_divisi: normalizedOrganizationCodes.kode_divisi,
+              kode_bagian: normalizedOrganizationCodes.kode_bagian,
+              kode_seksi: normalizedOrganizationCodes.kode_seksi,
             },
           }),
           PrsJabatan.findOne({
-            where: { kode_jab: organizationCodes.kode_jabatan },
+            where: { kode_jab: normalizedOrganizationCodes.kode_jabatan },
           }),
         ]);
 
