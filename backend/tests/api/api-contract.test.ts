@@ -56,7 +56,7 @@ const expectedFamilyCounts: Record<string, number> = {
   mutasi: 1,
   'openapi.json': 1,
   pengalaman: 5,
-  personalia: 85,
+  personalia: 86,
   presensi: 1,
   redis: 2,
   'riw-pendidikan-kar': 6,
@@ -99,8 +99,8 @@ const standardCrudResources = [
 ];
 
 describe('kontrak seluruh API', () => {
-  it('mendaftarkan 232 kombinasi method dan path unik', () => {
-    expect(apiRoutes).toHaveLength(232);
+  it('mendaftarkan 233 kombinasi method dan path unik', () => {
+    expect(apiRoutes).toHaveLength(233);
   });
 
   it('menjaga jumlah endpoint setiap keluarga API', () => {
