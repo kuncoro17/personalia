@@ -42,14 +42,20 @@ export const markSasEntry = () => {
 
 export const hasSasEntry = () => storage?.getItem(SAS_ENTRY_KEY) === "true";
 
+export const getSasPortalUrl = () => {
+  const configuredUrl =
+    import.meta.env.VITE_SAS_PORTAL_URL ||
+    import.meta.env.VITE_CLERK_SIGN_IN_URL;
+
+  return configuredUrl || "https://sas.bpkpenabur.or.id";
+};
+
 export const getSasSdmUrl = () => {
   const configuredUrl = import.meta.env.VITE_SAS_SDM_URL;
 
   if (configuredUrl) return configuredUrl;
 
-  const portalUrl =
-    import.meta.env.VITE_SAS_PORTAL_URL ||
-    import.meta.env.VITE_CLERK_SIGN_IN_URL;
+  const portalUrl = getSasPortalUrl();
 
   if (portalUrl) {
     try {
@@ -59,5 +65,5 @@ export const getSasSdmUrl = () => {
     }
   }
 
-  return "https://staging-new-sas.bpkpenaburjakarta.or.id/sumber-daya-manusia";
+  return "https://sas.bpkpenabur.or.id/sumber-daya-manusia";
 };

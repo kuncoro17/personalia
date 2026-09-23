@@ -1,4 +1,4 @@
-import { RedirectToSignIn, useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Spinner } from "@heroui/react";
@@ -9,6 +9,7 @@ import {
   hasSasEntry,
   hasSasSession,
   markSasEntry,
+  getSasPortalUrl,
 } from "../utils/sasSession";
 
 const rawSignInUrl = import.meta.env.VITE_CLERK_SIGN_IN_URL;
@@ -67,17 +68,7 @@ function AppRouter() {
   }
 
   if (!isSignedIn && !hasInternalSasSession) {
-    // Prefer Clerk's redirect helper so it can attach the correct return URL.
-    if (signInUrl) {
-      return (
-        <>
-          <RedirectToSignIn redirectUrl={window.location.href} />
-          <SignedOutFallback signInUrl={signInUrl} />
-        </>
-      );
-    }
-
-    return <SignedOutFallback signInUrl={signInUrl} />;
+    return <SignedOutRedirect redirectUrl={signInUrl || getSasPortalUrl()} />;
   }
 
   return (
@@ -103,8 +94,10 @@ function LoadingFallback() {
 
 export { AppRouter };
 
-function SignedOutFallback({ signInUrl }) {
-  const canRedirect = Boolean(signInUrl);
+function SignedOutRedirect({ redirectUrl }) {
+  useEffect(() => {
+    window.location.replace(redirectUrl);
+  }, [redirectUrl]);
 
   return (
     <div className="flex items-center justify-center min-h-screen p-6">
@@ -114,15 +107,9 @@ function SignedOutFallback({ signInUrl }) {
           Silakan login lagi untuk melanjutkan.
         </div>
 
-        {canRedirect ? (
-          <div className="text-sm text-default-400">
-            Mengalihkan ke halaman login…
-          </div>
-        ) : (
-          <div className="text-sm text-default-400">
-            `VITE_CLERK_SIGN_IN_URL` belum diset.
-          </div>
-        )}
+        <div className="text-sm text-default-400">
+          Mengalihkan ke halaman login…
+        </div>
       </div>
     </div>
   );

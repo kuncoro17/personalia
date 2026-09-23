@@ -2,7 +2,11 @@ import { addToast } from "@heroui/toast";
 import axios from "axios";
 
 import { useToastSlice } from "../stores/useToast";
-import { clearSasSession, getSasSessionToken } from "../utils/sasSession";
+import {
+  clearSasSession,
+  getSasPortalUrl,
+  getSasSessionToken,
+} from "../utils/sasSession";
 
 const getResolvedApiUrl = () => {
   const configuredApiUrl = String(import.meta.env.VITE_API_URL || "").trim();
@@ -21,6 +25,12 @@ const API_URL = getResolvedApiUrl();
 const AUTH_TOKEN_RETRY_DELAYS_MS = [0, 200, 500, 1000, 1500];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const redirectToSasPortal = () => {
+  if (typeof window === "undefined") return;
+
+  window.location.replace(getSasPortalUrl());
+};
 
 const stripLeadingSlash = (path = "") => path.replace(/^\/+/, "");
 
@@ -175,6 +185,10 @@ export const apiClient = (getToken) => {
           clearSasSession();
         }
 
+        if (status === 401) {
+          redirectToSasPortal();
+        }
+
         if (status === 403 || status === 404) {
           showToastOnce("Access denied", {
             title: "Akses ditolak",
@@ -250,6 +264,8 @@ export const apiClient = (getToken) => {
       }
 
       if (error?.type === "AUTH_TOKEN_NOT_READY") {
+        clearSasSession();
+        redirectToSasPortal();
         return Promise.reject(error);
       }
 
