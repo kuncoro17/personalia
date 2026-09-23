@@ -527,8 +527,14 @@ deploy-production:
         exit 1
       }
     - |
+      ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "hostname; df -h '/opt/$APP_NAME/deployment'; df -ih '/opt/$APP_NAME/deployment'" || {
+        echo "INFRASTRUCTURE_ERROR: unable to inspect production deployment filesystem"
+        exit 1
+      }
+    - |
       rsync -rlvz --delete --no-perms --no-owner --no-group -e "ssh -p $PRODUCTION_SSH_PORT" deployment/ "$PRODUCTION_TARGET:/opt/$APP_NAME/deployment/" || {
         echo "INFRASTRUCTURE_ERROR: unable to synchronize deployment files"
+        ssh -p "$PRODUCTION_SSH_PORT" "$PRODUCTION_TARGET" "hostname; df -h '/opt/$APP_NAME/deployment'; df -ih '/opt/$APP_NAME/deployment'" || true
         exit 1
       }
     - |
