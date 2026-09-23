@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
-
+//swagger versi
 export const swaggerApp = new OpenAPIHono();
 
 swaggerApp.doc('/openapi.json', {
