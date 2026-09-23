@@ -522,17 +522,25 @@ export default function AllKaryawan() {
       ),
     );
 
-    return found?.id ?? found?.kode ?? found?.kode_status_karyawan ?? null;
+    return (
+      found?.id ??
+      found?.kode ??
+      found?.kode_agama ??
+      found?.kode_status_karyawan ??
+      null
+    );
   };
 
   const resolveImportMasterValues = (payload, masterData) => {
     const normalized = { ...payload };
 
-    const agamaId = getLookupId(masterData.agama, normalized.agama, [
-      "agama",
-      "nama",
-    ]);
+    const agamaId = getLookupId(
+      masterData.agama,
+      normalized.kode_agama || normalized.agama,
+      ["kode_agama", "agama", "nama"],
+    );
     if (agamaId != null) normalized.agama = agamaId;
+    delete normalized.kode_agama;
 
     const setempatId = getLookupId(
       masterData.setempat,

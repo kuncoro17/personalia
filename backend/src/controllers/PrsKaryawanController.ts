@@ -30,6 +30,8 @@ import { normalizeInactiveStatus } from '../utils/normalizeInactiveStatus';
 import PrsUnitKerja from '../models/PrsUnitKerja';
 import PrsUnitKerjaKaryawan from '../models/PrsUnitKerjaKaryawan';
 import PrsJabatan from '../models/prsJabatan';
+import PrsMasterAgama from '../models/PrsMasterAgama';
+import PrsMasterSetempat from '../models/PrsMasterSetempat';
 // import { PrsKeluargaKaryawanAttributes } from '../types/prsKeluargaKaryawan.types';
 
 // import { PrsJabatanService } from '../services/prsJabatanService';
@@ -60,6 +62,47 @@ const removeImportOrganizationFields = (body: Record<string, string>) => {
     'kode_jabatan',
     'jabatan',
   ].forEach(key => delete body[key]);
+};
+
+const normalizeImportReferenceFields = async (
+  body: Record<string, string>
+): Promise<string | null> => {
+  const kodeAgama = body.kode_agama?.trim();
+  const namaAgama = body.agama?.trim();
+
+  if (kodeAgama) {
+    if (!/^\d+$/.test(kodeAgama)) {
+      return 'Kode agama harus berupa angka dari master agama';
+    }
+    body.agama = kodeAgama;
+  } else if (namaAgama) {
+    const agama = await PrsMasterAgama.findOne({
+      where: { agama: namaAgama },
+    });
+
+    if (!agama) {
+      return 'Agama tidak ditemukan pada master agama; isi Kode Agama yang valid';
+    }
+
+    body.agama = String(agama.getDataValue('kode_agama'));
+  }
+
+  delete body.kode_agama;
+
+  const setempat = body.id_master_setempat?.trim();
+  if (setempat && !/^\d+$/.test(setempat)) {
+    const masterSetempat = await PrsMasterSetempat.findOne({
+      where: { kota_setempat: setempat },
+    });
+
+    if (!masterSetempat) {
+      return 'Kota Setempat tidak ditemukan pada master setempat; isi ID atau nama kota yang valid';
+    }
+
+    body.id_master_setempat = String(masterSetempat.getDataValue('id'));
+  }
+
+  return null;
 };
 
 const normalizeStatusAktifFilter = (
@@ -878,6 +921,12 @@ const createKaryawanInternal = async (
       }
 
       removeImportOrganizationFields(parsedBody);
+
+      const referenceFieldError =
+        await normalizeImportReferenceFields(parsedBody);
+      if (referenceFieldError) {
+        return badRequest(c, referenceFieldError);
+      }
     }
 
     if (!parsedBody.id_karyawan) {
