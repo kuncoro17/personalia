@@ -18,7 +18,7 @@ export const prsKaryawanSchema = z.object({
   nama_panggilan: z.string().max(100),
   telp_pribadi: z.string().max(15).optional(),
   telp_kantor: z.string().max(15).optional(),
-  email_pribadi: z.string().email().max(100),
+  email_pribadi: z.string().email().max(100).optional(),
   email_penabur: z.string().email().max(100),
   tgl_join_penabur: z.string().optional(), // ISO format: YYYY-MM-DD
   tgl_join_penabur_jkt: z.string().optional(),

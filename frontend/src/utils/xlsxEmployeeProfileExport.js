@@ -32,11 +32,73 @@ const columnName = (index) => {
 
 const dateValue = (value) => (value ? String(value).slice(0, 10) : "");
 
+const getUnitKerjaValues = (employee, getValue) => {
+  const unitKerja = Array.isArray(employee.unit_kerja_karyawan)
+    ? employee.unit_kerja_karyawan
+    : [];
+
+  return [...new Set(unitKerja.map(getValue).filter(Boolean))].join(" | ");
+};
+
 const getColumnValue = (employee, key) => {
   if (key === "kode_status_karyawan") {
     return employee.status_karyawan?.stat_karyawan_gp || employee[key];
   }
+  if (key === "kode_agama") {
+    return employee.agama_detail?.kode_agama || employee[key];
+  }
   if (key === "agama") return employee.agama_detail?.agama || employee[key];
+  if (key === "kode_divisi") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) =>
+        unit.unit_kerja_detail?.divisi?.kode ||
+        unit.unit_kerja_detail?.kode_divisi,
+    );
+  }
+  if (key === "nama_divisi") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) => unit.unit_kerja_detail?.divisi?.nama_div,
+    );
+  }
+  if (key === "kode_bagian") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) =>
+        unit.unit_kerja_detail?.bagian?.kode ||
+        unit.unit_kerja_detail?.kode_bagian,
+    );
+  }
+  if (key === "nama_bagian") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) => unit.unit_kerja_detail?.bagian?.nama_bag,
+    );
+  }
+  if (key === "kode_seksi") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) =>
+        unit.unit_kerja_detail?.seksi?.kode ||
+        unit.unit_kerja_detail?.kode_seksi,
+    );
+  }
+  if (key === "nama_seksi") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) => unit.unit_kerja_detail?.seksi?.nama_sek,
+    );
+  }
+  if (key === "kode_jabatan") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) => unit.jabatan?.kode_jab || unit.jab_id,
+    );
+  }
+  if (key === "jabatan") {
+    return getUnitKerjaValues(employee, (unit) => unit.jabatan?.jabatan);
+  }
   if (key === "id_master_setempat") {
     return employee.master_setempat?.kota_setempat || employee[key];
   }

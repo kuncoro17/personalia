@@ -8,6 +8,7 @@ import {
   mapEmployeeImportDates,
   normalizeResignDate,
 } from "../../src/utils/xlsxEmployeeImport.js";
+import { buildEmployeeProfileExportXlsx } from "../../src/utils/xlsxEmployeeProfileExport.js";
 
 test("resign_date maps to the existing backend field without changing employee status", () => {
   assert.deepEqual(
@@ -103,4 +104,44 @@ test("downloaded Excel template uses the agreed employee profile headers", async
     (sheet.match(/<c /g) || []).length,
     EMPLOYEE_EXCEL_COLUMNS.length,
   );
+});
+
+test("profile export includes organization and religion codes with their values", async () => {
+  const workbook = await buildEmployeeProfileExportXlsx([
+    {
+      nik: "0012345",
+      nama_lengkap: "Contoh Karyawan",
+      agama_detail: { kode_agama: 1, agama: "Kristen" },
+      unit_kerja_karyawan: [
+        {
+          jabatan: { kode_jab: "GURU", jabatan: "Guru" },
+          unit_kerja_detail: {
+            kode_divisi: "DIV-01",
+            kode_bagian: "BAG-01",
+            kode_seksi: "SEK-01",
+            divisi: { kode: "DIV-01", nama_div: "Pendidikan" },
+            bagian: { kode: "BAG-01", nama_bag: "Sekolah" },
+            seksi: { kode: "SEK-01", nama_sek: "SD" },
+          },
+        },
+      ],
+    },
+  ]);
+  const zip = await JSZip.loadAsync(await workbook.arrayBuffer());
+  const sheet = await zip.file("xl/worksheets/sheet1.xml").async("text");
+
+  for (const value of [
+    "Kode Divisi",
+    "Pendidikan",
+    "Kode Bagian",
+    "Sekolah",
+    "Kode Seksi",
+    "SD",
+    "Kode Jabatan",
+    "GURU",
+    "Kode Agama",
+    "Kristen",
+  ]) {
+    assert.match(sheet, new RegExp(`>${value}<`));
+  }
 });

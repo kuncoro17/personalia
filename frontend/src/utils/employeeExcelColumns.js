@@ -7,6 +7,15 @@ export const EMPLOYEE_EXCEL_COLUMNS = [
   { key: "kode_status_karyawan", label: "Status Karyawan" },
   { key: "status_aktif", label: "Status Aktif" },
 
+  { key: "kode_divisi", label: "Kode Divisi" },
+  { key: "nama_divisi", label: "Divisi" },
+  { key: "kode_bagian", label: "Kode Bagian" },
+  { key: "nama_bagian", label: "Bagian" },
+  { key: "kode_seksi", label: "Kode Seksi" },
+  { key: "nama_seksi", label: "Seksi" },
+  { key: "kode_jabatan", label: "Kode Jabatan" },
+  { key: "jabatan", label: "Jabatan" },
+
   { key: "email_pribadi", label: "Email Pribadi" },
   { key: "no_ktp", label: "Nomor KTP" },
   { key: "no_pasport", label: "No Passport" },
@@ -18,6 +27,7 @@ export const EMPLOYEE_EXCEL_COLUMNS = [
   { key: "tgl_join_penabur_jkt", label: "Tanggal Join PENABUR Jakarta" },
   { key: "tgl_status_permanen", label: "Tanggal Status Tetap" },
   { key: "tgl_penuh_waktu", label: "Tanggal Penuh Waktu" },
+  { key: "kode_agama", label: "Kode Agama" },
   { key: "agama", label: "Agama" },
   { key: "status_nikah", label: "Status Nikah" },
   { key: "tanggal_pernikahan", label: "Tanggal Pernikahan" },

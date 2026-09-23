@@ -195,7 +195,7 @@ export class PrsKaryawanRepository {
         {
           model: PrsMasterAgama,
           as: 'agama_detail',
-          attributes: ['agama'],
+          attributes: ['kode_agama', 'agama'],
           required: false,
         },
         {
@@ -219,13 +219,13 @@ export class PrsKaryawanRepository {
             {
               model: PrsJabatan,
               as: 'jabatan',
-              attributes: ['jabatan'],
+              attributes: ['kode_jab', 'jabatan'],
               required: false,
             },
             {
               model: PrsUnitKerja,
               as: 'unit_kerja_detail',
-              attributes: [],
+              attributes: ['kode_divisi', 'kode_bagian', 'kode_seksi'],
               required: false,
               include: [
                 {
@@ -243,19 +243,19 @@ export class PrsKaryawanRepository {
                 {
                   model: PrsDivisi,
                   as: 'divisi',
-                  attributes: ['nama_div'],
+                  attributes: ['kode', 'nama_div'],
                   required: false,
                 },
                 {
                   model: PrsBagian,
                   as: 'bagian',
-                  attributes: ['nama_bag'],
+                  attributes: ['kode', 'nama_bag'],
                   required: false,
                 },
                 {
                   model: PrsSeksi,
                   as: 'seksi',
-                  attributes: ['nama_sek'],
+                  attributes: ['kode', 'nama_sek'],
                   required: false,
                 },
               ],
