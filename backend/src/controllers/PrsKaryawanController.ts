@@ -825,6 +825,8 @@ const createKaryawanInternal = async (
 
     let unitKerja: PrsUnitKerja | null = null;
     let jabatan: PrsJabatan | null = null;
+    let unitKerjaId = '';
+    let kodeJabatan = '';
 
     if (isImport) {
       const organizationCodes = {
@@ -861,6 +863,16 @@ const createKaryawanInternal = async (
           return badRequest(
             c,
             'Kode jabatan tidak ditemukan pada master jabatan'
+          );
+        }
+
+        unitKerjaId = String(unitKerja.getDataValue('uk_id') ?? '').trim();
+        kodeJabatan = String(jabatan.getDataValue('kode_jab') ?? '').trim();
+
+        if (!unitKerjaId || !kodeJabatan) {
+          return badRequest(
+            c,
+            'Master unit kerja atau jabatan tidak memiliki kode yang dapat digunakan untuk import'
           );
         }
       }
@@ -904,8 +916,8 @@ const createKaryawanInternal = async (
       await PrsUnitKerjaKaryawan.create({
         ukk_id: uuidv4(),
         karyawan_id: createdData.id_karyawan,
-        unit_kerja: unitKerja.uk_id,
-        jab_id: jabatan.kode_jab,
+        unit_kerja: unitKerjaId,
+        jab_id: kodeJabatan,
         lokasi_penggajian: '',
       });
     }
