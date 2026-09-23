@@ -827,19 +827,12 @@ export const createKaryawan = async (c: Context): Promise<Response> => {
       kode_jabatan: getImportOrganizationCode(parsedBody, 'kode_jabatan'),
     };
     const organizationCodeValues = Object.values(organizationCodes);
-    const hasOrganizationCodes = organizationCodeValues.some(Boolean);
-
-    if (hasOrganizationCodes && organizationCodeValues.some(code => !code)) {
-      return badRequest(
-        c,
-        'Kode divisi, bagian, seksi, dan jabatan harus diisi seluruhnya untuk membuat unit kerja karyawan'
-      );
-    }
+    const hasCompleteOrganizationCodes = organizationCodeValues.every(Boolean);
 
     let unitKerja: PrsUnitKerja | null = null;
     let jabatan: PrsJabatan | null = null;
 
-    if (hasOrganizationCodes) {
+    if (hasCompleteOrganizationCodes) {
       [unitKerja, jabatan] = await Promise.all([
         PrsUnitKerja.findOne({
           where: {

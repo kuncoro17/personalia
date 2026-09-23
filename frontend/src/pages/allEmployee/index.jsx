@@ -101,7 +101,12 @@ const getImportErrorMessage = (err) => {
       .join("; ");
   }
 
-  return payload?.message || err?.message || "Gagal insert";
+  return (
+    payload?.error?.message ||
+    payload?.message ||
+    err?.message ||
+    "Gagal insert"
+  );
 };
 
 export default function AllKaryawan() {
