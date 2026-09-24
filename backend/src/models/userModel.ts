@@ -4,14 +4,16 @@ import { sequelize } from '../config/database';
 export interface UserAttributes {
   id: string;
   email: string;
-  name: string | null;
-  created_at: Date;
-  updated_at: Date;
+  name: string;
+  email_verified_at: Date | null;
+  remember_token: string | null;
+  created_at: Date | null;
+  updated_at: Date | null;
 }
 
 export type UserCreationAttributes = Optional<
   UserAttributes,
-  'id' | 'name' | 'created_at' | 'updated_at'
+  'id' | 'email_verified_at' | 'remember_token' | 'created_at' | 'updated_at'
 >;
 
 class User
@@ -20,9 +22,11 @@ class User
 {
   declare id: string;
   declare email: string;
-  declare name: string | null;
-  declare created_at: Date;
-  declare updated_at: Date;
+  declare name: string;
+  declare email_verified_at: Date | null;
+  declare remember_token: string | null;
+  declare created_at: Date | null;
+  declare updated_at: Date | null;
 }
 
 User.init(
@@ -34,23 +38,28 @@ User.init(
       allowNull: false,
     },
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
-      unique: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    email_verified_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    remember_token: {
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
+      allowNull: true,
     },
     updated_at: {
       type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
+      allowNull: true,
     },
   },
   {

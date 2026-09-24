@@ -22,7 +22,7 @@ export class UserService {
     return userRepository.createUser({
       id: input.id,
       email: input.email,
-      name: input.name ?? null,
+      name: input.name?.trim() || input.email,
     });
   }
 

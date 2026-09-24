@@ -10,15 +10,17 @@ const createUserRequestSchema = z.object({
       'Optional. Isi jika kolom users.id di database tidak punya default/auto-generate.',
   }),
   email: z.string().email(),
-  name: z.string().nullable().optional(),
+  name: z.string().optional(),
 });
 
 const userResponseSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
-  name: z.string().nullable(),
-  created_at: z.union([z.string(), z.date()]),
-  updated_at: z.union([z.string(), z.date()]),
+  name: z.string(),
+  email_verified_at: z.union([z.string(), z.date()]).nullable(),
+  remember_token: z.string().nullable(),
+  created_at: z.union([z.string(), z.date()]).nullable(),
+  updated_at: z.union([z.string(), z.date()]).nullable(),
 });
 
 export const userRoutes = (app: OpenAPIHono) => {

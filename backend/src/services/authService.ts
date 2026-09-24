@@ -13,7 +13,7 @@ export class AuthService {
     const existingUser = await userRepository.findByEmail(email);
     if (existingUser) throw new Error('Email sudah terdaftar');
 
-    return await userRepository.createUser({ email });
+    return await userRepository.createUser({ email, name: email });
   }
 
   async login(email: string): Promise<LoginResponse> {

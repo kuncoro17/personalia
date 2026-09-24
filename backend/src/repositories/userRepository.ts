@@ -68,7 +68,7 @@ export class UserRepository {
   async createUser(data: {
     id?: string;
     email: string;
-    name?: string | null;
+    name: string;
   }): Promise<User> {
     try {
       return await User.create(data);

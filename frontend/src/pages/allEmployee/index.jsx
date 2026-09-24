@@ -942,7 +942,7 @@ export default function AllKaryawan() {
 
                 <Input
                   {...PROPFORM}
-                  className="col-span-2 min-w-0 md:max-w-xs md:flex-1"
+                  className="col-span-2 min-w-0 md:min-w-[260px] md:flex-[1_1_320px]"
                   classNames={{
                     input: "text-small",
                     inputWrapper:
