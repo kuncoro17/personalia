@@ -549,12 +549,17 @@ export default function AllKaryawan() {
     );
     if (setempatId != null) normalized.id_master_setempat = setempatId;
 
-    const statusCode = getLookupId(
-      masterData.status,
+    const normalizedStatusCode = normalizeLookupValue(
       normalized.kode_status_karyawan,
-      ["stat_karyawan_gp", "status_karyawan", "nama"],
     );
-    if (statusCode != null) normalized.kode_status_karyawan = statusCode;
+    const status = (
+      Array.isArray(masterData.status) ? masterData.status : []
+    ).find((item) =>
+      ["kode", "stat_karyawan_gp", "status_karyawan", "nama"].some(
+        (key) => normalizeLookupValue(item?.[key]) === normalizedStatusCode,
+      ),
+    );
+    if (status?.kode != null) normalized.kode_status_karyawan = status.kode;
 
     return normalized;
   };

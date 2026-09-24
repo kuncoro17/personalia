@@ -1,0 +1,66 @@
+LAPORAN PEMERIKSAAN APLIKASI PERSONALIA
+Tanggal: 24 September 2026
+
+RUANG LINGKUP
+- Menyembunyikan fitur Cetak Surat sementara dari antarmuka.
+- Memeriksa format, type-check, unit/API test, dan build frontend.
+- Melakukan pemeriksaan statis ringan terhadap log debug.
+
+PERUBAHAN YANG DITERAPKAN
+1. Menu "Cetak Surat" disembunyikan dari sidebar.
+   Lokasi: frontend/src/constants/routes.js
+2. Label Cetak Surat disembunyikan dari kartu Karyawan Baru.
+   Lokasi: frontend/src/pages/newEmployee/components/userManagement/newEmployees.jsx
+3. Panel Cetak Surat disembunyikan dari profil/detail karyawan.
+   Lokasi: frontend/src/pages/detailEmployee/details/index.jsx
+4. Route /printLetter tetap ada agar fitur dapat diaktifkan kembali tanpa
+   mengembalikan kode. Route tersebut tidak lagi terlihat pada menu.
+
+HASIL PEMERIKSAAN
+- Frontend format check: LULUS
+- Frontend unit test: LULUS (23 test)
+- Frontend production build: LULUS
+- Backend format check: LULUS
+- Backend TypeScript type-check: LULUS
+- Backend test/API contract: LULUS (12 suite, 304 test)
+- Git diff whitespace check: LULUS
+
+TEMUAN / PERINGATAN
+1. Bundle frontend cukup besar (prioritas: sedang)
+   Build menghasilkan satu JavaScript chunk sekitar 1.94 MB (gzip sekitar
+   580 KB) dan CSS sekitar 1.36 MB (gzip sekitar 244 KB).
+   Dampak: waktu muat awal dapat lebih lambat pada koneksi pengguna yang
+   terbatas.
+   Saran: lakukan code splitting/manualChunks untuk library besar dan muat
+   halaman berat secara lazy-load.
+
+2. Data Browserslist kedaluwarsa (prioritas: rendah)
+   Build memberi peringatan bahwa caniuse-lite sudah sekitar 8 bulan lama.
+   Dampak: target kompatibilitas browser dapat kurang akurat.
+   Saran: jalankan "npx update-browserslist-db@latest" pada saat pemeliharaan
+   dependensi berikutnya.
+
+3. Log debug masih cukup banyak (prioritas: rendah)
+   Ditemukan 58 pemanggilan console.log/console.warn/console.error pada
+   frontend dan backend. Sebagian berada pada modul Cetak Surat, misalnya:
+   - frontend/src/pages/detailEmployee/components/modalsPrintLetter.jsx
+   - frontend/src/pages/detailEmployee/components/footer.jsx
+   Dampak: log browser/layanan produksi menjadi ramai dan dapat memuat data
+   respons yang tidak perlu.
+   Saran: ganti log debug dengan logger terstruktur atau batasi hanya untuk
+   mode development.
+
+4. Cetak Surat hanya disembunyikan, belum dinonaktifkan (informasi)
+   URL /printLetter masih dapat dibuka langsung oleh pengguna yang mengetahui
+   alamatnya. Ini sengaja dilakukan karena permintaan adalah hide sementara.
+   Jika fitur perlu benar-benar ditutup, hapus atau beri guard pada route
+   /printLetter dan endpoint terkait.
+
+BATASAN PEMERIKSAAN
+- Test otomatis tidak menjalankan impor Excel terhadap database production.
+- Setelah deploy, lakukan uji manual satu baris import menggunakan kode
+  master valid untuk memastikan data production sesuai master terbaru.
+
+KESIMPULAN
+Tidak ada error build, type, format, atau test yang memblokir perubahan ini.
+Empat butir di atas adalah peringatan/pekerjaan pemeliharaan yang disarankan.

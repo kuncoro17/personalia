@@ -42,7 +42,17 @@ const getUnitKerjaValues = (employee, getValue) => {
 
 const getColumnValue = (employee, key) => {
   if (key === "kode_status_karyawan") {
-    return employee.status_karyawan?.stat_karyawan_gp || employee[key];
+    return (
+      employee.kode_status_karyawan ||
+      employee.status_karyawan?.kode ||
+      employee.status_karyawan?.stat_karyawan_gp
+    );
+  }
+  if (key === "status_karyawan") {
+    return (
+      employee.status_karyawan?.stat_karyawan ||
+      employee.status_karyawan?.stat_karyawan_gp
+    );
   }
   if (key === "kode_agama") {
     return employee.agama_detail?.kode_agama || employee[key];

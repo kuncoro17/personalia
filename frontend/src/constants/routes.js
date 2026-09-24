@@ -73,5 +73,4 @@ export const SIDEBARMENU = [
     icon: "/icon/karyawan.svg",
     path: "/check-absensi",
   },
-  { name: "Cetak Surat", icon: "/icon/cetakSurat.svg", path: "/printLetter" },
 ];

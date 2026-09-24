@@ -3,8 +3,9 @@
 export const EMPLOYEE_EXCEL_COLUMNS = [
   { key: "nik", label: "ID Karyawan" },
   { key: "nama_lengkap", label: "Nama Lengkap" },
-
-  { key: "kode_status_karyawan", label: "Status Karyawan" },
+  { key: "nama_panggilan", label: "Nama Panggilan" },
+  { key: "kode_status_karyawan", label: "Kode Status Karyawan" },
+  { key: "status_karyawan", label: "Status Karyawan" },
   { key: "status_aktif", label: "Status Aktif" },
 
   { key: "kode_divisi", label: "Kode Divisi" },
@@ -16,7 +17,7 @@ export const EMPLOYEE_EXCEL_COLUMNS = [
   { key: "kode_jabatan", label: "Kode Jabatan" },
   { key: "jabatan", label: "Jabatan" },
 
-  { key: "email_pribadi", label: "Email Pribadi" },
+  { key: "email_penabur", label: "Email Penabur" },
   { key: "no_ktp", label: "Nomor KTP" },
   { key: "no_pasport", label: "No Passport" },
   { key: "telp_pribadi", label: "Telepon Pribadi" },
@@ -59,3 +60,7 @@ export const EMPLOYEE_EXCEL_COLUMNS = [
 export const EMPLOYEE_EXCEL_HEADER_TO_KEY = Object.fromEntries(
   EMPLOYEE_EXCEL_COLUMNS.map(({ key, label }) => [label, key]),
 );
+
+// Header template lama tetap diterima agar file yang sudah diunduh pengguna
+// sebelumnya tidak gagal saat diimpor.
+EMPLOYEE_EXCEL_HEADER_TO_KEY["Email Pribadi"] = "email_penabur";

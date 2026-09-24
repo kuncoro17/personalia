@@ -185,7 +185,7 @@ export const mapEmployeeImportDates = (record, date1904 = false) => {
     payload.telp_kantor = tlp_kantor;
   }
 
-  if (status_karyawan != null) {
+  if (status_karyawan != null && !payload.kode_status_karyawan) {
     payload.kode_status_karyawan = status_karyawan;
   }
 
@@ -207,12 +207,44 @@ export const buildEmployeeImportTemplateXlsx = async (
 ) => {
   const zip = new JSZip();
 
+  const escapeXml = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+  const buildInlineCell = (column, row, value) =>
+    `<c r="${column}${row}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
+
+  const exampleByKey = {
+    nik: "0123456",
+    nama_lengkap: "CONTOH KARYAWAN",
+    nama_panggilan: "CONTOH",
+    kode_status_karyawan: "SKB00",
+    status_karyawan: "KWT",
+    status_aktif: "Aktif",
+    kode_divisi: "VSI",
+    nama_divisi: "Divisi Sistem Informasi Manajemen",
+    kode_jabatan: "OSF",
+    jabatan: "Staf",
+    email_penabur: "contoh@bpkpenaburjakarta.or.id",
+    no_ktp: "3173084705870008",
+    id_master_setempat: "Jakarta",
+    tgl_join_penabur: "2026-01-01",
+    tgl_join_penabur_jkt: "2026-01-01",
+    kode_agama: "1",
+    agama: "Kristen",
+    gender: "Laki-Laki",
+    kewarganegaraan: "WNI",
+  };
+
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
   <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
 </Types>`;
 
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -224,25 +256,22 @@ export const buildEmployeeImportTemplateXlsx = async (
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
-    <sheet name="Sheet1" sheetId="1" r:id="rId1"/>
+    <sheet name="Template Import" sheetId="1" r:id="rId1"/>
+    <sheet name="Contoh dan Petunjuk" sheetId="2" r:id="rId2"/>
   </sheets>
 </workbook>`;
 
   const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>
 </Relationships>`;
 
   const cells = headers
     .map((h, i) => {
       const col = toColumnName(i);
 
-      const safe = String(h)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-      return `<c r="${col}1" t="inlineStr"><is><t>${safe}</t></is></c>`;
+      return buildInlineCell(col, 1, h);
     })
     .join("");
 
@@ -255,11 +284,73 @@ export const buildEmployeeImportTemplateXlsx = async (
   </sheetData>
 </worksheet>`;
 
+  const exampleHeaderCells = headers
+    .map((header, index) => buildInlineCell(toColumnName(index), 4, header))
+    .join("");
+
+  const exampleCells = headers
+    .map((header, index) => {
+      const key = EMPLOYEE_EXCEL_HEADER_TO_KEY[header];
+      const value = exampleByKey[key] ?? "";
+
+      return value ? buildInlineCell(toColumnName(index), 5, value) : "";
+    })
+    .join("");
+
+  const legendRows = [
+    ["Kolom", "Nilai contoh", "Keterangan"],
+    [
+      "Kode Status Karyawan",
+      "SKB00",
+      "Harus sama persis dengan kode di Master Status Karyawan.",
+    ],
+    [
+      "Status Karyawan",
+      "KWT",
+      "Keterangan saja; kode status yang disimpan adalah SKB00.",
+    ],
+    ["Kode Divisi", "VSI", "Gunakan kode dari master organisasi."],
+    [
+      "Kode Bagian dan Kode Seksi",
+      "kosong",
+      "Boleh kosong untuk karyawan level Divisi.",
+    ],
+    ["Kode Jabatan", "OSF", "Harus sama persis dengan kode di Master Jabatan."],
+    ["Kode Agama", "1", "Gunakan kode angka dari Master Agama."],
+  ];
+
+  const sheet2 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    <row r="1">${buildInlineCell("A", 1, "CONTOH PENGISIAN IMPORT KARYAWAN")}</row>
+    <row r="2">${buildInlineCell("A", 2, "Jangan menyalin baris contoh ini ke sheet Template Import. Isi data karyawan pada sheet pertama.")}</row>
+    <row r="4">${exampleHeaderCells}</row>
+    <row r="5">${exampleCells}</row>
+    ${legendRows
+      .map(
+        (row, rowIndex) =>
+          `<row r="${rowIndex + 7}">${row
+            .map((value, columnIndex) =>
+              value
+                ? buildInlineCell(
+                    toColumnName(columnIndex),
+                    rowIndex + 7,
+                    value,
+                  )
+                : "",
+            )
+            .join("")}</row>`,
+      )
+      .join("")}
+  </sheetData>
+</worksheet>`;
+
   zip.file("[Content_Types].xml", contentTypes);
   zip.folder("_rels").file(".rels", rels);
   zip.folder("xl").file("workbook.xml", workbook);
   zip.folder("xl").folder("_rels").file("workbook.xml.rels", workbookRels);
   zip.folder("xl").folder("worksheets").file("sheet1.xml", sheet1);
+  zip.folder("xl").folder("worksheets").file("sheet2.xml", sheet2);
 
   return zip.generateAsync({ type: "blob" });
 };

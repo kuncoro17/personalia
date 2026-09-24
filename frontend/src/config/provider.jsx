@@ -9,6 +9,7 @@ import "@flaticon/flaticon-uicons/css/all/all.css";
 
 import { applyTheme, getPreferredTheme } from "../utils/theme";
 import { resolveSatelliteDomain } from "../utils/clerkConfig";
+import { getSasPortalUrl } from "../utils/sasSession";
 
 const queryClient = new QueryClient();
 
@@ -49,7 +50,7 @@ export function Provider({ children }) {
 
         <ClerkProvider
           publishableKey={PUBLISHABLE_KEY}
-          afterSignOutUrl="https://dt24ftxpcr79w.cloudfront.net/"
+          afterSignOutUrl={getSasPortalUrl()}
           signInUrl={CLERK_SIGN_IN_URL}
           domain={CLERK_IS_SATELLITE ? CLERK_DOMAIN : undefined}
           isSatellite={CLERK_IS_SATELLITE}

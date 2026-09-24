@@ -12,8 +12,6 @@ import {
   getSasPortalUrl,
 } from "../utils/sasSession";
 
-const rawSignInUrl = import.meta.env.VITE_CLERK_SIGN_IN_URL;
-const signInUrl = rawSignInUrl;
 const SasVerifyPage = lazy(() => import("../pages/sasVerify"));
 
 function AppRouter() {
@@ -68,7 +66,7 @@ function AppRouter() {
   }
 
   if (!isSignedIn && !hasInternalSasSession) {
-    return <SignedOutRedirect redirectUrl={signInUrl || getSasPortalUrl()} />;
+    return <SignedOutRedirect redirectUrl={getSasPortalUrl()} />;
   }
 
   return (

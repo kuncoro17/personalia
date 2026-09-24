@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import Footer from "../components/footer";
 import { HEADER } from "../constant";
 
 export default function Detail({ employeeData }) {
@@ -34,13 +33,6 @@ export default function Detail({ employeeData }) {
           {HEADER[selectedHeader].content}
         </div>
       </div>
-
-      {/* Pass employeeData ke Footer */}
-      <Footer
-        employeeId={employeeData?.id_karyawan}
-        employeeName={employeeData?.nama_lengkap}
-        employeeStatus={employeeData?.status}
-      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 
-import { Badge, Card } from "../../../../components/ui";
+import { Card } from "../../../../components/ui";
 import { apiClient } from "../../../../service/api";
 import Loading from "../../../../components/common/Loading";
 import NoData from "../../../../components/common/NoData";
@@ -50,11 +50,6 @@ export default function NewEmployees({ limitPage }) {
               {String(getNewEmployeeStatus(item)).replace(/-/g, " ")}
             </p>
           </div>
-
-          <Badge variant="warning" className="hidden gap-2 sm:inline-flex">
-            <img src="/icon/cetakSurat.svg" alt="" className="h-4 w-4" />
-            <p>Cetak Surat</p>
-          </Badge>
         </Card>
       ))}
     </div>

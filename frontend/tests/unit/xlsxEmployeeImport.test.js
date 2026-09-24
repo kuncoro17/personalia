@@ -93,17 +93,27 @@ test("downloaded Excel template uses the agreed employee profile headers", async
   const template = await buildEmployeeImportTemplateXlsx();
   const zip = await JSZip.loadAsync(await template.arrayBuffer());
   const sheet = await zip.file("xl/worksheets/sheet1.xml").async("text");
+  const instructions = await zip
+    .file("xl/worksheets/sheet2.xml")
+    .async("text");
 
   assert.match(sheet, /<t>ID Karyawan<\/t>/);
+  assert.match(sheet, /<t>Nama Panggilan<\/t>/);
   assert.match(sheet, /<t>Telepon Pribadi<\/t>/);
+  assert.match(sheet, /<t>Email Penabur<\/t>/);
+  assert.match(sheet, /<t>Kode Status Karyawan<\/t>/);
   assert.match(sheet, /<t>Status Karyawan<\/t>/);
   assert.match(sheet, /<t>Tanggal Inactive<\/t>/);
   assert.match(sheet, /<t>No TABITA<\/t>/);
-  assert.match(sheet, /r="AA1"/);
+  assert.match(sheet, /r="AZ1"/);
   assert.equal(
     (sheet.match(/<c /g) || []).length,
     EMPLOYEE_EXCEL_COLUMNS.length,
   );
+  assert.match(instructions, /CONTOH PENGISIAN IMPORT KARYAWAN/);
+  assert.match(instructions, />SKB00</);
+  assert.match(instructions, />KWT</);
+  assert.match(instructions, /Harus sama persis dengan kode di Master Status Karyawan/);
 });
 
 test("profile export includes organization and religion codes with their values", async () => {
