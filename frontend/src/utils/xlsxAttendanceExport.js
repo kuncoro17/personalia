@@ -24,6 +24,20 @@ const toColumnLetter = (index) => {
 const toCell = (value, rowIndex, columnIndex) =>
   `<c r="${toColumnLetter(columnIndex)}${rowIndex}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
 
+const DAY_COLUMN_PATTERN = /^\d{2}-[A-Za-z]{3}$/;
+const TIME_RANGE_PATTERN = /^\d{2}:\d{2}-\d{2}:\d{2}$/;
+
+const getAttendanceExportValue = (column, row) => {
+  const value = String(row?.[column.key] ?? "").trim();
+
+  if (!DAY_COLUMN_PATTERN.test(column.key)) return value || "-";
+  if (!value || value === "-") return "0";
+  if (value === "NC") return "NC";
+  if (TIME_RANGE_PATTERN.test(value)) return "1";
+
+  return value;
+};
+
 export const buildAttendanceExportXlsx = async (columns, rows) => {
   const zip = new JSZip();
   const headerCells = columns
@@ -34,7 +48,11 @@ export const buildAttendanceExportXlsx = async (columns, rows) => {
       (row, rowIndex) =>
         `<row r="${rowIndex + 2}">${columns
           .map((column, columnIndex) =>
-            toCell(row?.[column.key] ?? "-", rowIndex + 2, columnIndex),
+            toCell(
+              getAttendanceExportValue(column, row),
+              rowIndex + 2,
+              columnIndex,
+            ),
           )
           .join("")}</row>`,
     )

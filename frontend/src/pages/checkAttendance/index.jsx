@@ -22,13 +22,6 @@ import { useMaster } from "../../hooks/useMaster";
 import { buildAttendanceExportXlsx } from "../../utils/xlsxAttendanceExport";
 
 const ROWS_PER_PAGE = 20;
-const toDateInput = (date) => date.toISOString().slice(0, 10);
-const getMonthBounds = () => {
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), 1);
-
-  return { start: toDateInput(start), end: toDateInput(today) };
-};
 const EMPTY_FILTERS = { unit_kerja: "all", nama_div: "all", nama_bag: "all" };
 const getUniqueOptions = (rows, key) =>
   Array.from(
@@ -51,17 +44,18 @@ const getErrorMessage = (error) =>
 export default function CheckAttendancePage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const api = apiClient(getToken);
-  const initialPeriod = getMonthBounds();
-  const [startDate, setStartDate] = useState(initialPeriod.start);
-  const [endDate, setEndDate] = useState(initialPeriod.end);
-  const [appliedPeriod, setAppliedPeriod] = useState(initialPeriod);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [appliedPeriod, setAppliedPeriod] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
 
   const endpoint = useMemo(
     () =>
-      `personalia/absensi/pivot?tanggal_mulai=${encodeURIComponent(appliedPeriod.start)}&tanggal_selesai=${encodeURIComponent(appliedPeriod.end)}&page=1&limit=500`,
+      appliedPeriod
+        ? `personalia/absensi/pivot?tanggal_mulai=${encodeURIComponent(appliedPeriod.start)}&tanggal_selesai=${encodeURIComponent(appliedPeriod.end)}&page=1&limit=500`
+        : "",
     [appliedPeriod],
   );
   const {
@@ -69,7 +63,7 @@ export default function CheckAttendancePage() {
     isFetching,
     error,
   } = useMaster(api, ["attendance-pivot", appliedPeriod], endpoint, {
-    enabled: isLoaded && isSignedIn,
+    enabled: Boolean(appliedPeriod) && isLoaded && isSignedIn,
     returnEmptyOnError: false,
     select: (response) => (Array.isArray(response?.data) ? response.data : []),
   });
@@ -131,7 +125,7 @@ export default function CheckAttendancePage() {
     { key: "total_semua", label: "TOTAL" },
   ];
   const exportToXlsx = async () => {
-    if (filteredRows.length === 0) return;
+    if (!appliedPeriod || filteredRows.length === 0) return;
 
     setIsExporting(true);
     try {
@@ -170,14 +164,20 @@ export default function CheckAttendancePage() {
             label="Tanggal mulai"
             type="date"
             value={startDate}
-            onValueChange={setStartDate}
+            onValueChange={(value) => {
+              setStartDate(value);
+              setAppliedPeriod(null);
+            }}
           />
           <Input
             isRequired
             label="Tanggal selesai"
             type="date"
             value={endDate}
-            onValueChange={setEndDate}
+            onValueChange={(value) => {
+              setEndDate(value);
+              setAppliedPeriod(null);
+            }}
           />
           <Select
             label="Unit kerja"
@@ -264,7 +264,11 @@ export default function CheckAttendancePage() {
                   )}
                 </TableHeader>
                 <TableBody
-                  emptyContent="Tidak ada data absensi pada periode ini"
+                  emptyContent={
+                    appliedPeriod
+                      ? "Tidak ada data absensi pada periode ini"
+                      : "Masukkan periode tanggal, lalu klik Tampilkan"
+                  }
                   isLoading={isFetching}
                   items={displayedRows}
                   loadingContent={<Spinner />}

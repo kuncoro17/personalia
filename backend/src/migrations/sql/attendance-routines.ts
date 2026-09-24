@@ -42,7 +42,10 @@ BEGIN
                 -- Absensi hadir
                 SELECT userid::varchar AS nik,
                        date(checktime) AS tanggal,
-                       to_char(MIN(checktime), 'HH24:MI') || '-' || to_char(MAX(checktime), 'HH24:MI') AS status,
+                       CASE
+                           WHEN COUNT(*) >= 2 THEN to_char(MIN(checktime), 'HH24:MI') || '-' || to_char(MAX(checktime), 'HH24:MI')
+                           ELSE 'NC'
+                       END AS status,
                        'HADIR' AS jenis
                 FROM sdm_checkinout
                 WHERE checktime BETWEEN %L AND %L
@@ -601,7 +604,10 @@ BEGIN
                 SELECT 
                     userid::varchar AS nik,
                     date(checktime) AS tanggal,
-                    to_char(MIN(checktime), 'HH24:MI') || '-' || to_char(MAX(checktime), 'HH24:MI') AS status_raw,
+                    CASE
+                        WHEN COUNT(*) >= 2 THEN to_char(MIN(checktime), 'HH24:MI') || '-' || to_char(MAX(checktime), 'HH24:MI')
+                        ELSE 'NC'
+                    END AS status_raw,
                     'HDR' AS jenis
                 FROM sdm_checkinout
                 WHERE checktime BETWEEN %L AND %L
