@@ -107,6 +107,15 @@ const DEFAULT_EMPLOYEE_HEADERS = EMPLOYEE_EXCEL_COLUMNS.map(
   ({ label }) => label,
 );
 
+const EMPLOYEE_DATE_FIELDS = [
+  "tgl_join_penabur",
+  "tgl_join_penabur_jkt",
+  "tanggal_pernikahan",
+  "tgl_status_permanen",
+  "tgl_penuh_waktu",
+  "birth_date",
+];
+
 export const normalizeResignDate = (value, date1904 = false) => {
   const text = String(value ?? "").trim();
 
@@ -197,6 +206,19 @@ export const mapEmployeeImportDates = (record, date1904 = false) => {
 
   if (resolvedInactiveDate) {
     payload.tanggal_inactive = resolvedInactiveDate;
+  }
+
+  for (const field of EMPLOYEE_DATE_FIELDS) {
+    if (payload[field] == null || String(payload[field]).trim() === "") {
+      delete payload[field];
+      continue;
+    }
+
+    try {
+      payload[field] = normalizeResignDate(payload[field], date1904);
+    } catch {
+      throw new Error(`${field} berisi tanggal yang tidak valid`);
+    }
   }
 
   return payload;

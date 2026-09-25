@@ -61,6 +61,31 @@ test("supports ISO dates, Indonesian dates, and both Excel date systems", () => 
   assert.equal(normalizeResignDate("29/02/2024"), "2024-02-29");
 });
 
+test("normalizes every employee date before sending an import request", () => {
+  assert.deepEqual(
+    mapEmployeeImportDates({
+      tgl_join_penabur: "16/09/2026",
+      tgl_join_penabur_jkt: "2026-09-17",
+      tanggal_pernikahan: "18/09/2026",
+      tgl_status_permanen: "19/09/2026",
+      tgl_penuh_waktu: "20/09/2026",
+      birth_date: "21/09/2000",
+    }),
+    {
+      tgl_join_penabur: "2026-09-16",
+      tgl_join_penabur_jkt: "2026-09-17",
+      tanggal_pernikahan: "2026-09-18",
+      tgl_status_permanen: "2026-09-19",
+      tgl_penuh_waktu: "2026-09-20",
+      birth_date: "2000-09-21",
+    },
+  );
+  assert.throws(
+    () => mapEmployeeImportDates({ tgl_join_penabur: "Invalid date" }),
+    /tgl_join_penabur berisi tanggal yang tidak valid/,
+  );
+});
+
 test("invalid and conflicting resign dates are rejected", () => {
   for (const value of [
     "2026-02-30",
