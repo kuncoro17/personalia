@@ -8,6 +8,8 @@ export const EMPLOYEE_EXCEL_COLUMNS = [
   { key: "status_karyawan", label: "Status Karyawan" },
   { key: "status_aktif", label: "Status Aktif" },
 
+  { key: "kode_deputi", label: "Kode Deputi" },
+  { key: "nama_deputi", label: "Deputi" },
   { key: "kode_divisi", label: "Kode Divisi" },
   { key: "nama_divisi", label: "Divisi" },
   { key: "kode_bagian", label: "Kode Bagian" },

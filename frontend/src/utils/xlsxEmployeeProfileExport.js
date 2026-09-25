@@ -58,6 +58,20 @@ const getColumnValue = (employee, key) => {
     return employee.agama_detail?.kode_agama || employee[key];
   }
   if (key === "agama") return employee.agama_detail?.agama || employee[key];
+  if (key === "kode_deputi") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) =>
+        unit.unit_kerja_detail?.deputi?.kode ||
+        unit.unit_kerja_detail?.kode_deputi,
+    );
+  }
+  if (key === "nama_deputi") {
+    return getUnitKerjaValues(
+      employee,
+      (unit) => unit.unit_kerja_detail?.deputi?.nama_dep,
+    );
+  }
   if (key === "kode_divisi") {
     return getUnitKerjaValues(
       employee,

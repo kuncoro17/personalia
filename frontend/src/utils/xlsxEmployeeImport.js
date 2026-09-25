@@ -223,6 +223,8 @@ export const buildEmployeeImportTemplateXlsx = async (
     kode_status_karyawan: "SKB00",
     status_karyawan: "KWT",
     status_aktif: "Aktif",
+    kode_deputi: "",
+    nama_deputi: "",
     kode_divisi: "VSI",
     nama_divisi: "Divisi Sistem Informasi Manajemen",
     kode_jabatan: "OSF",
@@ -310,6 +312,11 @@ export const buildEmployeeImportTemplateXlsx = async (
       "Keterangan saja; kode status yang disimpan adalah SKB00.",
     ],
     ["Kode Divisi", "VSI", "Gunakan kode dari master organisasi."],
+    [
+      "Kode Deputi untuk Biro",
+      "DEP01",
+      "Untuk Biro: isi Kode Deputi dan Kode Bagian, lalu kosongkan Kode Divisi.",
+    ],
     [
       "Kode Bagian dan Kode Seksi",
       "kosong",
