@@ -19,14 +19,22 @@ function sanitizeObject(
     'kode_seksi',
     'kode_bagian',
     'kode_divisi',
+    'kode_direktur',
+    'kode_deputi',
   ];
 
   const sanitized: Partial<PrsUnitKerjaCreateInput> = {};
   for (const key of allowedFields) {
     const value = input[key];
-    if (value !== null && value !== undefined) {
-      sanitized[key] = typeof value === 'string' ? xss(value) : value;
+    if (value === undefined) continue;
+
+    if (value === null) {
+      if (key === 'kode_direktur') sanitized.kode_direktur = null;
+      if (key === 'kode_deputi') sanitized.kode_deputi = null;
+      continue;
     }
+
+    sanitized[key] = xss(value);
   }
   return sanitized;
 }

@@ -30,11 +30,14 @@ const EMPTY_FORM = {
   kode: "",
   nama: "",
   alamat: "",
+  parentType: "divisi",
+  deputi: "",
   divisi: "",
   bagian: "",
 };
 
 const DIVISI_ENDPOINT = "personalia/divisi";
+const DEPUTI_ENDPOINT = "master-deputi/getAllDeputi";
 const UNIT_KERJA_ENDPOINT = "unit-kerja";
 const UNIT_KERJA_LIST_ENDPOINT = "unit-kerja/getllUnitKerja";
 
@@ -65,6 +68,8 @@ const normalizeNestedApiList = (payload) => {
 
 const unitToFlat = (item) => ({
   id: item?.id ?? item?.uk_id ?? null,
+  deputiId: String(item?.deputi?.id ?? item?.kode_deputi ?? "").trim(),
+  deputiName: String(item?.deputi?.nama ?? item?.deputi?.name ?? "").trim(),
   divisiId: String(item?.divisi?.id ?? item?.kode_divisi ?? "").trim(),
   divisiName: String(item?.divisi?.nama ?? item?.divisi?.name ?? "").trim(),
   bagianId: String(item?.bagian?.id ?? item?.kode_bagian ?? "").trim(),
@@ -84,6 +89,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
   const needsDivisi = config.level === "bagian" || config.level === "seksi";
   const needsBagian = config.level === "seksi";
+  const supportsDeputiParent = config.level === "bagian";
   const isBagianRequired = needsBagian && config.requireBagian !== false;
   const hasDataTableSearch = ["divisi", "bagian", "seksi"].includes(
     config.level,
@@ -110,6 +116,16 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     DIVISI_ENDPOINT,
     {
       enabled: isReady && needsDivisi,
+      returnEmptyOnError: true,
+    },
+  );
+
+  const { data: deputiRaw } = useMaster(
+    api,
+    ["master-deputi-options"],
+    DEPUTI_ENDPOINT,
+    {
+      enabled: isReady && supportsDeputiParent,
       returnEmptyOnError: true,
     },
   );
@@ -152,6 +168,16 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
       )
       .filter((item) => item.id && item.name);
   }, [divisiRaw]);
+
+  const deputiOptions = useMemo(
+    () =>
+      normalizeApiList(deputiRaw)
+        .map((item) =>
+          toOption(item?.kode ?? item?.id, item?.nama_dep ?? item?.nama),
+        )
+        .filter((item) => item.id && item.name),
+    [deputiRaw],
+  );
 
   const unitRows = useMemo(
     () =>
@@ -226,6 +252,8 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
           kode,
           nama: String(row?.[config.nameField] ?? row?.nama ?? "").trim(),
           alamat: String(row?.alamat ?? "").trim(),
+          deputi: relation?.deputiId ?? "",
+          deputiName: relation?.deputiName ?? "",
           divisi: relation?.divisiId ?? "",
           divisiName: relation?.divisiName ?? "",
           bagian: relation?.bagianId ?? "",
@@ -247,6 +275,8 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
         item.kode,
         item.nama,
         item.alamat,
+        item.deputi,
+        item.deputiName,
         item.divisi,
         item.divisiName,
         item.bagian,
@@ -282,6 +312,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
       { key: "nama", label: "NAMA" },
     ];
 
+    if (supportsDeputiParent) base.push({ key: "deputi", label: "DEPUTI" });
     if (needsDivisi) base.push({ key: "divisi", label: "DIVISI" });
     if (needsBagian) base.push({ key: "bagian", label: "BAGIAN" });
 
@@ -290,7 +321,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
       { key: "alamat", label: "ALAMAT" },
       { key: "actions", label: "AKSI" },
     ];
-  }, [needsBagian, needsDivisi]);
+  }, [needsBagian, needsDivisi, supportsDeputiParent]);
 
   useEffect(() => {
     if (!error) return;
@@ -345,7 +376,8 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     const relationPayload =
       config.level === "bagian"
         ? {
-            kode_divisi: data.divisi,
+            kode_divisi: data.parentType === "deputi" ? "nnn" : data.divisi,
+            kode_deputi: data.parentType === "deputi" ? data.deputi : null,
             kode_bagian: kode,
           }
         : {
@@ -361,6 +393,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
         matches.map((item) =>
           api.put(`${UNIT_KERJA_ENDPOINT}/${item.id}`, {
             kode_divisi: relationPayload.kode_divisi,
+            kode_deputi: relationPayload.kode_deputi,
             kode_bagian: relationPayload.kode_bagian,
             ...(relationPayload.kode_seksi
               ? { kode_seksi: relationPayload.kode_seksi }
@@ -373,6 +406,7 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
     await api.post(`${UNIT_KERJA_ENDPOINT}/created`, {
       kode_divisi: relationPayload.kode_divisi,
+      kode_deputi: relationPayload.kode_deputi,
       kode_bagian: relationPayload.kode_bagian,
       kode_seksi: relationPayload.kode_seksi || "nnn",
     });
@@ -467,13 +501,23 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
   const canSubmit = Boolean(
     form.kode.trim() &&
       form.nama.trim() &&
-      (!needsDivisi || form.divisi) &&
+      (!needsDivisi ||
+        (supportsDeputiParent
+          ? form.parentType === "deputi"
+            ? form.deputi
+            : form.divisi
+          : form.divisi)) &&
       (!isBagianRequired || form.bagian),
   );
   const canUpdate = Boolean(
     editingForm.kode.trim() &&
       editingForm.nama.trim() &&
-      (!needsDivisi || editingForm.divisi) &&
+      (!needsDivisi ||
+        (supportsDeputiParent
+          ? editingForm.parentType === "deputi"
+            ? editingForm.deputi
+            : editingForm.divisi
+          : editingForm.divisi)) &&
       (!isBagianRequired || editingForm.bagian),
   );
 
@@ -481,12 +525,14 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     setForm((current) => ({
       ...current,
       [field]: value,
+      ...(field === "parentType" ? { deputi: "", divisi: "" } : {}),
       ...(field === "divisi" ? { bagian: "" } : {}),
     }));
   const updateEditingForm = (field, value) =>
     setEditingForm((current) => ({
       ...current,
       [field]: value,
+      ...(field === "parentType" ? { deputi: "", divisi: "" } : {}),
       ...(field === "divisi" ? { bagian: "" } : {}),
     }));
 
@@ -498,6 +544,9 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
     }
     if (columnKey === "divisi") {
       return item.divisiName ? `${item.divisi} - ${item.divisiName}` : "-";
+    }
+    if (columnKey === "deputi") {
+      return item.deputiName ? `${item.deputi} - ${item.deputiName}` : "-";
     }
     if (columnKey === "bagian") {
       return item.bagianName ? `${item.bagian} - ${item.bagianName}` : "-";
@@ -516,6 +565,9 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
                 kode: item.kode || "",
                 nama: item.nama || "",
                 alamat: item.alamat || "",
+                parentType:
+                  isNoneValue(item.divisi) && item.deputi ? "deputi" : "divisi",
+                deputi: item.deputi || "",
                 divisi: item.divisi || "",
                 bagian: item.bagian || "",
               });
@@ -542,18 +594,47 @@ export default function MasterOrganisasiSection({ api, isReady, config }) {
 
   const renderParentSelectors = (value, onChange, bagianOptions) => (
     <>
-      {needsDivisi && (
+      {supportsDeputiParent && (
         <Select
-          label="Divisi"
-          placeholder="Pilih divisi"
-          selectedKeys={
-            value.divisi ? new Set([String(value.divisi)]) : new Set()
-          }
+          label="Jenis Unit"
+          selectedKeys={new Set([value.parentType || "divisi"])}
           onSelectionChange={(keys) =>
-            onChange("divisi", String(Array.from(keys)[0] || ""))
+            onChange("parentType", String(Array.from(keys)[0] || "divisi"))
           }
         >
-          {divisiOptions.map((item) => (
+          <SelectItem key="divisi">Bagian (di bawah Divisi)</SelectItem>
+          <SelectItem key="deputi">Biro (langsung di bawah Deputi)</SelectItem>
+        </Select>
+      )}
+      {needsDivisi &&
+        (!supportsDeputiParent || value.parentType !== "deputi") && (
+          <Select
+            label="Divisi"
+            placeholder="Pilih divisi"
+            selectedKeys={
+              value.divisi ? new Set([String(value.divisi)]) : new Set()
+            }
+            onSelectionChange={(keys) =>
+              onChange("divisi", String(Array.from(keys)[0] || ""))
+            }
+          >
+            {divisiOptions.map((item) => (
+              <SelectItem key={item.id}>{item.name}</SelectItem>
+            ))}
+          </Select>
+        )}
+      {supportsDeputiParent && value.parentType === "deputi" && (
+        <Select
+          label="Deputi"
+          placeholder="Pilih deputi"
+          selectedKeys={
+            value.deputi ? new Set([String(value.deputi)]) : new Set()
+          }
+          onSelectionChange={(keys) =>
+            onChange("deputi", String(Array.from(keys)[0] || ""))
+          }
+        >
+          {deputiOptions.map((item) => (
             <SelectItem key={item.id}>{item.name}</SelectItem>
           ))}
         </Select>
