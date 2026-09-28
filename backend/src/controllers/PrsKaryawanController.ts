@@ -987,8 +987,7 @@ const createKaryawanInternal = async (
 
             unitKerja = await PrsUnitKerja.create({
               uk_id: uuidv4(),
-              kode_direktur:
-                normalizedOrganizationCodes.kode_direktur || null,
+              kode_direktur: normalizedOrganizationCodes.kode_direktur || null,
               kode_deputi: normalizedOrganizationCodes.kode_deputi,
               kode_divisi: 'nnn',
               kode_bagian: normalizedOrganizationCodes.kode_bagian,
@@ -1022,8 +1021,7 @@ const createKaryawanInternal = async (
             // staf level Divisi dapat diimpor tanpa Bagian maupun Seksi.
             unitKerja = await PrsUnitKerja.create({
               uk_id: uuidv4(),
-              kode_direktur:
-                normalizedOrganizationCodes.kode_direktur || null,
+              kode_direktur: normalizedOrganizationCodes.kode_direktur || null,
               kode_deputi: normalizedOrganizationCodes.kode_deputi || null,
               kode_divisi: normalizedOrganizationCodes.kode_divisi,
               kode_bagian: 'nnn',
