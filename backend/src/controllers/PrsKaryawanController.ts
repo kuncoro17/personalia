@@ -893,8 +893,16 @@ const createKaryawanInternal = async (
         kode_seksi: getImportOrganizationCode(parsedBody, 'kode_seksi'),
         kode_jabatan: getImportOrganizationCode(parsedBody, 'kode_jabatan'),
       };
-      const hasOrganizationData =
-        Object.values(organizationCodes).some(Boolean);
+      // Kode jabatan hanya dapat dipakai bersama unit kerja. Jangan jadikan
+      // keberadaannya alasan untuk mewajibkan kolom organisasi saat import.
+      // Dengan begitu, karyawan dapat diimpor tanpa Deputi/Divisi/Bagian/Seksi.
+      const hasOrganizationData = [
+        organizationCodes.kode_direktur,
+        organizationCodes.kode_deputi,
+        organizationCodes.kode_divisi,
+        organizationCodes.kode_bagian,
+        organizationCodes.kode_seksi,
+      ].some(Boolean);
 
       if (hasOrganizationData) {
         const isBiroUnderDeputi =

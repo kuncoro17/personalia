@@ -247,8 +247,6 @@ export const buildEmployeeImportTemplateXlsx = async (
     status_aktif: "Aktif",
     kode_deputi: "",
     nama_deputi: "",
-    kode_divisi: "VSI",
-    nama_divisi: "Divisi Sistem Informasi Manajemen",
     kode_jabatan: "OSF",
     jabatan: "Staf",
     email_penabur: "contoh@bpkpenaburjakarta.or.id",
@@ -333,7 +331,12 @@ export const buildEmployeeImportTemplateXlsx = async (
       "KWT",
       "Keterangan saja; kode status yang disimpan adalah SKB00.",
     ],
-    ["Kode Divisi", "VSI", "Gunakan kode dari master organisasi."],
+    [
+      "Kolom Deputi sampai Seksi",
+      "kosong",
+      "Opsional. Kosongkan seluruh kolom ini jika karyawan belum memiliki unit kerja.",
+    ],
+    ["Kode Divisi", "VSI", "Gunakan kode dari master organisasi bila diisi."],
     [
       "Kode Deputi untuk Biro",
       "DEP01",
