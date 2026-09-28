@@ -35,6 +35,7 @@ import PrsMasterSetempat from '../models/PrsMasterSetempat';
 import PrsDivisi from '../models/PrsDivisi';
 import PrsBagian from '../models/PrsBagian';
 import { PrsMasterDeputi } from '../models/PrsMasterDeputi';
+import PrsMasterDirektur from '../models/PrsMasterDirektur';
 // import { PrsKeluargaKaryawanAttributes } from '../types/prsKeluargaKaryawan.types';
 
 // import { PrsJabatanService } from '../services/prsJabatanService';
@@ -52,6 +53,7 @@ const YAYASAN_SETEMPAT_ID = 13;
 const getImportOrganizationCode = (
   body: Record<string, string>,
   key:
+    | 'kode_direktur'
     | 'kode_deputi'
     | 'kode_divisi'
     | 'kode_bagian'
@@ -63,6 +65,7 @@ const removeImportOrganizationFields = (body: Record<string, string>) => {
   [
     'kode_divisi',
     'nama_divisi',
+    'kode_direktur',
     'kode_deputi',
     'nama_deputi',
     'kode_bagian',
@@ -883,6 +886,7 @@ const createKaryawanInternal = async (
 
     if (isImport) {
       const organizationCodes = {
+        kode_direktur: getImportOrganizationCode(parsedBody, 'kode_direktur'),
         kode_deputi: getImportOrganizationCode(parsedBody, 'kode_deputi'),
         kode_divisi: getImportOrganizationCode(parsedBody, 'kode_divisi'),
         kode_bagian: getImportOrganizationCode(parsedBody, 'kode_bagian'),
@@ -929,7 +933,10 @@ const createKaryawanInternal = async (
               kode_divisi: normalizedOrganizationCodes.kode_divisi,
               kode_bagian: normalizedOrganizationCodes.kode_bagian,
               kode_seksi: normalizedOrganizationCodes.kode_seksi,
-              ...(isBiroUnderDeputi
+              ...(normalizedOrganizationCodes.kode_direktur
+                ? { kode_direktur: normalizedOrganizationCodes.kode_direktur }
+                : {}),
+              ...(normalizedOrganizationCodes.kode_deputi
                 ? { kode_deputi: normalizedOrganizationCodes.kode_deputi }
                 : {}),
             },
@@ -940,22 +947,37 @@ const createKaryawanInternal = async (
         ]);
 
         if (!unitKerja) {
-          if (isBiroUnderDeputi) {
-            const [deputi, biro] = await Promise.all([
-              PrsMasterDeputi.findOne({
-                where: { kode: normalizedOrganizationCodes.kode_deputi },
-              }),
-              PrsBagian.findOne({
-                where: { kode: normalizedOrganizationCodes.kode_bagian },
-              }),
-            ]);
+          const [direktur, deputi] = await Promise.all([
+            normalizedOrganizationCodes.kode_direktur
+              ? PrsMasterDirektur.findOne({
+                  where: { kode: normalizedOrganizationCodes.kode_direktur },
+                })
+              : Promise.resolve(null),
+            normalizedOrganizationCodes.kode_deputi
+              ? PrsMasterDeputi.findOne({
+                  where: { kode: normalizedOrganizationCodes.kode_deputi },
+                })
+              : Promise.resolve(null),
+          ]);
 
-            if (!deputi) {
-              return badRequest(
-                c,
-                'Kode deputi tidak ditemukan pada master deputi'
-              );
-            }
+          if (normalizedOrganizationCodes.kode_direktur && !direktur) {
+            return badRequest(
+              c,
+              'Kode direktur tidak ditemukan pada master direktur'
+            );
+          }
+
+          if (normalizedOrganizationCodes.kode_deputi && !deputi) {
+            return badRequest(
+              c,
+              'Kode deputi tidak ditemukan pada master deputi'
+            );
+          }
+
+          if (isBiroUnderDeputi) {
+            const biro = await PrsBagian.findOne({
+              where: { kode: normalizedOrganizationCodes.kode_bagian },
+            });
             if (!biro) {
               return badRequest(
                 c,
@@ -965,6 +987,8 @@ const createKaryawanInternal = async (
 
             unitKerja = await PrsUnitKerja.create({
               uk_id: uuidv4(),
+              kode_direktur:
+                normalizedOrganizationCodes.kode_direktur || null,
               kode_deputi: normalizedOrganizationCodes.kode_deputi,
               kode_divisi: 'nnn',
               kode_bagian: normalizedOrganizationCodes.kode_bagian,
@@ -998,6 +1022,9 @@ const createKaryawanInternal = async (
             // staf level Divisi dapat diimpor tanpa Bagian maupun Seksi.
             unitKerja = await PrsUnitKerja.create({
               uk_id: uuidv4(),
+              kode_direktur:
+                normalizedOrganizationCodes.kode_direktur || null,
+              kode_deputi: normalizedOrganizationCodes.kode_deputi || null,
               kode_divisi: normalizedOrganizationCodes.kode_divisi,
               kode_bagian: 'nnn',
               kode_seksi: 'nnn',
