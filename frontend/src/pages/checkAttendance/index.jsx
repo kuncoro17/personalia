@@ -17,16 +17,12 @@ import { useAuth } from "@clerk/clerk-react";
 import { useMemo, useState } from "react";
 
 import Layout from "../../components/layout";
+import { MASTERENDPOINT } from "../../constants/api";
 import { apiClient } from "../../service/api";
 import { useMaster } from "../../hooks/useMaster";
 import { buildAttendanceExportXlsx } from "../../utils/xlsxAttendanceExport";
 
 const ROWS_PER_PAGE = 20;
-const EMPTY_FILTERS = { unit_kerja: "all", nama_div: "all", nama_bag: "all" };
-const getUniqueOptions = (rows, key) =>
-  Array.from(
-    new Set(rows.map((row) => String(row?.[key] ?? "").trim()).filter(Boolean)),
-  ).sort((first, second) => first.localeCompare(second, "id"));
 const getDayColumns = (rows) =>
   Array.from(
     new Set(
@@ -35,6 +31,8 @@ const getDayColumns = (rows) =>
       ),
     ),
   );
+const getSelectedKey = (keys) =>
+  typeof keys === "string" ? keys : (Array.from(keys)[0] ?? "all");
 const getErrorMessage = (error) =>
   error?.payload?.message ||
   error?.response?.data?.message ||
@@ -47,14 +45,25 @@ export default function CheckAttendancePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [appliedPeriod, setAppliedPeriod] = useState(null);
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [divisionCode, setDivisionCode] = useState("all");
+  const [sectionCode, setSectionCode] = useState("all");
   const [page, setPage] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
 
   const endpoint = useMemo(
     () =>
       appliedPeriod
-        ? `personalia/absensi/pivot?tanggal_mulai=${encodeURIComponent(appliedPeriod.start)}&tanggal_selesai=${encodeURIComponent(appliedPeriod.end)}&page=1&limit=500`
+        ? `personalia/absensi/pivot?${new URLSearchParams({
+            tanggal_mulai: appliedPeriod.start,
+            tanggal_selesai: appliedPeriod.end,
+            page: "1",
+            limit: "500",
+            ...(appliedPeriod.sectionCode !== "all"
+              ? { unitType: "BAGIAN", unitKode: appliedPeriod.sectionCode }
+              : appliedPeriod.divisionCode !== "all"
+                ? { unitType: "DIVISI", unitKode: appliedPeriod.divisionCode }
+                : {}),
+          }).toString()}`
         : "",
     [appliedPeriod],
   );
@@ -68,28 +77,36 @@ export default function CheckAttendancePage() {
     select: (response) => (Array.isArray(response?.data) ? response.data : []),
   });
 
-  const unitOptions = useMemo(
-    () => getUniqueOptions(rows, "unit_kerja"),
-    [rows],
+  const { data: divisionOptions = [] } = useMaster(
+    api,
+    ["attendance-division-options"],
+    MASTERENDPOINT.divisi,
+    {
+      enabled: isLoaded && isSignedIn,
+      select: (response) =>
+        (Array.isArray(response?.data) ? response.data : []).map((item) => ({
+          code: String(item?.kode ?? item?.id ?? "").trim(),
+          name: String(item?.nama_div ?? item?.nama ?? item?.name ?? "").trim(),
+        })),
+    },
   );
-  const divisiOptions = useMemo(
-    () => getUniqueOptions(rows, "nama_div"),
-    [rows],
-  );
-  const bagianOptions = useMemo(
-    () => getUniqueOptions(rows, "nama_bag"),
-    [rows],
+  const sectionEndpoint =
+    divisionCode !== "all" ? MASTERENDPOINT.bagian(divisionCode) : "";
+  const { data: sectionOptions = [] } = useMaster(
+    api,
+    ["attendance-section-options", divisionCode],
+    sectionEndpoint,
+    {
+      enabled: Boolean(sectionEndpoint) && isLoaded && isSignedIn,
+      select: (response) =>
+        (Array.isArray(response?.data) ? response.data : []).map((item) => ({
+          code: String(item?.kode ?? item?.id ?? "").trim(),
+          name: String(item?.nama_bag ?? item?.nama ?? item?.name ?? "").trim(),
+        })),
+    },
   );
   const dayColumns = useMemo(() => getDayColumns(rows), [rows]);
-  const filteredRows = useMemo(
-    () =>
-      rows.filter((row) =>
-        Object.entries(filters).every(([key, value]) =>
-          value === "all" ? true : String(row?.[key] ?? "").trim() === value,
-        ),
-      ),
-    [filters, rows],
-  );
+  const filteredRows = rows;
   const totalPages = Math.max(
     1,
     Math.ceil(filteredRows.length / ROWS_PER_PAGE),
@@ -99,15 +116,14 @@ export default function CheckAttendancePage() {
     (currentPage - 1) * ROWS_PER_PAGE,
     currentPage * ROWS_PER_PAGE,
   );
-  const updateFilter = (key) => (keys) => {
-    const value =
-      typeof keys === "string" ? keys : (Array.from(keys)[0] ?? "all");
-    setFilters((current) => ({ ...current, [key]: value }));
-    setPage(1);
-  };
   const applyPeriod = () => {
     if (!startDate || !endDate || startDate > endDate) return;
-    setAppliedPeriod({ start: startDate, end: endDate });
+    setAppliedPeriod({
+      start: startDate,
+      end: endDate,
+      divisionCode,
+      sectionCode,
+    });
     setPage(1);
   };
   const columns = [
@@ -158,7 +174,7 @@ export default function CheckAttendancePage() {
             Tinjau kehadiran karyawan dalam format pivot per tanggal.
           </p>
         </div>
-        <div className="personalia-card grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-6 xl:items-end">
+        <div className="personalia-card grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-5 xl:items-end">
           <Input
             isRequired
             label="Tanggal mulai"
@@ -180,34 +196,41 @@ export default function CheckAttendancePage() {
             }}
           />
           <Select
-            label="Unit kerja"
-            selectedKeys={[filters.unit_kerja]}
-            onSelectionChange={updateFilter("unit_kerja")}
-          >
-            <SelectItem key="all">Semua unit kerja</SelectItem>
-            {unitOptions.map((item) => (
-              <SelectItem key={item}>{item}</SelectItem>
-            ))}
-          </Select>
-          <Select
             label="Divisi"
-            selectedKeys={[filters.nama_div]}
-            onSelectionChange={updateFilter("nama_div")}
+            selectedKeys={[divisionCode]}
+            onSelectionChange={(keys) => {
+              const value = getSelectedKey(keys);
+              setDivisionCode(value);
+              setSectionCode("all");
+              setAppliedPeriod(null);
+            }}
           >
             <SelectItem key="all">Semua divisi</SelectItem>
-            {divisiOptions.map((item) => (
-              <SelectItem key={item}>{item}</SelectItem>
-            ))}
+            {divisionOptions
+              .filter((item) => item.code)
+              .map((item) => (
+                <SelectItem key={item.code}>
+                  {item.name || item.code}
+                </SelectItem>
+              ))}
           </Select>
           <Select
             label="Bagian"
-            selectedKeys={[filters.nama_bag]}
-            onSelectionChange={updateFilter("nama_bag")}
+            isDisabled={divisionCode === "all"}
+            selectedKeys={[sectionCode]}
+            onSelectionChange={(keys) => {
+              setSectionCode(getSelectedKey(keys));
+              setAppliedPeriod(null);
+            }}
           >
             <SelectItem key="all">Semua bagian</SelectItem>
-            {bagianOptions.map((item) => (
-              <SelectItem key={item}>{item}</SelectItem>
-            ))}
+            {sectionOptions
+              .filter((item) => item.code)
+              .map((item) => (
+                <SelectItem key={item.code}>
+                  {item.name || item.code}
+                </SelectItem>
+              ))}
           </Select>
           <div className="flex gap-2">
             <Button
@@ -220,7 +243,9 @@ export default function CheckAttendancePage() {
             <Button
               variant="bordered"
               onPress={() => {
-                setFilters(EMPTY_FILTERS);
+                setDivisionCode("all");
+                setSectionCode("all");
+                setAppliedPeriod(null);
                 setPage(1);
               }}
             >
