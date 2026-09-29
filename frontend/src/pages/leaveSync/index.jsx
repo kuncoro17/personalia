@@ -1,4 +1,4 @@
-import { Button, Card, CardBody } from "@heroui/react";
+import { Button, Card, CardBody, Input } from "@heroui/react";
 import { addToast } from "@heroui/toast";
 import { useAuth } from "@clerk/clerk-react";
 import { useState } from "react";
@@ -13,16 +13,35 @@ const getErrorMessage = (error) =>
   error?.message ||
   "Sinkronisasi cuti dan izin gagal dijalankan.";
 
+const getJakartaToday = () => {
+  const values = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(new Date())
+      .map((part) => [part.type, part.value]),
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
 export default function LeaveSyncPage() {
   const { getToken } = useAuth();
   const api = apiClient(getToken);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [startDate, setStartDate] = useState(getJakartaToday);
+  const [endDate, setEndDate] = useState(getJakartaToday);
 
   const handleSync = async () => {
     setIsSyncing(true);
 
     try {
-      const response = await api.post(LEAVEENDPOINT.sync);
+      const response = await api.post(
+        `${LEAVEENDPOINT.sync}&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
+      );
       const result = response?.data?.data;
 
       addToast({
@@ -55,7 +74,27 @@ export default function LeaveSyncPage() {
                 IZI.
               </p>
             </div>
-            <Button color="primary" isLoading={isSyncing} onPress={handleSync}>
+            <Input
+              type="date"
+              label="Tanggal mulai"
+              value={startDate}
+              onValueChange={setStartDate}
+              description="Data cuti dan izin yang disetujui sejak tanggal ini akan diambil dari IZI."
+            />
+            <Input
+              type="date"
+              label="Tanggal akhir"
+              value={endDate}
+              min={startDate}
+              onValueChange={setEndDate}
+              description="Data disinkronkan sampai tanggal ini."
+            />
+            <Button
+              color="primary"
+              isDisabled={!startDate || !endDate || endDate < startDate}
+              isLoading={isSyncing}
+              onPress={handleSync}
+            >
               Mulai Sinkronisasi
             </Button>
           </CardBody>

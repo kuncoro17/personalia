@@ -8,7 +8,7 @@ const DEFAULT_API_URL =
 
 type LeaveGroupName = 'cuti' | 'izinBiasa' | 'izinKhusus';
 
-interface ApiLeaveRecord {
+export interface ApiLeaveRecord {
   id: string;
   nik: string;
   tanggal_mulai: string;
@@ -21,11 +21,11 @@ interface ApiLeaveRecord {
   deleted_at: string | null;
 }
 
-interface ApiLeaveGroup {
+export interface ApiLeaveGroup {
   data: ApiLeaveRecord[];
 }
 
-interface ApprovedSummaryResponse {
+export interface ApprovedSummaryResponse {
   cuti: ApiLeaveGroup;
   izinBiasa: ApiLeaveGroup;
   izinKhusus: ApiLeaveGroup;
@@ -41,6 +41,8 @@ export interface LeaveDestinationRecord {
 
 export interface LeaveSyncOptions {
   dryRun?: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface LeaveSyncResult {
@@ -48,6 +50,10 @@ export interface LeaveSyncResult {
   rows: number;
   synced: number;
   dryRun: boolean;
+  startDate: string;
+  endDate: string;
+  /** Payload mentah yang diterima dari API Cuti/Izin pada proses ini. */
+  sourceData: ApprovedSummaryResponse;
 }
 
 export interface LeaveRow {
@@ -153,6 +159,36 @@ function readPositiveInteger(name: string, fallback: number): number {
   return value;
 }
 
+function validateDate(name: string, value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(`${name} harus menggunakan format YYYY-MM-DD`);
+  }
+
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== value
+  ) {
+    throw new Error(`${name} bukan tanggal yang valid`);
+  }
+
+  return value;
+}
+
+function getJakartaToday(): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const valueByType = Object.fromEntries(
+    parts.map(part => [part.type, part.value])
+  );
+
+  return `${valueByType.year}-${valueByType.month}-${valueByType.day}`;
+}
+
 function validateResponse(value: unknown): ApprovedSummaryResponse {
   if (value == null || typeof value !== 'object') {
     throw new Error('Respons API bukan object');
@@ -166,22 +202,63 @@ function validateResponse(value: unknown): ApprovedSummaryResponse {
   return response as ApprovedSummaryResponse;
 }
 
-async function fetchApprovedSummary(): Promise<ApprovedSummaryResponse> {
+export function getDatesInRange(startDate: string, endDate: string): string[] {
+  const dates: string[] = [];
+  const end = new Date(`${endDate}T00:00:00.000Z`);
+
+  for (
+    const current = new Date(`${startDate}T00:00:00.000Z`);
+    current <= end;
+    current.setUTCDate(current.getUTCDate() + 1)
+  ) {
+    dates.push(current.toISOString().slice(0, 10));
+  }
+
+  return dates;
+}
+
+async function fetchApprovedSummaryForDate(
+  date: string
+): Promise<ApprovedSummaryResponse> {
   const apiKey = process.env.LEAVE_SYNC_API_KEY;
   if (!apiKey) throw new Error('LEAVE_SYNC_API_KEY wajib diisi');
 
   const timeoutMs = readPositiveInteger('LEAVE_SYNC_TIMEOUT_MS', 15_000);
-  const response = await fetch(
-    process.env.LEAVE_SYNC_API_URL ?? DEFAULT_API_URL,
-    {
-      headers: { 'x-cuti-izin-key': apiKey, accept: 'application/json' },
-      signal: AbortSignal.timeout(timeoutMs),
-    }
-  );
+  const apiUrl = new URL(process.env.LEAVE_SYNC_API_URL ?? DEFAULT_API_URL);
+  apiUrl.searchParams.set('start_date', date);
+  apiUrl.searchParams.set('end_date', date);
+
+  const response = await fetch(apiUrl, {
+    headers: { 'x-cuti-izin-key': apiKey, accept: 'application/json' },
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   if (!response.ok) {
     throw new Error(`API cuti merespons HTTP ${response.status}`);
   }
   return validateResponse(await response.json());
+}
+
+async function fetchApprovedSummary(
+  startDate: string,
+  endDate: string
+): Promise<ApprovedSummaryResponse> {
+  const combined: ApprovedSummaryResponse = {
+    cuti: { data: [] },
+    izinBiasa: { data: [] },
+    izinKhusus: { data: [] },
+  };
+
+  // Panggil API sumber satu tanggal per request agar rentang data besar tidak
+  // membuat respons IZI terlalu berat. Berurutan untuk menjaga beban API sumber.
+  for (const date of getDatesInRange(startDate, endDate)) {
+    const dailyResponse = await fetchApprovedSummaryForDate(date);
+
+    combined.cuti.data.push(...dailyResponse.cuti.data);
+    combined.izinBiasa.data.push(...dailyResponse.izinBiasa.data);
+    combined.izinKhusus.data.push(...dailyResponse.izinKhusus.data);
+  }
+
+  return combined;
 }
 
 async function upsertRows(
@@ -270,9 +347,23 @@ export async function syncLeave(
   if (syncInProgress) throw new Error('Leave sync sedang berjalan');
   syncInProgress = true;
   const dryRun = options.dryRun ?? readBoolean('LEAVE_SYNC_DRY_RUN');
+  const today = getJakartaToday();
+  const startDate = validateDate(
+    'LEAVE_SYNC_START_DATE',
+    options.startDate || process.env.LEAVE_SYNC_START_DATE || today
+  );
+  const endDate = validateDate(
+    'LEAVE_SYNC_END_DATE',
+    options.endDate || process.env.LEAVE_SYNC_END_DATE || today
+  );
+  if (endDate < startDate) {
+    throw new Error(
+      'LEAVE_SYNC_END_DATE tidak boleh lebih awal dari start date'
+    );
+  }
 
   try {
-    const response = await fetchApprovedSummary();
+    const response = await fetchApprovedSummary(startDate, endDate);
     const groups = ['cuti', 'izinBiasa', 'izinKhusus'] as LeaveGroupName[];
     const applications = groups.flatMap(group => response[group].data);
     const rows = applications.flatMap(mapLeaveRecord);
@@ -312,6 +403,9 @@ export async function syncLeave(
       rows: uniqueRows.length,
       synced,
       dryRun,
+      startDate,
+      endDate,
+      sourceData: response,
     };
   } finally {
     syncInProgress = false;

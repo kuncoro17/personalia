@@ -7,13 +7,13 @@ dipecah menjadi satu baris per hari kerja (Senin–Jumat) di
 
 ## Mapping
 
-| API | PostgreSQL |
-| --- | --- |
-| `nik` | `nik` |
-| setiap hari kerja dalam `tanggal_mulai`–`tanggal_selesai` | `tgl_cuti` |
-| tanggal dari `tanggal_persetujuan` | `approval_date` |
-| `alasan_cuti` | `keperluan` |
-| `tipe_cuti` | `tipe` |
+| API                                                       | PostgreSQL      |
+| --------------------------------------------------------- | --------------- |
+| `nik`                                                     | `nik`           |
+| setiap hari kerja dalam `tanggal_mulai`–`tanggal_selesai` | `tgl_cuti`      |
+| tanggal dari `tanggal_persetujuan`                        | `approval_date` |
+| `alasan_cuti`                                             | `keperluan`     |
+| `tipe_cuti`                                               | `tipe`          |
 
 Jumlah tanggal hasil pemecahan harus sama dengan `jumlah_hari`. Jika berbeda,
 sinkronisasi dihentikan agar tanggal yang tidak pasti tidak masuk database.
@@ -28,6 +28,9 @@ tanggal yang sama, urutan prioritasnya adalah cuti, izin biasa, lalu izin khusus
 ```dotenv
 LEAVE_SYNC_API_URL=https://staging-sdm-izin.bpkpenaburjakarta.or.id/api/sdm-cuti/approved-summary
 LEAVE_SYNC_API_KEY=isi-secret-di-sini
+# Opsional. Jika kosong, proses memakai tanggal hari ini (Asia/Jakarta).
+LEAVE_SYNC_START_DATE=
+LEAVE_SYNC_END_DATE=
 LEAVE_SYNC_TIMEOUT_MS=15000
 LEAVE_SYNC_DRY_RUN=true
 ```
@@ -40,10 +43,19 @@ npm run sync:leave
 ```
 
 Setelah hasil valid, ubah `LEAVE_SYNC_DRY_RUN=false`. Proses juga dapat dipicu
-melalui `POST /personalia/leave/sync?dryRun=false`. Endpoint ini tidak
+melalui `POST /personalia/leave/sync?dryRun=false`. API sumber membutuhkan
+parameter `start_date` dan `end_date`; nilainya dibaca dari
+`LEAVE_SYNC_START_DATE` dan `LEAVE_SYNC_END_DATE` atau dapat ditentukan per
+request melalui `startDate` dan `endDate`. Jika tidak diisi, keduanya otomatis
+menggunakan tanggal hari ini dalam zona waktu Jakarta. Contoh request rentang:
+`POST /personalia/leave/sync?dryRun=false&startDate=2026-01-01&endDate=2026-12-31`. Endpoint ini tidak
 membutuhkan header `x-api-key`; credential API sumber dibaca langsung oleh
 backend dari `LEAVE_SYNC_API_KEY`. Untuk sinkron berkala, jadwalkan
 `npm run sync:leave` melalui cron atau scheduler server.
+
+Untuk setiap hari dalam rentang tersebut, backend memanggil API IZI secara
+berurutan dengan `start_date` dan `end_date` yang sama. Contoh untuk 29
+September 2026: `?start_date=2026-09-29&end_date=2026-09-29`.
 
 ## Membaca hasil sinkronisasi
 

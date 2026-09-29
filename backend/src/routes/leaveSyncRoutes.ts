@@ -12,6 +12,23 @@ const LEAVE_SYNC_ALLOWED_EMAILS = [
   'antoni.wijaya@bpkpenaburjakarta.or.id',
 ] as const;
 
+const sourceLeaveRecordSchema = z.object({
+  id: z.string(),
+  nik: z.string(),
+  tanggal_mulai: z.string(),
+  tanggal_selesai: z.string(),
+  jumlah_hari: z.number(),
+  tipe_cuti: z.string(),
+  alasan_cuti: z.string().nullable(),
+  status_persetujuan: z.number(),
+  tanggal_persetujuan: z.string().nullable(),
+  deleted_at: z.string().nullable(),
+});
+
+const sourceLeaveGroupSchema = z.object({
+  data: z.array(sourceLeaveRecordSchema),
+});
+
 const route = createRoute({
   method: 'post',
   path: '/personalia/leave/sync',
@@ -21,6 +38,14 @@ const route = createRoute({
   request: {
     query: z.object({
       dryRun: z.enum(['true', 'false']).optional().default('false'),
+      startDate: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
+      endDate: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
     }),
   },
   responses: {
@@ -35,6 +60,13 @@ const route = createRoute({
               rows: z.number().int(),
               synced: z.number().int(),
               dryRun: z.boolean(),
+              startDate: z.string(),
+              endDate: z.string(),
+              sourceData: z.object({
+                cuti: sourceLeaveGroupSchema,
+                izinBiasa: sourceLeaveGroupSchema,
+                izinKhusus: sourceLeaveGroupSchema,
+              }),
             }),
           }),
         },
@@ -94,7 +126,11 @@ export const leaveSyncRoutes = (app: OpenAPIHono) => {
   app.openapi(route, async c => {
     try {
       const dryRun = c.req.valid('query').dryRun === 'true';
-      const data = await syncLeave({ dryRun });
+      const data = await syncLeave({
+        dryRun,
+        startDate: c.req.valid('query').startDate,
+        endDate: c.req.valid('query').endDate,
+      });
       return c.json({ success: true as const, data }, 200);
     } catch (error) {
       if (
