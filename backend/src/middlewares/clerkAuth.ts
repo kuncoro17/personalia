@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { ClerkAuthPayload } from '../types/clerk';
 import { HTTPException } from 'hono/http-exception';
+import { ForbiddenException } from '../utils/http-exception';
 import logger from '../utils/logger';
 import User from '../models/userModel';
 dotenv.config();
@@ -157,6 +158,25 @@ export const clerkAuthMiddleware: MiddlewareHandler<{
     logger.warn('Internal JWT verification failed', _err);
     return c.json({ message: 'Invalid token' }, 401);
   }
+};
+
+/** Membatasi endpoint sensitif ke alamat email yang secara eksplisit diizinkan. */
+export const requireAllowedEmails = (
+  allowedEmails: readonly string[]
+): MiddlewareHandler<{ Variables: { auth: ClerkAuthPayload } }> => {
+  const allowed = new Set(allowedEmails.map(email => email.toLowerCase()));
+
+  return async (c, next) => {
+    const email = extractEmailFromClerkPayload(c.get('auth'))?.toLowerCase();
+
+    if (!email || !allowed.has(email)) {
+      throw new ForbiddenException(
+        'Anda tidak memiliki izin untuk menjalankan sinkronisasi cuti dan izin'
+      );
+    }
+
+    await next();
+  };
 };
 
 export interface AuthUser {

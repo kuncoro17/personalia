@@ -1,13 +1,23 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
 import { getAllLeave, syncLeave } from '../services/leaveSyncService';
+import {
+  clerkAuthMiddleware,
+  requireAllowedEmails,
+} from '../middlewares/clerkAuth';
 import { HttpException } from '../utils/http-exception';
+
+const LEAVE_SYNC_ALLOWED_EMAILS = [
+  'kuncoro.kinasih@bpkpenaburjakarta.or.id',
+  'antoni.wijaya@bpkpenaburjakarta.or.id',
+] as const;
 
 const route = createRoute({
   method: 'post',
   path: '/personalia/leave/sync',
   summary: 'Sinkronisasi cuti dan izin yang telah disetujui',
   tags: ['Leave Sync'],
+  security: [{ bearerAuth: [] }],
   request: {
     query: z.object({
       dryRun: z.enum(['true', 'false']).optional().default('false'),
@@ -30,6 +40,8 @@ const route = createRoute({
         },
       },
     },
+    401: { description: 'Token autentikasi tidak valid atau tidak diberikan' },
+    403: { description: 'Email tidak diizinkan menjalankan sinkronisasi' },
     409: { description: 'Sinkronisasi lain sedang berjalan' },
     500: { description: 'API sumber, validasi, atau database gagal' },
   },
@@ -68,6 +80,12 @@ const getRoute = createRoute({
 });
 
 export const leaveSyncRoutes = (app: OpenAPIHono) => {
+  app.use('/personalia/leave/sync', clerkAuthMiddleware);
+  app.use(
+    '/personalia/leave/sync',
+    requireAllowedEmails(LEAVE_SYNC_ALLOWED_EMAILS)
+  );
+
   app.openapi(getRoute, async c => {
     const data = await getAllLeave();
     return c.json({ success: true as const, data }, 200);
