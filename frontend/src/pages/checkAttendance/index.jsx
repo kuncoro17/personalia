@@ -33,6 +33,32 @@ const getDayColumns = (rows) =>
   );
 const getSelectedKey = (keys) =>
   typeof keys === "string" ? keys : (Array.from(keys)[0] ?? "all");
+const buildPivotEndpoint = ({ start, end, divisionCode, sectionCode }) =>
+  `personalia/absensi/pivot?${new URLSearchParams({
+    tanggal_mulai: start,
+    tanggal_selesai: end,
+    page: "1",
+    limit: "500",
+    ...(sectionCode !== "all"
+      ? { unitType: "BAGIAN", unitKode: sectionCode }
+      : divisionCode !== "all"
+        ? { unitType: "DIVISI", unitKode: divisionCode }
+        : {}),
+  }).toString()}`;
+const buildColumns = (rows) => [
+  { key: "nik", label: "NIK", frozen: true },
+  { key: "nama_lengkap", label: "NAMA KARYAWAN", frozen: true },
+  { key: "unit_kerja", label: "UNIT KERJA" },
+  { key: "nama_div", label: "DIVISI" },
+  { key: "nama_bag", label: "BAGIAN" },
+  ...getDayColumns(rows).map((key) => ({ key, label: key })),
+  { key: "total_yangmenggunakanjam", label: "JAM" },
+  { key: "total_LUPA(LUPA)", label: "LUPA" },
+  { key: "total_sakit(SKT)", label: "SAKIT" },
+  { key: "total_izin(IZN)", label: "IZIN" },
+  { key: "total_cuti_tahunan(CTH)", label: "CUTI" },
+  { key: "total_semua", label: "TOTAL" },
+];
 const getErrorMessage = (error) =>
   error?.payload?.message ||
   error?.response?.data?.message ||
@@ -51,20 +77,7 @@ export default function CheckAttendancePage() {
   const [isExporting, setIsExporting] = useState(false);
 
   const endpoint = useMemo(
-    () =>
-      appliedPeriod
-        ? `personalia/absensi/pivot?${new URLSearchParams({
-            tanggal_mulai: appliedPeriod.start,
-            tanggal_selesai: appliedPeriod.end,
-            page: "1",
-            limit: "500",
-            ...(appliedPeriod.sectionCode !== "all"
-              ? { unitType: "BAGIAN", unitKode: appliedPeriod.sectionCode }
-              : appliedPeriod.divisionCode !== "all"
-                ? { unitType: "DIVISI", unitKode: appliedPeriod.divisionCode }
-                : {}),
-          }).toString()}`
-        : "",
+    () => (appliedPeriod ? buildPivotEndpoint(appliedPeriod) : ""),
     [appliedPeriod],
   );
   const {
@@ -126,20 +139,7 @@ export default function CheckAttendancePage() {
     });
     setPage(1);
   };
-  const columns = [
-    { key: "nik", label: "NIK", frozen: true },
-    { key: "nama_lengkap", label: "NAMA KARYAWAN", frozen: true },
-    { key: "unit_kerja", label: "UNIT KERJA" },
-    { key: "nama_div", label: "DIVISI" },
-    { key: "nama_bag", label: "BAGIAN" },
-    ...dayColumns.map((key) => ({ key, label: key })),
-    { key: "total_yangmenggunakanjam", label: "JAM" },
-    { key: "total_LUPA(LUPA)", label: "LUPA" },
-    { key: "total_sakit(SKT)", label: "SAKIT" },
-    { key: "total_izin(IZN)", label: "IZIN" },
-    { key: "total_cuti_tahunan(CTH)", label: "CUTI" },
-    { key: "total_semua", label: "TOTAL" },
-  ];
+  const columns = buildColumns(rows);
   const exportToXlsx = async () => {
     if (!appliedPeriod || filteredRows.length === 0) return;
 
@@ -156,6 +156,52 @@ export default function CheckAttendancePage() {
       addToast({
         title: "Gagal export Excel",
         description: err?.message || "File Excel tidak dapat dibuat.",
+        color: "danger",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  const exportDirectly = async () => {
+    if (!startDate || !endDate || startDate > endDate) return;
+
+    setIsExporting(true);
+    try {
+      const response = await api.get(
+        buildPivotEndpoint({
+          start: startDate,
+          end: endDate,
+          divisionCode,
+          sectionCode,
+        }),
+      );
+      const exportRows = Array.isArray(response?.data?.data)
+        ? response.data.data
+        : [];
+
+      if (exportRows.length === 0) {
+        addToast({
+          title: "Tidak ada data",
+          description: "Tidak ada data absensi sesuai filter yang dipilih.",
+          color: "warning",
+        });
+        return;
+      }
+
+      const blob = await buildAttendanceExportXlsx(
+        buildColumns(exportRows),
+        exportRows,
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `DATA-ABSENSI-${startDate}-${endDate}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      addToast({
+        title: "Gagal export Excel",
+        description: getErrorMessage(err),
         color: "danger",
       });
     } finally {
@@ -232,13 +278,21 @@ export default function CheckAttendancePage() {
                 </SelectItem>
               ))}
           </Select>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               color="primary"
               isDisabled={!startDate || !endDate || startDate > endDate}
               onPress={applyPeriod}
             >
               Tampilkan
+            </Button>
+            <Button
+              color="success"
+              isDisabled={!startDate || !endDate || startDate > endDate}
+              isLoading={isExporting}
+              onPress={exportDirectly}
+            >
+              Export Langsung
             </Button>
             <Button
               variant="bordered"
