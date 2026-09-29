@@ -7,7 +7,6 @@ class AbsensiPivot extends Model {
   public unit_kerja!: string | null;
   public nama_div!: string | null;
   public nama_bag!: string | null;
-
   public total_hadir_HDR?: number;
   public total_yangmenggunakanjam?: number;
   public total_LUPA_LUPA?: number;
