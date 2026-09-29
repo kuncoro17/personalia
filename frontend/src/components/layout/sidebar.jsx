@@ -1,10 +1,18 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
 
 import { SIDEBARMENU } from "../../constants/routes";
 
 export const SideBar = ({ isOpen = false, onClose }) => {
   let { pathname } = useLocation();
   const navigate = useNavigate();
+  const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() || "";
+  const menuItems = SIDEBARMENU.filter(
+    (item) =>
+      !item.allowedEmails ||
+      item.allowedEmails.some((allowedEmail) => allowedEmail === email),
+  );
 
   const handlePress = (label, title) => {
     if (label !== pathname) {
@@ -59,7 +67,7 @@ export const SideBar = ({ isOpen = false, onClose }) => {
           <span>Menu Utama</span>
         </div>
         <div className="flex flex-col gap-1">
-          {SIDEBARMENU.map((item) => (
+          {menuItems.map((item) => (
             <button
               key={item.name}
               className={`personalia-sidebar-item ${

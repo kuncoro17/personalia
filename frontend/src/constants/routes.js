@@ -10,6 +10,7 @@ const MasterWilayahPendidikanPage = lazy(
   () => import("../pages/masterWilayahPendidikan"),
 );
 const CheckAttendancePage = lazy(() => import("../pages/checkAttendance"));
+const LeaveSyncPage = lazy(() => import("../pages/leaveSync"));
 
 export const ROUTE = [
   {
@@ -35,6 +36,10 @@ export const ROUTE = [
   {
     path: "/check-absensi",
     element: createElement(CheckAttendancePage),
+  },
+  {
+    path: "/sinkron-cuti-izin",
+    element: createElement(LeaveSyncPage),
   },
   {
     path: "/printLetter",
@@ -72,5 +77,14 @@ export const SIDEBARMENU = [
     name: "Check Data Absen",
     icon: "/icon/karyawan.svg",
     path: "/check-absensi",
+  },
+  {
+    name: "Sinkron Cuti & Izin",
+    icon: "/icon/setting.svg",
+    path: "/sinkron-cuti-izin",
+    allowedEmails: [
+      "kuncoro.kinasih@bpkpenaburjakarta.or.id",
+      "antoni.wijaya@bpkpenaburjakarta.or.id",
+    ],
   },
 ];

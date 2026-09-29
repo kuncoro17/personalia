@@ -136,3 +136,7 @@ export const LETTERENDPOINT = {
   suratPHK: `SuratPHK`,
   cutiDiluarTanggungan: (employeeId) => `CutiDiluarTanggungan/${employeeId}`,
 };
+
+export const LEAVEENDPOINT = {
+  sync: "personalia/leave/sync?dryRun=false",
+};
