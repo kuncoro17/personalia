@@ -22,10 +22,11 @@ describe('leaveSyncService', () => {
     ).toEqual(['2026-06-26', '2026-06-29', '2026-06-30']);
   });
 
-  it('memetakan satu pengajuan menjadi satu baris per hari kerja', () => {
+  it('memetakan satu data harian API menjadi satu baris tujuan', () => {
     const rows = mapLeaveRecord({
       id: 'abc',
       nik: ' 0123292 ',
+      tanggal: '2026-07-23T00:00:00.000Z',
       tanggal_mulai: '2026-07-23T00:00:00.000Z',
       tanggal_selesai: '2026-07-24T00:00:00.000Z',
       jumlah_hari: 2,
@@ -33,7 +34,6 @@ describe('leaveSyncService', () => {
       alasan_cuti: 'Liburan',
       status_persetujuan: 1,
       tanggal_persetujuan: '2026-07-13T08:32:13.398Z',
-      deleted_at: null,
     });
     expect(rows).toEqual([
       {
@@ -43,30 +43,24 @@ describe('leaveSyncService', () => {
         keperluan: 'Liburan',
         tipe: 'CTH',
       },
-      {
-        nik: '0123292',
-        tglCuti: '2026-07-24',
-        approvalDate: '2026-07-13',
-        keperluan: 'Liburan',
-        tipe: 'CTH',
-      },
     ]);
   });
 
-  it('menolak jumlah hari yang tidak konsisten', () => {
-    expect(() =>
+  it('mempertahankan data pada tanggal akhir pekan dari API sumber', () => {
+    expect(
       mapLeaveRecord({
         id: 'abc',
         nik: '1',
+        tanggal: '2026-07-25',
         tanggal_mulai: '2026-07-23',
-        tanggal_selesai: '2026-07-24',
-        jumlah_hari: 1,
-        tipe_cuti: 'CTH',
+        tanggal_selesai: '2026-07-25',
+        jumlah_hari: 3,
+        tipe_cuti: 'DNL',
         alasan_cuti: null,
         status_persetujuan: 1,
-        tanggal_persetujuan: null,
-        deleted_at: null,
       })
-    ).toThrow('tidak konsisten');
+    ).toEqual([
+      expect.objectContaining({ tglCuti: '2026-07-25', tipe: 'DNL' }),
+    ]);
   });
 });

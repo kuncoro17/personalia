@@ -6,30 +6,24 @@ import logger from '../utils/logger';
 const DEFAULT_API_URL =
   'https://staging-sdm-izin.bpkpenaburjakarta.or.id/api/sdm-cuti/approved-summary';
 
-type LeaveGroupName = 'cuti' | 'izinBiasa' | 'izinKhusus';
-
 export interface ApiLeaveRecord {
   id: string;
   nik: string;
+  tanggal: string;
+  nama_lengkap?: string;
+  email?: string;
   tanggal_mulai: string;
   tanggal_selesai: string;
   jumlah_hari: number;
   tipe_cuti: string;
+  jenis_cuti?: string;
   alasan_cuti: string | null;
+  status?: string;
   status_persetujuan: number;
-  tanggal_persetujuan: string | null;
-  deleted_at: string | null;
+  tanggal_persetujuan?: string | null;
 }
 
-export interface ApiLeaveGroup {
-  data: ApiLeaveRecord[];
-}
-
-export interface ApprovedSummaryResponse {
-  cuti: ApiLeaveGroup;
-  izinBiasa: ApiLeaveGroup;
-  izinKhusus: ApiLeaveGroup;
-}
+export type ApprovedSummaryResponse = ApiLeaveRecord[];
 
 export interface LeaveDestinationRecord {
   nik: string;
@@ -122,25 +116,23 @@ export function mapLeaveRecord(
   if ((record.alasan_cuti?.trim().length ?? 0) > 255) {
     throw new Error(`alasan_cuti terlalu panjang pada pengajuan ${record.id}`);
   }
-  if (record.status_persetujuan !== 1 || record.deleted_at != null) return [];
+  if (record.status_persetujuan !== 1) return [];
 
-  const dates = expandWeekdays(record.tanggal_mulai, record.tanggal_selesai);
-  if (dates.length !== record.jumlah_hari) {
-    throw new Error(
-      `Jumlah hari pengajuan ${record.id} tidak konsisten: ` +
-        `API=${record.jumlah_hari}, hari kerja=${dates.length}`
-    );
-  }
+  // API IZI sudah mengembalikan satu item per `tanggal`, termasuk hari nonkerja
+  // bila disetujui. Rentang tanggal tidak perlu dipecah lagi.
+  const tglCuti = requireDatePart(record.tanggal, 'tanggal');
 
-  return dates.map(tglCuti => ({
-    nik: record.nik.trim(),
-    tglCuti,
-    approvalDate: record.tanggal_persetujuan
-      ? requireDatePart(record.tanggal_persetujuan, 'tanggal_persetujuan')
-      : null,
-    keperluan: record.alasan_cuti?.trim() || null,
-    tipe: record.tipe_cuti.trim(),
-  }));
+  return [
+    {
+      nik: record.nik.trim(),
+      tglCuti,
+      approvalDate: record.tanggal_persetujuan
+        ? requireDatePart(record.tanggal_persetujuan, 'tanggal_persetujuan')
+        : null,
+      keperluan: record.alasan_cuti?.trim() || null,
+      tipe: record.tipe_cuti.trim(),
+    },
+  ];
 }
 
 function readBoolean(name: string, fallback = false): boolean {
@@ -190,16 +182,11 @@ function getJakartaToday(): string {
 }
 
 function validateResponse(value: unknown): ApprovedSummaryResponse {
-  if (value == null || typeof value !== 'object') {
-    throw new Error('Respons API bukan object');
+  if (!Array.isArray(value)) {
+    throw new Error('Respons API harus berupa array data cuti dan izin');
   }
-  const response = value as Partial<ApprovedSummaryResponse>;
-  for (const group of ['cuti', 'izinBiasa', 'izinKhusus'] as LeaveGroupName[]) {
-    if (!Array.isArray(response[group]?.data)) {
-      throw new Error(`Respons API tidak memiliki ${group}.data`);
-    }
-  }
-  return response as ApprovedSummaryResponse;
+
+  return value as ApprovedSummaryResponse;
 }
 
 export function getDatesInRange(startDate: string, endDate: string): string[] {
@@ -242,20 +229,14 @@ async function fetchApprovedSummary(
   startDate: string,
   endDate: string
 ): Promise<ApprovedSummaryResponse> {
-  const combined: ApprovedSummaryResponse = {
-    cuti: { data: [] },
-    izinBiasa: { data: [] },
-    izinKhusus: { data: [] },
-  };
+  const combined: ApprovedSummaryResponse = [];
 
   // Panggil API sumber satu tanggal per request agar rentang data besar tidak
   // membuat respons IZI terlalu berat. Berurutan untuk menjaga beban API sumber.
   for (const date of getDatesInRange(startDate, endDate)) {
     const dailyResponse = await fetchApprovedSummaryForDate(date);
 
-    combined.cuti.data.push(...dailyResponse.cuti.data);
-    combined.izinBiasa.data.push(...dailyResponse.izinBiasa.data);
-    combined.izinKhusus.data.push(...dailyResponse.izinKhusus.data);
+    combined.push(...dailyResponse);
   }
 
   return combined;
@@ -364,8 +345,7 @@ export async function syncLeave(
 
   try {
     const response = await fetchApprovedSummary(startDate, endDate);
-    const groups = ['cuti', 'izinBiasa', 'izinKhusus'] as LeaveGroupName[];
-    const applications = groups.flatMap(group => response[group].data);
+    const applications = response;
     const rows = applications.flatMap(mapLeaveRecord);
 
     // Tabel tujuan menyimpan satu status cuti/izin per pegawai per tanggal.

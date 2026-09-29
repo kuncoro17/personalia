@@ -1,27 +1,25 @@
 # Sinkronisasi cuti dan izin ke PostgreSQL
 
-Proses ini mengambil tiga kelompok data yang sudah disetujui (`cuti`,
-`izinBiasa`, dan `izinKhusus`) dari API SDM Izin. Setiap rentang pengajuan
-dipecah menjadi satu baris per hari kerja (Senin–Jumat) di
-`public.sdm_checkinout_cuti`.
+Proses ini mengambil data yang sudah disetujui dari API SDM Izin. API sumber
+sudah mengirim satu item untuk setiap tanggal, sehingga setiap item disimpan
+sebagai satu baris di `public.sdm_checkinout_cuti`, termasuk tanggal nonkerja
+bila ada pada respons sumber.
 
 ## Mapping
 
 | API                                                       | PostgreSQL      |
 | --------------------------------------------------------- | --------------- |
 | `nik`                                                     | `nik`           |
-| setiap hari kerja dalam `tanggal_mulai`–`tanggal_selesai` | `tgl_cuti`      |
+| `tanggal`                                                 | `tgl_cuti`      |
 | tanggal dari `tanggal_persetujuan`                        | `approval_date` |
 | `alasan_cuti`                                             | `keperluan`     |
 | `tipe_cuti`                                               | `tipe`          |
 
-Jumlah tanggal hasil pemecahan harus sama dengan `jumlah_hari`. Jika berbeda,
-sinkronisasi dihentikan agar tanggal yang tidak pasti tidak masuk database.
 Data dicocokkan berdasarkan `(nik, tgl_cuti)`. Baris yang sudah ada akan
 diperbarui dan baris yang belum ada akan dimasukkan; perubahan data sumber akan
 mengatur `flag_pump` kembali ke `0`. Proses ini tidak memerlukan unique
 constraint tambahan. Jika API mengirim lebih dari satu tipe untuk NIK dan
-tanggal yang sama, urutan prioritasnya adalah cuti, izin biasa, lalu izin khusus.
+tanggal yang sama, data pertama dari respons sumber yang disimpan.
 
 ## Konfigurasi dan eksekusi
 

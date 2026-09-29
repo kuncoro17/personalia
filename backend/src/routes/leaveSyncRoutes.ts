@@ -15,18 +15,18 @@ const LEAVE_SYNC_ALLOWED_EMAILS = [
 const sourceLeaveRecordSchema = z.object({
   id: z.string(),
   nik: z.string(),
+  tanggal: z.string(),
+  nama_lengkap: z.string().optional(),
+  email: z.string().optional(),
   tanggal_mulai: z.string(),
   tanggal_selesai: z.string(),
   jumlah_hari: z.number(),
   tipe_cuti: z.string(),
+  jenis_cuti: z.string().optional(),
   alasan_cuti: z.string().nullable(),
+  status: z.string().optional(),
   status_persetujuan: z.number(),
-  tanggal_persetujuan: z.string().nullable(),
-  deleted_at: z.string().nullable(),
-});
-
-const sourceLeaveGroupSchema = z.object({
-  data: z.array(sourceLeaveRecordSchema),
+  tanggal_persetujuan: z.string().nullable().optional(),
 });
 
 const route = createRoute({
@@ -62,11 +62,7 @@ const route = createRoute({
               dryRun: z.boolean(),
               startDate: z.string(),
               endDate: z.string(),
-              sourceData: z.object({
-                cuti: sourceLeaveGroupSchema,
-                izinBiasa: sourceLeaveGroupSchema,
-                izinKhusus: sourceLeaveGroupSchema,
-              }),
+              sourceData: z.array(sourceLeaveRecordSchema),
             }),
           }),
         },
