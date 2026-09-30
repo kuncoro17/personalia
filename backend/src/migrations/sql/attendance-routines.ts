@@ -355,6 +355,7 @@ BEGIN
 
             d.nama_div,
             b.nama_bag,
+            j.jabatan AS jabatan,
 
             %s,
 
@@ -685,11 +686,12 @@ BEGIN
         LEFT JOIN prs_unit_kerja uk ON ukk.unit_kerja = uk.uk_id
         LEFT JOIN prs_divisi d ON d.kode = uk.kode_divisi
         LEFT JOIN prs_bagian b ON b.kode = uk.kode_bagian
+        LEFT JOIN prs_jabatan j ON j.kode_jab = ukk.jab_id
         LEFT JOIN data_absensi da ON kt.nik = da.nik AND kt.tanggal = da.tanggal
         WHERE (%L IS NULL 
                OR (%L = 'BAGIAN' AND b.kode = %L)
                OR (%L = 'DIVISI' AND d.kode = %L))
-        GROUP BY kt.nik, kt.nama_lengkap, d.nama_div, b.nama_bag
+        GROUP BY kt.nik, kt.nama_lengkap, d.nama_div, b.nama_bag, j.jabatan
         ORDER BY kt.nik;
     $f$,
         p_start, p_end,  -- semua_tanggal
