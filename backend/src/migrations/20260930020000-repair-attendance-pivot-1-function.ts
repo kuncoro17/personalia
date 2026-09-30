@@ -1,19 +1,19 @@
 import type { Migration } from '../types/migration';
 
 /**
- * Replaces the legacy function still called by older consumers. Its prior
+ * Replaces the legacy procedure still called by older consumers. Its prior
  * dynamic SQL referenced `ukk.jabatan`, a column that does not exist.
  */
 const migration: Migration = {
   async up({ sequelize, transaction }) {
     await sequelize.query(
-      `CREATE OR REPLACE FUNCTION public.get_absensi_pivot_1(
+      `CREATE OR REPLACE PROCEDURE public.get_absensi_pivot_1(
           IN p_start date,
           IN p_end date,
           INOUT ref refcursor DEFAULT 'absensi_cursor'
         )
         LANGUAGE plpgsql
-        AS $function$
+        AS $procedure$
         BEGIN
           CALL public.get_absensi_pivot_bagian(
             p_start,
@@ -23,7 +23,7 @@ const migration: Migration = {
             ref
           );
         END;
-        $function$`,
+        $procedure$`,
       { transaction }
     );
   },
