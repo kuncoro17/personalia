@@ -48,9 +48,9 @@ const buildPivotEndpoint = ({ start, end, divisionCode, sectionCode }) =>
 const buildColumns = (rows) => [
   { key: "nik", label: "NIK", frozen: true },
   { key: "nama_lengkap", label: "NAMA KARYAWAN", frozen: true },
-  { key: "unit_kerja", label: "UNIT KERJA" },
   { key: "nama_div", label: "DIVISI" },
   { key: "nama_bag", label: "BAGIAN" },
+  { key: "jabatan", label: "JABATAN" },
   ...getDayColumns(rows).map((key) => ({ key, label: key })),
   { key: "total_yangmenggunakanjam", label: "JAM" },
   { key: "total_LUPA(LUPA)", label: "LUPA" },
