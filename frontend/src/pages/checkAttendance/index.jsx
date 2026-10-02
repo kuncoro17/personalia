@@ -73,6 +73,7 @@ export default function CheckAttendancePage() {
   const [appliedPeriod, setAppliedPeriod] = useState(null);
   const [divisionCode, setDivisionCode] = useState("all");
   const [sectionCode, setSectionCode] = useState("all");
+  const [tableSearch, setTableSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -119,7 +120,19 @@ export default function CheckAttendancePage() {
     },
   );
   const dayColumns = useMemo(() => getDayColumns(rows), [rows]);
-  const filteredRows = rows;
+  const filteredRows = useMemo(() => {
+    const query = tableSearch.trim().toLocaleLowerCase("id-ID");
+
+    if (!query) return rows;
+
+    return rows.filter((row) =>
+      [row?.nik, row?.nama_lengkap].some((value) =>
+        String(value ?? "")
+          .toLocaleLowerCase("id-ID")
+          .includes(query),
+      ),
+    );
+  }, [rows, tableSearch]);
   const totalPages = Math.max(
     1,
     Math.ceil(filteredRows.length / ROWS_PER_PAGE),
@@ -316,10 +329,23 @@ export default function CheckAttendancePage() {
           <p className="text-sm text-danger">{getErrorMessage(error)}</p>
         ) : (
           <div className="personalia-card min-w-0 p-3">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-sm text-default-500">
-                {filteredRows.length} data karyawan
-              </p>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-default-500">
+                  {filteredRows.length} data karyawan
+                </p>
+                <Input
+                  aria-label="Cari NIK atau nama karyawan"
+                  className="w-64"
+                  placeholder="Cari NIK atau nama"
+                  size="sm"
+                  value={tableSearch}
+                  onValueChange={(value) => {
+                    setTableSearch(value);
+                    setPage(1);
+                  }}
+                />
+              </div>
               <div className="flex items-center gap-3">
                 <p className="text-xs text-default-400">
                   Geser tabel ke samping untuk melihat absensi per tanggal.
