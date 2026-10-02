@@ -424,17 +424,23 @@ export const parseEmployeeXlsxFile = async (file) => {
 
   const headerRow = table[0] || {};
 
-  const headers = Object.keys(headerRow)
-    .map((k) => Number(k))
-    .filter((n) => Number.isInteger(n) && n >= 0)
-    .sort((a, b) => a - b)
-    .map((idx) => {
-      const original = String(headerRow[idx] ?? "").trim();
+  // Simpan indeks kolom asli. File Excel dapat memiliki kolom kosong sebelum
+  // header pertama; memakai array yang dipadatkan akan menggeser semua field.
+  const headers = Object.fromEntries(
+    Object.keys(headerRow)
+      .map((k) => Number(k))
+      .filter((n) => Number.isInteger(n) && n >= 0)
+      .sort((a, b) => a - b)
+      .map((idx) => {
+        const original = String(headerRow[idx] ?? "").trim();
 
-      return (
-        EMPLOYEE_EXCEL_HEADER_TO_KEY[original] || normalizeHeaderKey(original)
-      );
-    });
+        return [
+          idx,
+          EMPLOYEE_EXCEL_HEADER_TO_KEY[original] ||
+            normalizeHeaderKey(original),
+        ];
+      }),
+  );
 
   /*
    * Field yang boleh kosong.

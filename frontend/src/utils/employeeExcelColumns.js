@@ -67,3 +67,4 @@ export const EMPLOYEE_EXCEL_HEADER_TO_KEY = Object.fromEntries(
 // Header template lama tetap diterima agar file yang sudah diunduh pengguna
 // sebelumnya tidak gagal saat diimpor.
 EMPLOYEE_EXCEL_HEADER_TO_KEY["Email Pribadi"] = "email_penabur";
+EMPLOYEE_EXCEL_HEADER_TO_KEY["Telpon Pribadi"] = "telp_pribadi";
