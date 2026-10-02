@@ -469,7 +469,36 @@ export default function Profile() {
       ].some((field) => Object.prototype.hasOwnProperty.call(value, field));
 
       if (changedHierarchy) {
-        const resolvedUnitKerjaId = resolveUnitKerjaId(selectedHierarchy);
+        let resolvedUnitKerjaId = resolveUnitKerjaId(selectedHierarchy);
+
+        // Direktur dan Deputi dapat menjadi struktur puncak. Jika master
+        // tersebut belum memiliki unit kerja, buat unit level puncak agar
+        // tetap dapat dihubungkan ke karyawan.
+        if (
+          !resolvedUnitKerjaId &&
+          (selectedHierarchy.direktur || selectedHierarchy.deputi)
+        ) {
+          const unitKerjaRootResponse = await apiService(
+            "post",
+            api,
+            "unit-kerja/created",
+            {
+              kode_direktur: selectedHierarchy.direktur || null,
+              kode_deputi: selectedHierarchy.deputi || null,
+              kode_divisi: "nnn",
+              kode_bagian: "nnn",
+              kode_seksi: "nnn",
+            },
+          );
+
+          if (!unitKerjaRootResponse.success) throw unitKerjaRootResponse;
+
+          resolvedUnitKerjaId =
+            unitKerjaRootResponse.data?.uk_id ??
+            unitKerjaRootResponse.data?.id ??
+            null;
+        }
+
         if (!resolvedUnitKerjaId) {
           throw new Error(
             "Unit kerja untuk struktur yang dipilih belum tersedia. Lengkapi relasi struktur pada Master Wilayah Pendidikan terlebih dahulu.",
