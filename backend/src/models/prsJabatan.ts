@@ -15,7 +15,6 @@ export type PrsJabatanCreationAttributes = Optional<
   'jab_id'
 >;
 
-
 export class PrsJabatan
   extends Model<PrsJabatanAttributes, PrsJabatanCreationAttributes>
   implements PrsJabatanAttributes
