@@ -445,6 +445,12 @@ export default function Profile() {
               return;
             }
 
+            if (
+              ["direktur", "deputi", "divisi", "bagian", "seksi"].includes(key)
+            ) {
+              return;
+            }
+
             profilePayload[key] = findSelected.id;
           }
 
@@ -464,16 +470,13 @@ export default function Profile() {
 
       if (changedHierarchy) {
         const resolvedUnitKerjaId = resolveUnitKerjaId(selectedHierarchy);
-        if (resolvedUnitKerjaId) {
-          unitKerjaPayload.unit_kerja = resolvedUnitKerjaId;
-          // Struktur organisasi disimpan melalui relasi unit kerja karyawan.
-          // Jangan kirim field-field ini ke endpoint profil karyawan.
-          delete profilePayload.direktur;
-          delete profilePayload.deputi;
-          delete profilePayload.divisi;
-          delete profilePayload.bagian;
-          delete profilePayload.seksi;
+        if (!resolvedUnitKerjaId) {
+          throw new Error(
+            "Unit kerja untuk struktur yang dipilih belum tersedia. Lengkapi relasi struktur pada Master Wilayah Pendidikan terlebih dahulu.",
+          );
         }
+
+        unitKerjaPayload.unit_kerja = resolvedUnitKerjaId;
       } else if (
         Object.prototype.hasOwnProperty.call(unitKerjaPayload, "jab_id")
       ) {
