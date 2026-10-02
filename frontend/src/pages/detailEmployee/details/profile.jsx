@@ -15,12 +15,16 @@ import { PROPERTIES } from "../constant";
 import { DETAILENDPOINT, MASTERENDPOINT } from "../../../constants/api";
 
 const SELECT_TITLE_TO_STATE_KEY = {
+  direktur: "direktur",
+  deputi: "deputi",
   divisi: "divisi",
   "bagian/biro/sekolah": "bagian",
   seksi: "seksi",
 };
 
 const resetUnits = {
+  direktur: ["deputi", "divisi", "bagian", "seksi"],
+  deputi: ["divisi", "bagian", "seksi"],
   divisi: ["bagian", "seksi"],
   bagian: ["seksi"],
   seksi: [],
@@ -35,6 +39,8 @@ export default function Profile() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   const [valueSelect, setValueSelect] = useState({
+    direktur: null,
+    deputi: null,
     divisi: null,
     bagian: null,
     seksi: null,
@@ -108,6 +114,31 @@ export default function Profile() {
       },
     },
   );
+
+  const masterDirektur = useMemo(
+    () =>
+      uniqById(
+        (masterUnitKerja?.data ?? [])
+          .map((item) => item?.direktur)
+          .filter((item) => item?.id && item.id !== "nnn"),
+        "id",
+      ),
+    [masterUnitKerja],
+  );
+
+  const masterDeputi = useMemo(() => {
+    const units = masterUnitKerja?.data ?? [];
+    const filteredUnits = valueSelect.direktur
+      ? units.filter((item) => item?.direktur?.id === valueSelect.direktur)
+      : units;
+
+    return uniqById(
+      filteredUnits
+        .map((item) => item?.deputi)
+        .filter((item) => item?.id && item.id !== "nnn"),
+      "id",
+    );
+  }, [masterUnitKerja, valueSelect.direktur]);
 
   const { data: masterBagian } = useMaster(
     api,
@@ -190,6 +221,12 @@ export default function Profile() {
     if (!masterUnitKerja) return [];
     let units = [...masterUnitKerja.data];
 
+    if (valueSelect.direktur)
+      units = units.filter((i) => i?.direktur?.id === valueSelect.direktur);
+
+    if (valueSelect.deputi)
+      units = units.filter((i) => i?.deputi?.id === valueSelect.deputi);
+
     if (valueSelect.seksi)
       units = units.filter((i) => i.seksi.id === valueSelect.seksi);
 
@@ -248,6 +285,44 @@ export default function Profile() {
       return divisiLevel?.id ?? null;
     }
 
+    if (selectedHierarchy.deputi) {
+      const deputiLevel =
+        allUnits.find(
+          (item) =>
+            item?.deputi?.id === selectedHierarchy.deputi &&
+            isNoneUnitValue(item?.divisi?.id) &&
+            isNoneUnitValue(item?.divisi?.nama) &&
+            isNoneUnitValue(item?.bagian?.id) &&
+            isNoneUnitValue(item?.bagian?.nama) &&
+            isNoneUnitValue(item?.seksi?.id) &&
+            isNoneUnitValue(item?.seksi?.nama),
+        ) ??
+        allUnits.find((item) => item?.deputi?.id === selectedHierarchy.deputi);
+
+      return deputiLevel?.id ?? null;
+    }
+
+    if (selectedHierarchy.direktur) {
+      const direkturLevel =
+        allUnits.find(
+          (item) =>
+            item?.direktur?.id === selectedHierarchy.direktur &&
+            isNoneUnitValue(item?.deputi?.id) &&
+            isNoneUnitValue(item?.deputi?.nama) &&
+            isNoneUnitValue(item?.divisi?.id) &&
+            isNoneUnitValue(item?.divisi?.nama) &&
+            isNoneUnitValue(item?.bagian?.id) &&
+            isNoneUnitValue(item?.bagian?.nama) &&
+            isNoneUnitValue(item?.seksi?.id) &&
+            isNoneUnitValue(item?.seksi?.nama),
+        ) ??
+        allUnits.find(
+          (item) => item?.direktur?.id === selectedHierarchy.direktur,
+        );
+
+      return direkturLevel?.id ?? null;
+    }
+
     return null;
   };
 
@@ -279,6 +354,8 @@ export default function Profile() {
 
   const master = {
     masterStatus,
+    masterDirektur,
+    masterDeputi,
     masterDivisi,
     masterSeksi,
     masterMapel,
@@ -345,7 +422,18 @@ export default function Profile() {
           );
 
           if (findSelected) {
-            if (key === "divisi") {
+            if (key === "direktur") {
+              selectedHierarchy.direktur = findSelected.id;
+              selectedHierarchy.deputi = null;
+              selectedHierarchy.divisi = null;
+              selectedHierarchy.bagian = null;
+              selectedHierarchy.seksi = null;
+            } else if (key === "deputi") {
+              selectedHierarchy.deputi = findSelected.id;
+              selectedHierarchy.divisi = null;
+              selectedHierarchy.bagian = null;
+              selectedHierarchy.seksi = null;
+            } else if (key === "divisi") {
               selectedHierarchy.divisi = findSelected.id;
               selectedHierarchy.bagian = null;
               selectedHierarchy.seksi = null;
@@ -368,9 +456,13 @@ export default function Profile() {
         profilePayload[key] = value[key];
       });
 
-      const changedHierarchy = ["divisi", "bagian", "seksi"].some((field) =>
-        Object.prototype.hasOwnProperty.call(value, field),
-      );
+      const changedHierarchy = [
+        "direktur",
+        "deputi",
+        "divisi",
+        "bagian",
+        "seksi",
+      ].some((field) => Object.prototype.hasOwnProperty.call(value, field));
 
       if (changedHierarchy) {
         const resolvedUnitKerjaId = resolveUnitKerjaId(selectedHierarchy);

@@ -61,6 +61,19 @@ export default function Modals({
     let inputValue = { [key]: fieldValue };
 
     switch (key) {
+      case "direktur":
+        inputValue["deputi"] = undefined;
+        inputValue["divisi"] = undefined;
+        inputValue["bagian"] = undefined;
+        inputValue["seksi"] = undefined;
+        break;
+
+      case "deputi":
+        inputValue["divisi"] = undefined;
+        inputValue["bagian"] = undefined;
+        inputValue["seksi"] = undefined;
+        break;
+
       case "nik":
         inputValue["nik"] = String(fieldValue ?? "")
           .replace(/\D+/g, "")

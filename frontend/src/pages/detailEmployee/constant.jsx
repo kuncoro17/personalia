@@ -99,12 +99,14 @@ export const PROPERTIES = {
     {
       title: "Direktur",
       properties: "direktur",
-      editable: false,
+      form: "select",
+      master: "masterDirektur",
     },
     {
       title: "Deputi",
       properties: "deputi",
-      editable: false,
+      form: "select",
+      master: "masterDeputi",
     },
     {
       title: "Divisi",
