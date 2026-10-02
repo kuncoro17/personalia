@@ -33,17 +33,31 @@ const getDayColumns = (rows) =>
   );
 const getSelectedKey = (keys) =>
   typeof keys === "string" ? keys : (Array.from(keys)[0] ?? "all");
-const buildPivotEndpoint = ({ start, end, divisionCode, sectionCode }) =>
+const UNIT_FILTER_FIELDS = [
+  { key: "DIREKTUR", relation: "direktur", label: "Direktur" },
+  { key: "DEPUTI", relation: "deputi", label: "Deputi" },
+  { key: "DIVISI", relation: "divisi", label: "Divisi" },
+  { key: "BAGIAN", relation: "bagian", label: "Bagian" },
+  { key: "SEKSI", relation: "seksi", label: "Seksi" },
+];
+const isValidUnitValue = (value) => {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  return normalized && normalized !== "nnn" && normalized !== "none";
+};
+const buildPivotEndpoint = ({ start, end, unitFilter }) =>
   `personalia/absensi/pivot?${new URLSearchParams({
     tanggal_mulai: start,
     tanggal_selesai: end,
     page: "1",
     limit: "500",
-    ...(sectionCode !== "all"
-      ? { unitType: "BAGIAN", unitKode: sectionCode }
-      : divisionCode !== "all"
-        ? { unitType: "DIVISI", unitKode: divisionCode }
-        : {}),
+    ...(unitFilter !== "all"
+      ? {
+          unitType: unitFilter.split(":")[0],
+          unitKode: unitFilter.split(":").slice(1).join(":"),
+        }
+      : {}),
   }).toString()}`;
 const buildColumns = (rows) => [
   { key: "nik", label: "NIK", frozen: true },
@@ -71,8 +85,7 @@ export default function CheckAttendancePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [appliedPeriod, setAppliedPeriod] = useState(null);
-  const [divisionCode, setDivisionCode] = useState("all");
-  const [sectionCode, setSectionCode] = useState("all");
+  const [unitFilter, setUnitFilter] = useState("all");
   const [tableSearch, setTableSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
@@ -91,34 +104,36 @@ export default function CheckAttendancePage() {
     select: (response) => (Array.isArray(response?.data) ? response.data : []),
   });
 
-  const { data: divisionOptions = [] } = useMaster(
+  const { data: masterUnitKerja = [] } = useMaster(
     api,
-    ["attendance-division-options"],
-    MASTERENDPOINT.divisi,
+    ["attendance-unit-options"],
+    MASTERENDPOINT.lokasiKerja,
     {
       enabled: isLoaded && isSignedIn,
       select: (response) =>
-        (Array.isArray(response?.data) ? response.data : []).map((item) => ({
-          code: String(item?.kode ?? item?.id ?? "").trim(),
-          name: String(item?.nama_div ?? item?.nama ?? item?.name ?? "").trim(),
-        })),
+        Array.isArray(response?.data) ? response.data : [],
     },
   );
-  const sectionEndpoint =
-    divisionCode !== "all" ? MASTERENDPOINT.bagian(divisionCode) : "";
-  const { data: sectionOptions = [] } = useMaster(
-    api,
-    ["attendance-section-options", divisionCode],
-    sectionEndpoint,
-    {
-      enabled: Boolean(sectionEndpoint) && isLoaded && isSignedIn,
-      select: (response) =>
-        (Array.isArray(response?.data) ? response.data : []).map((item) => ({
-          code: String(item?.kode ?? item?.id ?? "").trim(),
-          name: String(item?.nama_bag ?? item?.nama ?? item?.name ?? "").trim(),
-        })),
-    },
-  );
+  const unitOptions = useMemo(() => {
+    const options = new Map();
+    masterUnitKerja.forEach((unit) => {
+      UNIT_FILTER_FIELDS.forEach((field) => {
+        const relation = unit?.[field.relation] ?? {};
+        const code = String(
+          relation?.id ?? unit?.[`kode_${field.relation}`] ?? "",
+        ).trim();
+        if (!isValidUnitValue(code)) return;
+        const name = String(relation?.nama ?? relation?.name ?? code).trim();
+        options.set(`${field.key}:${code}`, {
+          key: `${field.key}:${code}`,
+          label: `${field.label}: ${name || code}`,
+        });
+      });
+    });
+    return Array.from(options.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  }, [masterUnitKerja]);
   const dayColumns = useMemo(() => getDayColumns(rows), [rows]);
   const filteredRows = useMemo(() => {
     const query = tableSearch.trim().toLocaleLowerCase("id-ID");
@@ -147,8 +162,7 @@ export default function CheckAttendancePage() {
     setAppliedPeriod({
       start: startDate,
       end: endDate,
-      divisionCode,
-      sectionCode,
+      unitFilter,
     });
     setPage(1);
   };
@@ -184,8 +198,7 @@ export default function CheckAttendancePage() {
         buildPivotEndpoint({
           start: startDate,
           end: endDate,
-          divisionCode,
-          sectionCode,
+          unitFilter,
         }),
       );
       const exportRows = Array.isArray(response?.data?.data)
@@ -255,41 +268,17 @@ export default function CheckAttendancePage() {
             }}
           />
           <Select
-            label="Divisi"
-            selectedKeys={[divisionCode]}
+            label="Unit Kerja"
+            selectedKeys={[unitFilter]}
             onSelectionChange={(keys) => {
-              const value = getSelectedKey(keys);
-              setDivisionCode(value);
-              setSectionCode("all");
+              setUnitFilter(getSelectedKey(keys));
               setAppliedPeriod(null);
             }}
           >
-            <SelectItem key="all">Semua divisi</SelectItem>
-            {divisionOptions
-              .filter((item) => item.code)
-              .map((item) => (
-                <SelectItem key={item.code}>
-                  {item.name || item.code}
-                </SelectItem>
-              ))}
-          </Select>
-          <Select
-            label="Bagian"
-            isDisabled={divisionCode === "all"}
-            selectedKeys={[sectionCode]}
-            onSelectionChange={(keys) => {
-              setSectionCode(getSelectedKey(keys));
-              setAppliedPeriod(null);
-            }}
-          >
-            <SelectItem key="all">Semua bagian</SelectItem>
-            {sectionOptions
-              .filter((item) => item.code)
-              .map((item) => (
-                <SelectItem key={item.code}>
-                  {item.name || item.code}
-                </SelectItem>
-              ))}
+            <SelectItem key="all">Semua unit kerja</SelectItem>
+            {unitOptions.map((item) => (
+              <SelectItem key={item.key}>{item.label}</SelectItem>
+            ))}
           </Select>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -310,8 +299,7 @@ export default function CheckAttendancePage() {
             <Button
               variant="bordered"
               onPress={() => {
-                setDivisionCode("all");
-                setSectionCode("all");
+                setUnitFilter("all");
                 setAppliedPeriod(null);
                 setPage(1);
               }}
