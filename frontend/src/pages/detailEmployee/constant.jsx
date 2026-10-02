@@ -97,6 +97,16 @@ export const PROPERTIES = {
       form: "number",
     },
     {
+      title: "Direktur",
+      properties: "direktur",
+      editable: false,
+    },
+    {
+      title: "Deputi",
+      properties: "deputi",
+      editable: false,
+    },
+    {
       title: "Divisi",
       properties: "divisi",
       form: "select",
