@@ -23,6 +23,37 @@ import { useMaster } from "../../hooks/useMaster";
 import { buildAttendanceExportXlsx } from "../../utils/xlsxAttendanceExport";
 
 const ROWS_PER_PAGE = 20;
+const LEAVE_TYPE_TOTALS = [
+  ["CTH", "Cuti Tahunan"],
+  ["DNL", "Dinas Luar"],
+  ["EVN", "Event"],
+  ["IJS", "Izin Setengah Hari"],
+  ["LUPA", "Lupa Absen"],
+  ["SKTCVD", "Sakit Covid"],
+  ["CKH-MT1", "Cuti Khusus Menikah"],
+  ["CKH-MT2", "Cuti Khusus Anak Menikah"],
+  ["CKH-MT3", "Cuti Khusus Anak Adopsi Menikah"],
+  ["CKH-MD1", "Cuti Khusus Istri Meninggal"],
+  ["CKH-MD2", "Cuti Khusus Suami Meninggal"],
+  ["CKH-MD3", "Cuti Khusus Anak Meninggal"],
+  ["CKH-MD4", "Cuti Khusus Orangtua Meninggal"],
+  ["CKH-MD5", "Cuti Khusus Mertua Meninggal"],
+  ["CKH-MD6", "Cuti Khusus Saudara Kandung Meninggal"],
+  ["CKH-MD7", "Cuti Khusus Istri Melahirkan"],
+  ["CKH-ML1", "Cuti Khusus Istri Keguguran"],
+  ["CKH-ML2", "Cuti Khusus Melahirkan"],
+  ["CKH-KG1", "Cuti Khusus Keguguran"],
+  ["CKH-KG2", "Cuti Khusus Keluarga Meninggal"],
+  ["CKH-AG1", "Cuti Khusus Baptis"],
+  ["CKH-AG2", "Cuti Khusus Sidi"],
+  ["CKH-AG3", "Cuti Khusus Khitan"],
+  ["SKT", "Sakit"],
+  ["IJF", "Izin Potong Gaji"],
+  ["KCL", "Izin Musibah"],
+  ["TK", "Tidak Hadir"],
+  ["TRN", "Tugas Training"],
+  ["HDR", "Hadir"],
+];
 const getDayColumns = (rows) =>
   Array.from(
     new Set(
@@ -67,12 +98,26 @@ const buildColumns = (rows) => [
   { key: "jabatan", label: "JABATAN" },
   ...getDayColumns(rows).map((key) => ({ key, label: key })),
   { key: "total_yangmenggunakanjam", label: "JAM" },
-  { key: "total_LUPA(LUPA)", label: "LUPA" },
-  { key: "total_sakit(SKT)", label: "SAKIT" },
-  { key: "total_izin(IZN)", label: "IZIN" },
-  { key: "total_cuti_tahunan(CTH)", label: "CUTI" },
+  ...LEAVE_TYPE_TOTALS.map(([code, label]) => ({
+    key: `total_kode_${code}`,
+    label: code,
+    description: label,
+  })),
   { key: "total_semua", label: "TOTAL" },
 ];
+const addLeaveTypeTotals = (row) => {
+  const dayColumns = getDayColumns([row]);
+  const next = { ...row };
+  LEAVE_TYPE_TOTALS.forEach(([code]) => {
+    next[`total_kode_${code}`] = dayColumns.filter((day) => {
+      const value = String(row?.[day] ?? "").trim();
+      return code === "HDR"
+        ? /^\d{2}:\d{2}-\d{2}:\d{2}$/.test(value)
+        : value === code;
+    }).length;
+  });
+  return next;
+};
 const getErrorMessage = (error) =>
   error?.payload?.message ||
   error?.response?.data?.message ||
@@ -101,7 +146,10 @@ export default function CheckAttendancePage() {
   } = useMaster(api, ["attendance-pivot", appliedPeriod], endpoint, {
     enabled: Boolean(appliedPeriod) && isLoaded && isSignedIn,
     returnEmptyOnError: false,
-    select: (response) => (Array.isArray(response?.data) ? response.data : []),
+    select: (response) =>
+      (Array.isArray(response?.data) ? response.data : []).map(
+        addLeaveTypeTotals,
+      ),
   });
 
   const { data: masterUnitKerja = [] } = useMaster(
@@ -202,7 +250,7 @@ export default function CheckAttendancePage() {
         }),
       );
       const exportRows = Array.isArray(response?.data?.data)
-        ? response.data.data
+        ? response.data.data.map(addLeaveTypeTotals)
         : [];
 
       if (exportRows.length === 0) {
