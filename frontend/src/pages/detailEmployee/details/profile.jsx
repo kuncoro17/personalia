@@ -416,9 +416,8 @@ export default function Profile() {
         if (!dataProp) return;
 
         if (dataProp.master) {
-          const findSelected = master[dataProp.master].find(
-            (i) => i.name === value[key],
-          );
+          const masterOptions = master[dataProp.master] ?? [];
+          const findSelected = masterOptions.find((i) => i.name === value[key]);
 
           if (findSelected) {
             if (key === "direktur") {
@@ -467,6 +466,10 @@ export default function Profile() {
         const resolvedUnitKerjaId = resolveUnitKerjaId(selectedHierarchy);
         if (resolvedUnitKerjaId) {
           unitKerjaPayload.unit_kerja = resolvedUnitKerjaId;
+          // Struktur organisasi disimpan melalui relasi unit kerja karyawan.
+          // Jangan kirim field-field ini ke endpoint profil karyawan.
+          delete profilePayload.direktur;
+          delete profilePayload.deputi;
           delete profilePayload.divisi;
           delete profilePayload.bagian;
           delete profilePayload.seksi;
