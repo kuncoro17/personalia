@@ -75,6 +75,8 @@ export const MASTERENDPOINT = {
   statusKaryawan: `status-karyawan`,
   agama: `master-agama`,
   jabatan: `personalia/jabatan/getall`,
+  direktur: `master-direktur`,
+  deputi: `master-deputi/getAllDeputi`,
 
   universitas: "riwayat-pendidikan",
 

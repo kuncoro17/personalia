@@ -115,30 +115,27 @@ export default function Profile() {
     },
   );
 
-  const masterDirektur = useMemo(
-    () =>
-      uniqById(
-        (masterUnitKerja?.data ?? [])
-          .map((item) => item?.direktur)
-          .filter((item) => item?.id && item.id !== "nnn"),
-        "id",
-      ),
-    [masterUnitKerja],
+  const { data: masterDirektur, isFetching: masterDirekturFetching } =
+    useMaster(api, ["master-direktur"], MASTERENDPOINT.direktur, {
+      enabled: isOpen,
+      select: (data) =>
+        data.data
+          .map((item) => ({ id: item.kode, name: item.nama_dir }))
+          .filter((item) => item.id && item.name),
+    });
+
+  const { data: masterDeputi, isFetching: masterDeputiFetching } = useMaster(
+    api,
+    ["master-deputi"],
+    MASTERENDPOINT.deputi,
+    {
+      enabled: isOpen,
+      select: (data) =>
+        data.data
+          .map((item) => ({ id: item.kode, name: item.nama_dep }))
+          .filter((item) => item.id && item.name),
+    },
   );
-
-  const masterDeputi = useMemo(() => {
-    const units = masterUnitKerja?.data ?? [];
-    const filteredUnits = valueSelect.direktur
-      ? units.filter((item) => item?.direktur?.id === valueSelect.direktur)
-      : units;
-
-    return uniqById(
-      filteredUnits
-        .map((item) => item?.deputi)
-        .filter((item) => item?.id && item.id !== "nnn"),
-      "id",
-    );
-  }, [masterUnitKerja, valueSelect.direktur]);
 
   const { data: masterBagian } = useMaster(
     api,
@@ -367,6 +364,8 @@ export default function Profile() {
   const isLoading =
     profileFetching ||
     masterStatusFetching ||
+    masterDirekturFetching ||
+    masterDeputiFetching ||
     masterDivisiFetching ||
     masterMapelFetching ||
     masterAgamaFetching ||
