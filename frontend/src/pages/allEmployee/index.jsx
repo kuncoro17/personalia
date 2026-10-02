@@ -42,9 +42,8 @@ const UNIT_FILTER_FIELDS = [
   { key: "kode_deputi", relation: "deputi", label: "Deputi" },
   { key: "kode_divisi", relation: "divisi", label: "Divisi" },
   { key: "kode_bagian", relation: "bagian", label: "Bagian" },
+  { key: "kode_seksi", relation: "seksi", label: "Seksi" },
 ];
-
-const UNIT_FILTER_PRIORITY = [...UNIT_FILTER_FIELDS].reverse();
 
 const getUnitRelationValue = (unit, field) => {
   const relation = unit?.[field.relation] ?? {};
@@ -62,26 +61,25 @@ const isValidUnitValue = (value) => {
   return clean && normalized !== "none" && normalized !== "nnn";
 };
 
-const getDeepestUnitFilterOption = (unit) => {
-  for (const field of UNIT_FILTER_PRIORITY) {
+const getUnitFilterOptions = (unit) =>
+  UNIT_FILTER_FIELDS.flatMap((field) => {
     const value = getUnitRelationValue(unit, field);
-    if (!isValidUnitValue(value)) continue;
+    if (!isValidUnitValue(value)) return [];
 
     const cleanValue = String(value).trim();
     const label = String(
       getUnitRelationLabel(unit, field) || cleanValue,
     ).trim();
 
-    return {
-      key: `${field.key}:${cleanValue}`,
-      fieldKey: field.key,
-      value: cleanValue,
-      label: label || cleanValue,
-    };
-  }
-
-  return null;
-};
+    return [
+      {
+        key: `${field.key}:${cleanValue}`,
+        fieldKey: field.key,
+        value: cleanValue,
+        label: `${field.label}: ${label || cleanValue}`,
+      },
+    ];
+  });
 
 const getEmptyUnitFilters = () =>
   Object.fromEntries(UNIT_FILTER_FIELDS.map((field) => [field.key, "all"]));
@@ -221,9 +219,9 @@ export default function AllKaryawan() {
     const optionMap = new Map();
 
     rows.forEach((unit) => {
-      const option = getDeepestUnitFilterOption(unit);
-      if (!option || optionMap.has(option.key)) return;
-      optionMap.set(option.key, option);
+      getUnitFilterOptions(unit).forEach((option) => {
+        if (!optionMap.has(option.key)) optionMap.set(option.key, option);
+      });
     });
 
     return Array.from(optionMap.values()).sort((a, b) =>
