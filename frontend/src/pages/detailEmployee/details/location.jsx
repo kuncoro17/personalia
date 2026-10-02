@@ -66,6 +66,7 @@ export default function Location() {
         return rows.map((d) => {
           const formatted = formatDataDetail("lokasi", d);
           formatted.id = d?.id ?? d?.ukk_id ?? d?.ukkId ?? null;
+          formatted.strukturUnit = d?.struktur_unit ?? null;
           return formatted;
         });
       },
@@ -449,6 +450,29 @@ export default function Location() {
                   </button>
                 </div>
               </div>
+
+              {item.strukturUnit && (
+                <div className="grid grid-cols-2 gap-5 md:grid-cols-5">
+                  {[
+                    ["Direktur", item.strukturUnit.direktur],
+                    ["Deputi", item.strukturUnit.deputi],
+                    ["Divisi", item.strukturUnit.divisi],
+                    ["Bagian", item.strukturUnit.bagian],
+                    ["Seksi", item.strukturUnit.seksi],
+                  ]
+                    .filter(([, value]) => value?.name)
+                    .map(([label, value]) => (
+                      <div key={label}>
+                        <p className="font-Poppins font-normal opacity-50 text-sm">
+                          {label}
+                        </p>
+                        <p className="font-Poppins font-medium truncate text-primary">
+                          {value.name}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              )}
 
               <div className="grid grid-cols-4 gap-5">
                 {item.map((item) => {

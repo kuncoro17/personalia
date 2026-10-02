@@ -1821,6 +1821,13 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
       mengajar_mapel: string;
       lokasi_kerja: { id: string | null; name: string | null };
       jabatan?: { id: string | null; name: string | null };
+      struktur_unit: {
+        direktur: { id: string | null; name: string | null } | null;
+        deputi: { id: string | null; name: string | null } | null;
+        divisi: { id: string | null; name: string | null } | null;
+        bagian: { id: string | null; name: string | null } | null;
+        seksi: { id: string | null; name: string | null } | null;
+      };
     };
 
     const filteredData: FilteredItem[] = [];
@@ -1852,6 +1859,26 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
 
     unitKerjaList.forEach(item => {
       const detail = item.unit_kerja_detail;
+      const toStrukturUnit = (node?: {
+        id?: string | null;
+        name?: string | null;
+        nama_sek?: string | null;
+        nama_bag?: string | null;
+        nama_div?: string | null;
+        nama_dep?: string | null;
+        nama_dir?: string | null;
+      }) => {
+        if (!node?.id || node.id === 'nnn') return null;
+
+        return { id: node.id, name: pickNama(node) || null };
+      };
+      const strukturUnit = {
+        direktur: toStrukturUnit(detail?.direktur),
+        deputi: toStrukturUnit(detail?.deputi),
+        divisi: toStrukturUnit(detail?.divisi),
+        bagian: toStrukturUnit(detail?.bagian),
+        seksi: toStrukturUnit(detail?.seksi),
+      };
 
       const lokasi =
         detail?.seksi?.id && detail.seksi.id !== 'nnn'
@@ -1902,6 +1929,7 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
             mengajar_mapel: j.mapel?.nama_mapel ?? '',
             lokasi_kerja: lokasi,
             jabatan,
+            struktur_unit: strukturUnit,
           });
         });
       } else {
@@ -1911,6 +1939,7 @@ export const getUnitKerjaByKaryawanId = async (c: Context) => {
           mengajar_mapel: '',
           lokasi_kerja: lokasi,
           jabatan,
+          struktur_unit: strukturUnit,
         });
       }
     });
