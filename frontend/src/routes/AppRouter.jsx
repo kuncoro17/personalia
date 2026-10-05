@@ -1,5 +1,5 @@
 import { useAuth, useUser } from "@clerk/clerk-react";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Spinner } from "@heroui/react";
 
@@ -11,16 +11,19 @@ import {
   markSasEntry,
   getSasPortalUrl,
 } from "../utils/sasSession";
+import { apiClient } from "../service/api";
 
 const SasVerifyPage = lazy(() => import("../pages/sasVerify"));
 
 function AppRouter() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { user } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
   const hasInternalSasSession = hasSasSession();
   const isSasVerifyRoute = location.pathname === "/sas/verify";
+  const [userAccess, setUserAccess] = useState("checking");
+  const api = apiClient(getToken);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -53,6 +56,55 @@ function AppRouter() {
     user?.id,
   ]);
 
+  useEffect(() => {
+    if (!isLoaded || (!isSignedIn && !hasInternalSasSession)) return;
+    if (isSasVerifyRoute) return;
+
+    const email = String(
+      user?.primaryEmailAddress?.emailAddress ||
+        getSasSessionUser()?.email ||
+        "",
+    )
+      .trim()
+      .toLowerCase();
+
+    if (!email) {
+      setUserAccess("denied");
+      return;
+    }
+
+    let active = true;
+    setUserAccess("checking");
+
+    api
+      .get(`personalia/users?q=${encodeURIComponent(email)}&limit=10`)
+      .then((response) => {
+        if (!active) return;
+        const users = response?.data?.data?.items ?? [];
+        const allowed = users.some(
+          (item) =>
+            String(item?.email ?? "")
+              .trim()
+              .toLowerCase() === email,
+        );
+        setUserAccess(allowed ? "allowed" : "denied");
+      })
+      .catch(() => {
+        if (active) setUserAccess("denied");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [
+    getToken,
+    hasInternalSasSession,
+    isLoaded,
+    isSasVerifyRoute,
+    isSignedIn,
+    user,
+  ]);
+
   if (!isLoaded) return <LoadingFallback />;
 
   if (isSasVerifyRoute) {
@@ -66,6 +118,12 @@ function AppRouter() {
   }
 
   if (!isSignedIn && !hasInternalSasSession) {
+    return <SignedOutRedirect redirectUrl={getSasPortalUrl()} />;
+  }
+
+  if (userAccess === "checking") return <LoadingFallback />;
+
+  if (userAccess === "denied") {
     return <SignedOutRedirect redirectUrl={getSasPortalUrl()} />;
   }
 

@@ -77,12 +77,18 @@ const isValidUnitValue = (value) => {
     .toLowerCase();
   return normalized && normalized !== "nnn" && normalized !== "none";
 };
-const buildPivotEndpoint = ({ start, end, unitFilter }) =>
+const buildPivotEndpoint = ({
+  start,
+  end,
+  unitFilter,
+  page = 1,
+  limit = 500,
+}) =>
   `personalia/absensi/pivot?${new URLSearchParams({
     tanggal_mulai: start,
     tanggal_selesai: end,
-    page: "1",
-    limit: "500",
+    page: String(page),
+    limit: String(limit),
     ...(unitFilter !== "all"
       ? {
           unitType: unitFilter.split(":")[0],
@@ -242,16 +248,26 @@ export default function CheckAttendancePage() {
 
     setIsExporting(true);
     try {
-      const response = await api.get(
-        buildPivotEndpoint({
-          start: startDate,
-          end: endDate,
-          unitFilter,
-        }),
-      );
-      const exportRows = Array.isArray(response?.data?.data)
-        ? response.data.data.map(addLeaveTypeTotals)
+      const request = { start: startDate, end: endDate, unitFilter };
+      const firstResponse = await api.get(buildPivotEndpoint(request));
+      const firstRows = Array.isArray(firstResponse?.data?.data)
+        ? firstResponse.data.data
         : [];
+      const totalPages = Math.max(
+        Number(firstResponse?.data?.pagination?.totalPages) || 1,
+        1,
+      );
+      const remainingResponses = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, index) =>
+          api.get(buildPivotEndpoint({ ...request, page: index + 2 })),
+        ),
+      );
+      const exportRows = [
+        ...firstRows,
+        ...remainingResponses.flatMap((response) =>
+          Array.isArray(response?.data?.data) ? response.data.data : [],
+        ),
+      ].map(addLeaveTypeTotals);
 
       if (exportRows.length === 0) {
         addToast({
