@@ -92,6 +92,8 @@ const buildPivotEndpoint = ({ start, end, unitFilter, page, limit }) =>
 const buildColumns = (rows) => [
   { key: "nik", label: "NIK", frozen: true },
   { key: "nama_lengkap", label: "NAMA KARYAWAN", frozen: true },
+  { key: "nama_direktur", label: "DIREKTUR" },
+  { key: "nama_deputi", label: "DEPUTI" },
   { key: "nama_div", label: "DIVISI" },
   { key: "nama_bag", label: "BAGIAN" },
   { key: "jabatan", label: "JABATAN" },

@@ -37,6 +37,22 @@ const migration: Migration = {
         `${unitConditions})`
       )
       .replace(
+        `d.nama_div,
+            b.nama_bag,
+
+            %s,`,
+        `dr.nama_dir AS nama_direktur,
+            dp.nama_dep AS nama_deputi,
+            d.nama_div,
+            b.nama_bag,
+
+            %s,`
+      )
+      .replace(
+        `GROUP BY kt.nik, kt.nama_lengkap, d.nama_div, b.nama_bag, j.jabatan`,
+        `GROUP BY kt.nik, kt.nama_lengkap, dr.nama_dir, dp.nama_dep, d.nama_div, b.nama_bag, j.jabatan`
+      )
+      .replace(
         `p_unit_type, p_unit_kode,
         p_unit_type, p_unit_kode`,
         `p_unit_type, p_unit_kode,
